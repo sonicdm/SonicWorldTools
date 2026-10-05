@@ -1,0 +1,11 @@
+{
+  "name": "SonicWorldTools",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/sonicdm/SonicWorldTools",
+  "description": "World-building utilities for Valheim: precision selection and refinement via Infinity Hammer. M0 scaffold.",
+  "author": "SonicDM",
+  "dependencies": [
+    "denikson-BepInExPack_Valheim-5.4.2202",
+    "ValheimModding-Jotunn-2.23.0"
+  ]
+}

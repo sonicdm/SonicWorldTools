@@ -1,0 +1,10 @@
+# Template-Version: 1
+# sonicworldtools-tool-v1 — owned by SonicWorldTools; safe to delete on uninstall
+hammer:
+- name: SonicWorldTools - Precision Area Pipette
+  description: |-
+    M0 scaffold — precision area selection pipette (coming in a later milestone).
+  icon: Hammer
+  instant: true
+  command: sonic_precision_pipette
+  tabIndex: 0
