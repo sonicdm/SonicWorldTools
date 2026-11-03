@@ -12,12 +12,21 @@ namespace SonicWorldTools.Core
 	/// </summary>
 	public static class ToolInstaller
 	{
-		public const string ToolName = "SonicWorldTools - Precision Area Pipette";
+		public const string ToolName = "Precision Select";
 		public const string Marker = "sonicworldtools-tool-v1";
 		public const string ActivateCommand = "sonic_precision_pipette";
+		public const string PieceRepeaterToolName = "Piece Repeater";
+		public const string LegacyPieceRepeaterToolName = "Shape Builder";
+		public const string PieceRepeaterCommand = "sonic_piece_repeater";
 		public const string EquipmentKey = "hammer";
 		public const string OwnedFileName = "infinity_tools_sonicworldtools.yaml";
 		public const string ConflictNewSuffix = ".new";
+
+		public static bool IsPieceRepeaterToolName(string name)
+		{
+			return string.Equals(name, PieceRepeaterToolName, StringComparison.OrdinalIgnoreCase)
+			       || string.Equals(name, LegacyPieceRepeaterToolName, StringComparison.OrdinalIgnoreCase);
+		}
 
 		public static string BuildOwnedDocument()
 		{
@@ -27,12 +36,58 @@ namespace SonicWorldTools.Core
 			sb.AppendLine("# " + Marker + " — owned by SonicWorldTools; safe to delete on uninstall");
 			sb.AppendLine(EquipmentKey + ":");
 			sb.AppendLine("- name: " + ToolName);
-			sb.AppendLine("  description: |-");
-			sb.AppendLine("    Select an exact rectangular volume using two corners.");
-			sb.AppendLine("    Refine the selection before copying.");
+			sb.AppendLine("  description: A→B→C box. Alt+LMB/MMB refine, Shift+MMB copy, Ctrl+Del dismantle, Shift+Del delete.");
 			sb.AppendLine("  icon: Hammer");
 			sb.AppendLine("  instant: true");
 			sb.AppendLine("  command: " + ActivateCommand);
+			sb.AppendLine("  tabIndex: 0");
+			sb.AppendLine("- name: " + PieceRepeaterToolName);
+		sb.AppendLine("  description: MMB samples; click waypoints; Ctrl+click places. Q/E cycle build snap points; Right Alt+click snaps a waypoint to a piece joint. Wheel rotates repeated pieces in place; Alt+wheel adjusts the gap. Profiles follow build-piece surfaces or terrain; props face the tangent. F7 sets interpolation, smoothing, gap and height. Esc exits.");
+			sb.AppendLine("  icon: Hammer");
+			sb.AppendLine("  instant: true");
+			sb.AppendLine("  command: " + PieceRepeaterCommand);
+			sb.AppendLine("  tabIndex: 0");
+			sb.AppendLine("hoe:");
+				sb.AppendLine("- name: Lower Terrain");
+			sb.AppendLine("  description: Lowers terrain by the selected amount. Hold <mod1> to smooth; hold <mod2> for free placement.");
+			sb.AppendLine("  icon: raise");
+			sb.AppendLine("  command: terrain lower=<h> smooth=<mod1>?.5:0 <area>");
+			sb.AppendLine("  initialHeight: 0.2");
+			sb.AppendLine("  terrainGrid: -<mod2>");
+			sb.AppendLine("  snapGround: true");
+			sb.AppendLine("  tabIndex: 0");
+			string[,] pathSurfaces =
+			{
+				{ "grass", "Grass", "replant" },
+				{ "patches", "Grass Patches", "iron_wall_2x2" },
+				{ "grass_dark", "Dark Grass", "trophyabomination" },
+				{ "dirt", "Dirt", "Hoe" },
+				{ "cultivated", "Cultivated", "cultivate" },
+				{ "paved", "Paved", "paved_road" },
+				{ "paved_moss", "Mossy Paved", "trophygreydwarfshaman" },
+				{ "paved_dark", "Dark Paved", "tar" }
+			};
+			for (int i = 0; i < pathSurfaces.GetLength(0); i++)
+			{
+				sb.AppendLine("- name: " + pathSurfaces[i, 1] + " Path");
+				sb.AppendLine("  description: Click route points. Hold <mod2> to finish; also hold <mod1> on the final point for softer edges. Scroll to change half-width.");
+				sb.AppendLine("  icon: " + pathSurfaces[i, 2]);
+				sb.AppendLine("  command: terrain curve paint=" + pathSurfaces[i, 0] + " level smooth=<mod1>?.5:0 circle=<r> p=<p*>");
+				sb.AppendLine("  initialSize: 2");
+				sb.AppendLine("  finish: <mod2>");
+				sb.AppendLine("  terrainGrid: true");
+				sb.AppendLine("  snapGround: true");
+				sb.AppendLine("  tabIndex: 0");
+			}
+			sb.AppendLine("cultivator:");
+			sb.AppendLine("- name: Scatter Props");
+			sb.AppendLine("  description: Middle-click props to sample/remove up to 8 types; Shift+middle-click clears them. Click to scatter the sampled mix, or the hovered prop if none are sampled.");
+			sb.AppendLine("  icon: Cultivator");
+			sb.AppendLine("  commands:");
+			sb.AppendLine("  - command: sonic_scatter place <x>,<z> radius=<r>");
+			sb.AppendLine("  initialSize: 3");
+			sb.AppendLine("  initialShape: circle");
+			sb.AppendLine("  snapGround: true");
 			sb.AppendLine("  tabIndex: 0");
 			return sb.ToString();
 		}
@@ -83,7 +138,7 @@ namespace SonicWorldTools.Core
 		}
 
 		/// <summary>
-		/// True for SonicWorldTools-owned stock (marker / Template-Version) without user icon edits.
+		/// True for SonicWorldTools-owned stock (marker / Template-Version) without a user edit to the pipette icon.
 		/// </summary>
 		public static bool IsUpgradeableStockDocument(string yaml)
 		{
@@ -100,7 +155,7 @@ namespace SonicWorldTools.Core
 				return false;
 			}
 
-			if (Regex.IsMatch(NormalizeNewlines(yaml), @"(?m)^\s*icon:\s*(?!Hammer\s*$).+$"))
+			if (PrimaryToolHasCustomIcon(yaml))
 			{
 				return false;
 			}
@@ -124,6 +179,39 @@ namespace SonicWorldTools.Core
 			return !string.Equals(stock, existing, StringComparison.Ordinal);
 		}
 
+		private static bool PrimaryToolHasCustomIcon(string yaml)
+		{
+			string[] lines = NormalizeNewlines(yaml).Split('\n');
+			var itemLine = new Regex(@"^\s*-\s*name:\s*(.*)$", RegexOptions.IgnoreCase);
+			var iconLine = new Regex(@"^\s*icon:\s*(.*?)\s*$", RegexOptions.IgnoreCase);
+			bool inPipetteTool = false;
+			foreach (string raw in lines)
+			{
+				string line = raw.TrimEnd('\r');
+				Match item = itemLine.Match(line);
+				if (item.Success)
+				{
+					string name = item.Groups[1].Value.Trim().Trim('"', '\'');
+					inPipetteTool = string.Equals(name, ToolName, StringComparison.OrdinalIgnoreCase)
+					                || name.IndexOf("Precision Area Pipette", StringComparison.OrdinalIgnoreCase) >= 0;
+					continue;
+				}
+
+				if (!inPipetteTool)
+				{
+					continue;
+				}
+
+				Match icon = iconLine.Match(line);
+				if (icon.Success)
+				{
+					return !string.Equals(icon.Groups[1].Value, "Hammer", StringComparison.OrdinalIgnoreCase);
+				}
+			}
+
+			return false;
+		}
+
 		/// <returns>True if preferred file bytes were written or an alternate was migrated/removed.</returns>
 		public static bool WriteOwnedFile(string configRoot, bool preferToolsSubfolder)
 		{
@@ -141,10 +229,33 @@ namespace SonicWorldTools.Core
 			bool useTools = preferToolsSubfolder && Directory.Exists(toolsDir);
 			string preferred = Path.Combine(useTools ? toolsDir : configRoot, OwnedFileName);
 			string alternate = Path.Combine(useTools ? configRoot : toolsDir, OwnedFileName);
+			// IH's folder watcher loads every file in "tools", regardless of extension.
+			// Keep conflict backups at config root so *.yaml.new cannot become a live tool file.
+			string safeConflictPath = Path.Combine(configRoot, OwnedFileName + ConflictNewSuffix);
+			string nestedConflictPath = preferred + ConflictNewSuffix;
+			bool touched = false;
+			if (!string.Equals(Path.GetFullPath(nestedConflictPath), Path.GetFullPath(safeConflictPath), StringComparison.OrdinalIgnoreCase)
+			    && File.Exists(nestedConflictPath))
+			{
+				string nestedText = File.ReadAllText(nestedConflictPath, Encoding.UTF8);
+				if (!File.Exists(safeConflictPath))
+				{
+					File.Move(nestedConflictPath, safeConflictPath);
+				}
+				else if (string.Equals(NormalizeNewlines(File.ReadAllText(safeConflictPath, Encoding.UTF8)), NormalizeNewlines(nestedText), StringComparison.Ordinal))
+				{
+					File.Delete(nestedConflictPath);
+				}
+				else
+				{
+					string archived = safeConflictPath + "." + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+					File.Move(nestedConflictPath, archived);
+				}
+				touched = true;
+			}
 
 			ResolveExistingOwnedContent(preferred, alternate, out string existing, out _);
 
-			bool touched = false;
 			WriteOwnedDocument(existing, out string next, out bool writeConflictNew);
 			string preferredNow = File.Exists(preferred) ? File.ReadAllText(preferred, Encoding.UTF8) : string.Empty;
 			if (!File.Exists(preferred)
@@ -156,12 +267,11 @@ namespace SonicWorldTools.Core
 
 			if (writeConflictNew)
 			{
-				string newPath = preferred + ConflictNewSuffix;
 				string stock = NormalizeNewlines(BuildOwnedDocument()).TrimEnd() + Environment.NewLine;
-				string existingNew = File.Exists(newPath) ? File.ReadAllText(newPath, Encoding.UTF8) : string.Empty;
+				string existingNew = File.Exists(safeConflictPath) ? File.ReadAllText(safeConflictPath, Encoding.UTF8) : string.Empty;
 				if (!string.Equals(NormalizeNewlines(existingNew), NormalizeNewlines(stock), StringComparison.Ordinal))
 				{
-					AtomicWrite(newPath, stock);
+					AtomicWrite(safeConflictPath, stock);
 					touched = true;
 				}
 			}
@@ -173,7 +283,7 @@ namespace SonicWorldTools.Core
 				string prefText = File.ReadAllText(preferred, Encoding.UTF8);
 				if (!string.Equals(NormalizeNewlines(altText), NormalizeNewlines(prefText), StringComparison.Ordinal))
 				{
-					AtomicWrite(alternate + ConflictNewSuffix, altText);
+					AtomicWrite(safeConflictPath, altText);
 				}
 
 				File.Delete(alternate);
@@ -236,7 +346,12 @@ namespace SonicWorldTools.Core
 				existing = preferredText;
 			}
 
-			conflictBackupPath = alternatePath + ConflictNewSuffix;
+			string preferredDirectory = Path.GetDirectoryName(preferredPath);
+			if (string.Equals(Path.GetFileName(preferredDirectory), "tools", StringComparison.OrdinalIgnoreCase))
+			{
+				preferredDirectory = Directory.GetParent(preferredDirectory)?.FullName ?? preferredDirectory;
+			}
+			conflictBackupPath = Path.Combine(preferredDirectory, OwnedFileName + ConflictNewSuffix);
 		}
 
 		public static int CountNamedToolsInDocument(string yaml, string toolName)

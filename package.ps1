@@ -15,7 +15,7 @@
     - SonicWorldTools.dll
     - any other mod files
 
-  Files are placed at the ZIP root (not inside a nested folder).
+  Thunderstore files are placed at the ZIP root (not inside a nested folder).
 
 .PARAMETER LibDir
   Folder of Valheim/BepInEx reference DLLs for building.
@@ -169,7 +169,6 @@ if (Test-Path -LiteralPath $ChangelogPath) {
     Assert-True (Test-Utf8File $ChangelogPath) "CHANGELOG.md must be UTF-8 compatible."
     Copy-Item -LiteralPath $ChangelogPath -Destination (Join-Path $Stage "CHANGELOG.md")
 }
-
 # --- Zip with files at root (do not zip the folder itself) ---
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $ZipName = "$($manifest.name)-$($manifest.version_number).zip"
@@ -178,12 +177,12 @@ if (Test-Path -LiteralPath $ZipPath) {
     Remove-Item -LiteralPath $ZipPath -Force
 }
 
-# Compress-Archive with explicit file list keeps entries at zip root
+# Compress-Archive with explicit file list keeps entries at the ZIP root.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $StageFiles = Get-ChildItem -LiteralPath $Stage -File | ForEach-Object { $_.FullName }
 Compress-Archive -LiteralPath $StageFiles -DestinationPath $ZipPath -CompressionLevel Optimal
 
 # Sanity-check zip root entries (no nested directory wrapper)
-Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
 try {
     $entries = @($zip.Entries | ForEach-Object { $_.FullName })

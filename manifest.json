@@ -2,7 +2,7 @@
   "name": "SonicWorldTools",
   "version_number": "0.1.0",
   "website_url": "https://github.com/sonicdm/SonicWorldTools",
-  "description": "World-building utilities for Valheim: precision selection and refinement via Infinity Hammer. M0 scaffold.",
+  "description": "Precision Area Pipette for Infinity Hammer: two-corner volume select, refine, copy hand-off. Requires IH stack (Server Devcommands + Infinity Hammer; WEC comes with IH).",
   "author": "SonicDM",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2202",

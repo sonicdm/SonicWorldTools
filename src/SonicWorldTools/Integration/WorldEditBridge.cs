@@ -1,5 +1,6 @@
 using System;
 using BepInEx.Bootstrap;
+using UnityEngine;
 
 namespace SonicWorldTools.Integration
 {
@@ -44,6 +45,29 @@ namespace SonicWorldTools.Integration
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// Canonical Origin-mode position: ZDO / world position (same source WEC/IH use).
+		/// Pass-through helper — no command parsing or gameplay (§3 / M2).
+		/// </summary>
+		internal static Vector3 GetCanonicalWorldPosition(Vector3 zdoOrWorldPosition)
+		{
+			return zdoOrWorldPosition;
+		}
+
+		/// <summary>Float overload for pure callers / tests adapters.</summary>
+		internal static void GetCanonicalWorldPosition(
+			float worldX,
+			float worldY,
+			float worldZ,
+			out float x,
+			out float y,
+			out float z)
+		{
+			x = worldX;
+			y = worldY;
+			z = worldZ;
 		}
 
 		private static bool IsWorldEditCommands(string pluginGuid, string name)

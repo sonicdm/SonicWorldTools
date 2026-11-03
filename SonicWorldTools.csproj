@@ -26,6 +26,7 @@
     <Reference Include="$(ValheimLibDir)\*.dll">
       <Private>false</Private>
     </Reference>
+    <EmbeddedResource Include="assets\terrain-surface-atlas.png" LogicalName="SonicWorldTools.terrain-surface-atlas.png" />
   </ItemGroup>
 
   <Target Name="ValidateValheimLibDir" BeforeTargets="ResolveReferences">

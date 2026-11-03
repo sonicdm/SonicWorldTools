@@ -1,0 +1,967 @@
+# ==========================================
+# DragNBuild - Vanilla Valheim Pieces Config
+# Valid Directions: UpDown, ForwardBackward, LeftRight
+# SonicWorldTools reads Directions and Dimensions to infer the prefab's repeat axis and spacing.
+# Optional per-piece fields:
+#   Axis: Auto | X | Z | Vertical
+#   ShapeSpacing: center-to-center meters (overrides Dimensions/bounds)
+#   Dimensions.BottomOffset: DragNBuild-compatible bottom offset
+#   ShapeYawOffset: local yaw correction in degrees, applied after the axis mapping
+#   TangentYawOffset: extra local yaw correction for GroundProp tangent-facing repeats
+#   ShapeCenterOffset: local x,y,z from prefab origin to the repeat-line center
+#   ShapeBottomOffset: local vertical offset from prefab origin to its ground-contact plane
+#   ShapeAnchor: Root | SnapCenter (Root is the DragNBuild-compatible default)
+# This file is embedded in the DLL and copied to the profile config folder on first run.
+# The plugin does not derive it from prefab data or overwrite an existing profile copy.
+# ==========================================
+
+# ------------------------------------------
+# WOOD STRUCTURES
+# ------------------------------------------
+# Walls & Doors
+woodwall:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+woodwall_half:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+wood_wall_half:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+wood_wall_quarter:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+wood_wall_log:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+wood_wall_log_4m:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+wood_wall_log_4x0.5:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight
+wood_door:
+  Directions: LeftRight
+
+# Poles & Beams
+wood_pole:
+  Directions: UpDown
+wood_pole2:
+  Directions: UpDown
+wood_pole_log:
+  Directions: UpDown
+wood_pole_log_4:
+  Directions: UpDown
+wood_beam:
+  Directions: LeftRight, ForwardBackward
+wood_beam1:
+  Directions: LeftRight, ForwardBackward
+wood_beam2:
+  Directions: LeftRight, ForwardBackward
+wood_beam_1:
+  Directions: LeftRight
+
+# Angled Beams
+wood_beam26:
+  Directions: ForwardBackward
+wood_beam45:
+  Directions: ForwardBackward
+wood_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+wood_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+wood_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+wood_log_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+wood_log_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+wood_log_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+
+# Floors & Stairs
+wood_floor:
+  Directions: LeftRight, ForwardBackward
+wood_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+wood_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+wood_stepladder:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+
+# Roofs & Roof Walls
+wood_roof:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+wood_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+wood_roof_67:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 4
+wood_roof_top:
+  Directions: LeftRight
+wood_roof_top_45:
+  Directions: LeftRight
+wood_roof_top_67:
+  Directions: LeftRight
+wood_wall_roof:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+wood_wall_roof_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -1
+wood_wall_roof_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+wood_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -2
+wood_wall_roof_a:
+  Directions: LeftRight
+  AddedLRHeight: 1
+wood_wall_roof_67_a:
+  Directions: LeftRight
+  AddedLRHeight: 4
+wood_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -4
+
+# Stave Structures
+stave_wall_2x2:
+  Directions: LeftRight, UpDown
+stave_pole_2m:
+  Directions: UpDown
+stave_pole_4m:
+  Directions: UpDown
+stave_beam_2m:
+  Directions: LeftRight
+stave_beam_4m:
+  Directions: LeftRight
+stave_beam_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+stave_beam_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+stave_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+stave_deco_wall_2x2:
+  Directions: LeftRight, UpDown
+stave_deco_pole_2m:
+  Directions: UpDown
+stave_deco_beam_2m:
+  Directions: LeftRight
+stave_deco_beam_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+stave_deco_beam_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+stave_deco_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+
+# Scale Wall Roofs
+scale_quarterwall_1x1:
+  Directions: LeftRight, UpDown
+scale_halfwall_1x2:
+  Directions: LeftRight, UpDown
+scale_wall_2x2:
+  Directions: LeftRight, UpDown
+scale_wall_roof_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+scale_wall_roof_26_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -1
+scale_wall_roof_26_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -1
+scale_wall_roof_26_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: 1
+scale_wall_roof_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+scale_wall_roof_45_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -2
+scale_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: 2
+scale_wall_roof_45_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -2
+scale_wall_roof_67:
+  Directions: LeftRight
+  AddedLRHeight: -4
+scale_wall_roof_67_flipped:
+  Directions: LeftRight
+  AddedLRHeight: 4
+scale_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: 4
+scale_wall_roof_67_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -4
+
+# ------------------------------------------
+# DARKWOOD STRUCTURES
+# ------------------------------------------
+# Walls & Deco
+darkwood_decowall:
+  Directions: UpDown, LeftRight
+
+# Poles, Beams & Arches
+darkwood_pole:
+  Directions: UpDown
+darkwood_pole4:
+  Directions: UpDown
+darkwood_beam:
+  Directions: LeftRight, ForwardBackward
+darkwood_beam2:
+  Directions: LeftRight, ForwardBackward
+darkwood_beam4x4:
+  Directions: LeftRight
+darkwood_arch:
+  Directions: LeftRight
+darkwood_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+darkwood_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+darkwood_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: -4
+
+# Roofs
+darkwood_roof:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+darkwood_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+darkwood_roof_67:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 4
+darkwood_roof_top:
+  Directions: LeftRight
+darkwood_roof_top_45:
+  Directions: LeftRight
+darkwood_decoroof:
+  Directions: LeftRight, ForwardBackward
+darkwood_decoroof_45:
+  Directions: LeftRight, ForwardBackward
+
+# ------------------------------------------
+# ASHWOOD STRUCTURES (Ashlands)
+# ------------------------------------------
+# Walls & Doors
+ashwood_wall_2x2:
+  Directions: UpDown, LeftRight
+ashwood_halfwall_1x2:
+  Directions: UpDown, LeftRight
+ashwood_quarterwall_1x1:
+  Directions: UpDown, LeftRight
+ashwood_wall_arch:
+  Directions: UpDown, LeftRight
+ashwood_decowall_2x2:
+  Directions: UpDown, LeftRight
+ashwood_decowall_tree:
+  Directions: UpDown, LeftRight
+ashwood_decowall_divider:
+  Directions: UpDown, LeftRight
+ashwood_door:
+  Directions: LeftRight
+
+# Poles & Beams
+ashwood_pole_1m:
+  Directions: UpDown
+ashwood_pole_2m:
+  Directions: UpDown
+ashwood_beam_1m:
+  Directions: LeftRight
+ashwood_beam_2m:
+  Directions: LeftRight
+ashwood_arch_big:
+  Directions: LeftRight
+
+# Floors & Stairs
+ashwood_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+ashwood_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+ashwood_deco_floor:
+  Directions: LeftRight, ForwardBackward
+ashwood_stair:
+  Directions: LeftRight
+
+# Roofs & Angled Pieces
+ashwood_wall_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+ashwood_wall_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+ashwood_wall_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+ashwood_wall_roof_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+ashwood_wall_roof_26_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -1
+ashwood_wall_roof_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+ashwood_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -2
+ashwood_wall_roof_67_a:
+  Directions: LeftRight
+  AddedLRHeight: 4
+ashwood_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -4
+
+# ------------------------------------------
+# STONE STRUCTURES
+# ------------------------------------------
+stone_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+stone_wall_2x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+stone_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+stone_pillar:
+  Directions: UpDown
+stone_arch:
+  Directions: LeftRight
+stone_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+stone_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+stone_fence:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, UpDown
+
+# ------------------------------------------
+# BLACK MARBLE STRUCTURES (Mistlands)
+# ------------------------------------------
+blackmarble_1x1:
+  Directions: UpDown, LeftRight, ForwardBackward
+blackmarble_2x1x1:
+  Directions: UpDown, LeftRight, ForwardBackward
+blackmarble_2x2x2:
+  Directions: UpDown, LeftRight, ForwardBackward
+blackmarble_wall_1x1:
+  Directions: UpDown, LeftRight
+blackmarble_wall_2x1:
+  Directions: UpDown, LeftRight
+blackmarble_wall_2x2:
+  Directions: UpDown, LeftRight
+blackmarble_column_1:
+  Directions: UpDown
+blackmarble_column_2:
+  Directions: UpDown
+blackmarble_column_3:
+  Directions: UpDown
+blackmarble_base_1:
+  Directions: ForwardBackward
+blackmarble_out_1:
+  Directions: ForwardBackward
+blackmarble_arch:
+  Directions: LeftRight, ForwardBackward
+blackmarble_floor:
+  Directions: LeftRight, ForwardBackward
+blackmarble_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+blackmarble_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+blackmarble_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+blackmarble_stair_corner:
+  Directions: LeftRight
+blackmarble_head_big:
+  Directions: UpDown, LeftRight
+
+# ------------------------------------------
+# GRAUSTEN STRUCTURES (Ashlands)
+# ------------------------------------------
+# Walls & Windows
+grausten_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+grausten_wall_2x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+grausten_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+Piece_grausten_wall_1x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+Piece_grausten_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+Piece_grausten_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+Piece_grausten_wall_arch:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, UpDown
+Piece_grausten_wall_arch_inverted:
+  Axis: X
+  ShapeSpacing: 2
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, ForwardBackward
+  AddedLRHeight: -2
+Piece_grausten_window_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+Piece_grausten_window_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+# Pillars & Beams
+grausten_pillar_1x1:
+  Directions: UpDown
+grausten_pillar_2x2:
+  Directions: UpDown
+Piece_grausten_pillarbase_small:
+  Directions: UpDown
+Piece_grausten_pillarbase_medium:
+  Directions: UpDown
+Piece_grausten_pillarbase_tapered:
+  Directions: UpDown
+Piece_grausten_pillarbase_tapered_inverted:
+  Directions: UpDown
+Piece_grausten_pillarbeam_small:
+  Directions: LeftRight
+Piece_grausten_pillarbeam_medium:
+  Directions: LeftRight
+
+# Floors & Stairs
+grausten_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+grausten_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+Piece_grausten_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+Piece_grausten_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+Piece_grausten_floor_4x4:
+  Directions: LeftRight, ForwardBackward
+grausten_stair:
+  Directions: LeftRight
+piece_grausten_stonestair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+Piece_grausten_stone_ladder:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+
+# Roofs
+grausten_roof_45:
+  Directions: LeftRight
+piece_grausten_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+piece_grausten_roof_45_arch:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+
+# ------------------------------------------
+# METALS, IRON & REINFORCED STRUCTURES
+# ------------------------------------------
+wood_iron_pole:
+  Directions: UpDown
+woodiron_pole:
+  Directions: UpDown
+wood_iron_beam:
+  Directions: LeftRight, ForwardBackward
+woodiron_beam:
+  Directions: LeftRight
+woodiron_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+woodiron_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+woodiron_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+iron_grate:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+iron_floor_1x1_v2:
+  Directions: LeftRight, ForwardBackward
+iron_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+iron_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+iron_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+piece_dvergr_metal_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+crystal_wall_1x1:
+  Directions: UpDown, LeftRight
+Piece_flametal_pillar:
+  Directions: UpDown
+Piece_flametal_beam:
+  Directions: LeftRight
+piece_icecube:
+  Directions: LeftRight, ForwardBackward, UpDown
+
+# ------------------------------------------
+# DEFENSES & FENCES
+# ------------------------------------------
+wood_fence:
+  Directions: LeftRight
+  Dimensions:
+    X: 2.5
+    Y: 0
+    Z: 0
+roundlog_fence:
+  Directions: LeftRight
+stake_wall:
+  Directions: LeftRight
+piece_sharpstakes:
+  Directions: LeftRight
+  Dimensions:
+    X: 2.3
+    Y: 0
+    Z: 0
+dvergr_stake:
+  Directions: LeftRight
+piece_dvergr_sharpstakes:
+  Directions: ForwardBackward
+  Dimensions:
+    X: 0
+    Y: 0
+    Z: 4
+piece_dvergr_stake_wall:
+  Directions: LeftRight
+piece_stakewall_blackwood:
+  Directions: LeftRight
+ashlands_wall_spike:
+  Directions: LeftRight
+
+# ------------------------------------------
+# CHESTS, CONTAINERS & STORAGE PILES
+# ------------------------------------------
+piece_chest:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.8
+    Y: 1
+    Z: 1
+piece_chest_wood:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 0.75
+piece_chest_private:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.9
+    Y: 0
+    Z: 0.5
+piece_chest_blackmetal:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 1.4
+piece_chest_grausten:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.7
+    Y: 1
+    Z: 1.2
+piece_chest_barrel:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.75
+    Y: 0
+    Z: 0.75
+piece_chest_treasure:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 1
+piece_chest_warderobe:
+  Directions: LeftRight
+  Dimensions:
+    X: 1.5
+    Y: 1
+    Z: 1
+
+# Resource Stacks & Metal Bars
+wood_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+wood_fine_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+wood_core_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+wood_yggdrasil_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 3
+blackwood_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+stone_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+coal_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+blackmarble_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+grausten_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2.25
+    Y: 0
+    Z: 2.25
+skull_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.8
+    Y: 0
+    Z: 0.8
+bone_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 1
+treasure_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.9
+    Y: 0
+    Z: 1.9
+treasure_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.33
+    Y: 0
+    Z: 0.33
+bar_tin_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_copper_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_bronze_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_iron_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_silver_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_blackmetal_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_flametal_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+bar_gold_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+
+# ------------------------------------------
+# UTILITY, PORTALS & MISC
+# ------------------------------------------
+hearth:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 3
+portal_wood:
+  Directions: LeftRight
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 0
+portal_stone:
+  Directions: LeftRight
+  Dimensions:
+    X: 8
+    Y: 0
+    Z: 0
+piece_turret:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 4
+piece_TrainingDummy:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+
+# ------------------------------------------
+# PICKABLES / FARMABLES
+# ------------------------------------------
+# Crops & Vegetation
+# sapling_turnip:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_seedturnip:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_onion:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_seedonion:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_carrot:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_seedcarrot:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_barley:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 1
+    # Y: 0
+    # Z: 1
+# sapling_flax:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 1
+    # Y: 0
+    # Z: 1
+# sapling_jotunpuffs:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+# sapling_magecap:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+
+# Trees & Vines
+# Beech_Sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# Birch_Sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# FirTree_Sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# Oak_Sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# PineTree_Sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# VineAsh_sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+# VineGreen_sapling:
+  # Directions: LeftRight, ForwardBackward
+  # Dimensions:
+    # X: 4
+    # Y: 0
+    # Z: 4
+
+# Ground prop tangent calibration
+piece_dvergr_lantern_pole:
+  TangentYawOffset: 180

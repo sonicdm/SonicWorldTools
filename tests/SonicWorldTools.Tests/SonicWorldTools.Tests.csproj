@@ -12,5 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\src\SonicWorldTools\Core\SelectionVolumeMath.cs" Link="SelectionVolumeMath.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Core\SelectionVolume.cs" Link="SelectionVolume.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Core\SelectionQuery.cs" Link="SelectionQuery.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Core\SelectionState.cs" Link="SelectionState.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Refinement\SelectionRefinement.cs" Link="SelectionRefinement.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Core\ToolInstaller.cs" Link="ToolInstaller.cs" />
   </ItemGroup>
 </Project>
