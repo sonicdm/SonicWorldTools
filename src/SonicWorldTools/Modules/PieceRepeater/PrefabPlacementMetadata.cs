@@ -103,7 +103,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			catch (Exception ex)
 			{
 				_nextCatalogAttempt = Time.unscaledTime + 10f;
-				_log?.LogWarning("[PieceRepeater] Catalog generation failed: " + ex);
+				_log?.LogWarning("[Line Tool] Catalog generation failed: " + ex);
 			}
 		}
 
@@ -115,9 +115,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				try
 				{
 					int scanned = RefreshCatalog();
-					args.Context.AddString("Piece Repeater catalog: scanned " + scanned + " build pieces; see the log for appended profile count.");
+					args.Context.AddString("Line Tool catalog: scanned " + scanned + " build pieces; see the log for appended profile count.");
 				}
-				catch (Exception ex) { args.Context.AddString("Piece Repeater catalog refresh failed: " + ex.Message); }
+				catch (Exception ex) { args.Context.AddString("Line Tool catalog refresh failed: " + ex.Message); }
 			});
 			_refreshCommandRegistered = true;
 		}
@@ -151,7 +151,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				File.WriteAllText(path, currentYaml, new System.Text.UTF8Encoding(false));
 			}
 			if (added > 0) Reload(_log);
-			_log?.LogInfo("[PieceRepeater] Catalog scanned " + candidates.Count + " build pieces; added " + added + " profiles to " + path);
+			_log?.LogInfo("[Line Tool] Catalog scanned " + candidates.Count + " build pieces; added " + added + " profiles to " + path);
 			return candidates.Count;
 		}
 
@@ -443,7 +443,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
 					resource.CopyTo(output);
 			}
-			_log?.LogInfo("Installed default Piece Repeater catalog at " + path);
+			_log?.LogInfo("Installed default Line Tool catalog at " + path);
 		}
 
 		private static void MigrateLegacyCatalog()
@@ -715,13 +715,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				yaml = ReplaceYamlSection(yaml, prefabId, updated);
 				File.WriteAllText(path, yaml, new System.Text.UTF8Encoding(false));
 				Reload(_log);
-				_log?.LogInfo("[PieceRepeater] Saved per-piece offsets for " + prefabId + " to " + path);
+				_log?.LogInfo("[Line Tool] Saved per-piece offsets for " + prefabId + " to " + path);
 				return true;
 			}
 			catch (Exception ex)
 			{
 				error = "Could not save this profile: " + ex.Message;
-				_log?.LogWarning("[PieceRepeater] Could not save offsets for " + prefabId + ": " + ex);
+				_log?.LogWarning("[Line Tool] Could not save offsets for " + prefabId + ": " + ex);
 				return false;
 			}
 		}

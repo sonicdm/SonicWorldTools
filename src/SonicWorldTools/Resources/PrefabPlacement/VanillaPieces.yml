@@ -1,4 +1,4 @@
-# Sonic World Tools Piece Repeater prefab catalog (source of truth).
+# Sonic World Tools Line Tool prefab catalog (source of truth).
 # This file is embedded in SonicWorldTools.dll and copied to each profile on first run.
 # Edit profiles here for release defaults; the runtime profile copy may append pieces
 # discovered from mods installed in that game profile and is not the source catalog.
@@ -637,9 +637,14 @@ scale_wall_2x2:
   MeasurementSource: ProjectedSnapEdges
   Confidence: High
   ShapeAxis: X
-  JoinStart: -1,0,-0.019
-  JoinEnd: 1,0,-0.019
-  ShapeBottomOffset: -1.029
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.998
+  ShapePositionOffset: 0,0,0
+  ShapeJoinStartOffset: 0.01,0,0
+  ShapeJoinEndOffset: -0.01,0,0
+  ShapeYawOffset: 0
+  TangentYawOffset: 0
 
 scale_wall_roof_26:
   Directions: LeftRight
@@ -3114,8 +3119,8 @@ piece_dvergr_lantern_pole:
   MeasurementSource: Uncertain
   Confidence: Low
   ShapeAxis: Z
-  JoinStart: 0,0,0
-  JoinEnd: 0,0,0
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
   ShapeBottomOffset: -0.719
 
 "DeerStew":

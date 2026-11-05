@@ -58,7 +58,7 @@ namespace SonicWorldTools.Integration
 		private static FieldInfo _shapeKeyEntry;
 		private static PropertyInfo _shapeKeyValue;
 
-		/// <summary>Temporarily disables IH's global Q-to-shape shortcut while Piece Repeater owns Q.</summary>
+		/// <summary>Temporarily disables IH's global Q-to-shape shortcut while Line Tool owns Q.</summary>
 		internal static bool TrySuspendShapeShortcut(out IDisposable restoration)
 		{
 			restoration = null;
@@ -86,12 +86,12 @@ namespace SonicWorldTools.Integration
 				object previous = _shapeKeyValue.GetValue(entry, null);
 				_shapeKeyValue.SetValue(entry, new KeyboardShortcut(KeyCode.None), null);
 				restoration = new RestoreInfinityHammerShapeShortcut(entry, previous);
-				SonicWorldToolsPlugin.ModLogger?.LogInfo("[PieceRepeater] Suspended IH's Q shape shortcut while the repeater is active.");
+				SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Suspended IH's Q shape shortcut while the repeater is active.");
 				return true;
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogWarning("Could not suspend IH shape shortcut while Piece Repeater is active: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("Could not suspend IH shape shortcut while Line Tool is active: " + ex.Message);
 				return false;
 			}
 		}
@@ -115,14 +115,14 @@ namespace SonicWorldTools.Integration
 				try { _shapeKeyValue?.SetValue(_entry, _value, null); }
 				catch (Exception ex)
 				{
-					SonicWorldToolsPlugin.ModLogger?.LogError("Could not restore IH shape shortcut after Piece Repeater: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogError("Could not restore IH shape shortcut after Line Tool: " + ex.Message);
 				}
 			}
 		}
 
 		/// <summary>
 		/// IH's Player.PlacePiece patch substitutes the active ToolSelection's dummy
-		/// prefab and dispatches its command. Piece Repeater needs vanilla placement
+		/// prefab and dispatches its command. Line Tool needs vanilla placement
 		/// for each sampled prefab, so briefly disable IH's placement wrapper only
 		/// for that synchronous batch and restore the user's setting immediately.
 		/// </summary>
@@ -162,7 +162,7 @@ namespace SonicWorldTools.Integration
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogWarning("Could not suspend IH placement interception for Piece Repeater: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("Could not suspend IH placement interception for Line Tool: " + ex.Message);
 				return false;
 			}
 		}
@@ -186,7 +186,7 @@ namespace SonicWorldTools.Integration
 				try { _configurationEnabledValue?.SetValue(_entry, _value, null); }
 				catch (Exception ex)
 				{
-					SonicWorldToolsPlugin.ModLogger?.LogError("Could not restore IH placement interception after Piece Repeater batch: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogError("Could not restore IH placement interception after Line Tool batch: " + ex.Message);
 				}
 			}
 		}
@@ -485,7 +485,7 @@ namespace SonicWorldTools.Integration
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogDebug("[PieceRepeater] Native snap search unavailable: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogDebug("[Line Tool] Native snap search unavailable: " + ex.Message);
 				return false;
 			}
 		}

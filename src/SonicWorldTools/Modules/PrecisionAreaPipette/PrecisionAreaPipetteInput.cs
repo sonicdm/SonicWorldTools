@@ -316,7 +316,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			return WasBoundKeyOrMouseDown(key);
 		}
 
-		private static bool WasBoundKeyOrMouseDown(KeyCode key)
+		internal static bool WasBoundKeyOrMouseDown(KeyCode key)
 		{
 			if (key == KeyCode.None)
 			{

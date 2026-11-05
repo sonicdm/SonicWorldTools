@@ -44,7 +44,8 @@ namespace SonicWorldTools.Install
 					Directory.CreateDirectory(toolsDir);
 				}
 
-				bool wroteBytes = ToolInstaller.WriteOwnedFile(configDir, preferToolsSubfolder: true);
+				var options = BuildOptions();
+				bool wroteBytes = ToolInstaller.WriteOwnedFile(configDir, preferToolsSubfolder: true, options);
 				string destPath = Path.Combine(toolsDir, ToolInstaller.OwnedFileName);
 
 				// Force rewrite if an old stock marker is still on disk.
@@ -57,14 +58,14 @@ namespace SonicWorldTools.Install
 					        || onDisk.IndexOf("Template-Version", StringComparison.OrdinalIgnoreCase) >= 0)
 					    && ToolInstaller.IsUpgradeableStockDocument(onDisk))
 					{
-						string stock = ToolInstaller.BuildOwnedDocument();
+						string stock = ToolInstaller.BuildOwnedDocument(options);
 						File.WriteAllText(destPath, stock);
 						wroteBytes = true;
 						log?.LogInfo("Forced IH tools YAML upgrade → " + ToolInstaller.Marker);
 					}
 				}
 
-				log?.LogInfo("[SonicWorldTools] Installed owned Infinity Hammer tool definitions.");
+				if (wroteBytes) log?.LogDebug("[SonicWorldTools] Updated owned Infinity Hammer tool definitions.");
 				if (!wroteBytes)
 				{
 					log?.LogDebug("Owned IH tools file already current: " + destPath);
@@ -74,6 +75,23 @@ namespace SonicWorldTools.Install
 			{
 				log?.LogWarning("Infinity Hammer YAML install failed: " + ex.Message);
 			}
+		}
+
+		private static ToolInstaller.Options BuildOptions()
+		{
+			string Key(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> entry) => PluginConfig.FormatKeyLabel(entry.Value);
+			string Chord(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> modifier, BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> key) => modifier.Value == UnityEngine.KeyCode.None ? Key(key) : Key(modifier) + "+" + Key(key);
+			return new ToolInstaller.Options
+			{
+				PrecisionDescription = "Click three corners to select. " + Chord(PluginConfig.RefineModifierKey, PluginConfig.AddPieceKey) + " adds; " + Chord(PluginConfig.RefineModifierKey, PluginConfig.ExcludePieceKey) + " excludes. " + PluginConfig.FormatPickUpChordLabel() + " copies; " + Chord(PluginConfig.DismantleModifierKey, PluginConfig.SelectionRemovalKey) + " dismantles; " + Chord(PluginConfig.PermanentDeleteModifierKey, PluginConfig.SelectionRemovalKey) + " deletes.",
+				LineDescription = "Sample " + Key(PluginConfig.PieceRepeaterSampleKey) + "; waypoint " + Key(PluginConfig.PieceRepeaterWaypointKey) + "; place " + Chord(PluginConfig.PieceRepeaterPlaceModifier, PluginConfig.PieceRepeaterWaypointKey) + ". Q/E cycles first-piece snaps; " + Chord(PluginConfig.PieceRepeaterJointModifier, PluginConfig.PieceRepeaterWaypointKey) + " snaps a joint. Wheel rotates; " + Key(PluginConfig.PieceRepeaterSpacingModifier) + "+wheel changes gap; " + Key(PluginConfig.PieceRepeaterLevelModifier) + " holds height. " + Key(PluginConfig.PieceRepeaterSettingsHotkey) + " settings; " + Chord(PluginConfig.PieceRepeaterOffsetEditorModifier, PluginConfig.PieceRepeaterSettingsHotkey) + " offsets; Esc exits.",
+				ScatterDescription = Key(PluginConfig.ScatterSampleKey) + " samples or removes a prop; " + (PluginConfig.ScatterClearModifier.Value == UnityEngine.KeyCode.None ? "console command clears samples" : Chord(PluginConfig.ScatterClearModifier, PluginConfig.ScatterSampleKey) + " clears samples") + ". Click scatters the sample mix, or the hovered prop when empty.",
+				PathHalfWidth = PluginConfig.TerrainPathInitialHalfWidth.Value,
+				PathSmoothness = PluginConfig.TerrainPathEdgeSmoothness.Value,
+				LowerHeight = PluginConfig.LowerTerrainInitialHeight.Value,
+				LowerSmoothness = PluginConfig.LowerTerrainSmoothness.Value,
+				ScatterRadius = PluginConfig.ScatterInitialRadius.Value
+			};
 		}
 
 		/// <summary>

@@ -1,51 +1,90 @@
 # SonicWorldTools
 
-Client-side Valheim tools for precise world selection and building workflows, delivered through Infinity Hammer’s existing Hammer and Hoe menus.
+**Draw the route. Preview the build. Place the whole line.**
 
-| | |
+SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Hammer, Hoe, and Cultivator menus. Line a winding road with fences or lamps, paint a curved path beneath it, scatter the surrounding props, and select an area when you want to move or remove a larger build.
+
+> **The tools live where you already build:** Line Tool and Precision Select under Hammer, terrain paths and Lower Terrain under Hoe, and Scatter Props under Cultivator.
+
+## What you can make
+
+| Tool | Try it for… |
 | --- | --- |
-| Version | 0.1.0 |
-| GUID | `com.sonicdm.valheim.sonicworldtools` |
-| Thunderstore hard deps | BepInEx, Jötunn |
-| Runtime stack (via Infinity Hammer) | Server Devcommands, Infinity Hammer; World Edit Commands is a **hard dependency of Infinity Hammer** (transitive — install with IH, not listed again here) |
+| **Line Tool** | Fence lines, curved walls, rows of lamps, posts, floors, and other supported build pieces along clicked waypoints. |
+| **Surface Paths** | Curved dirt, grass, cultivated, and paved routes with adjustable width and edge smoothing. No lava. |
+| **Scatter Props** | A mixed spread of rocks, plants, and other networked props sampled from the world. |
+| **Precision Select** | Copying, dismantling, or deleting a three-corner build area, with individual pieces added or excluded. |
+| **Lower Terrain** | Lowering ground by a chosen amount, with optional smoothing. |
 
-## Dependencies
+### Line a path in four steps
 
-| Package | Role |
+1. Select **Line Tool** in the Infinity Hammer Hammer tools menu.
+2. Point at a placed build piece and **middle-click** to sample it.
+3. **Click** waypoints along the route. The preview updates as you go.
+4. **Ctrl+click** to place the previewed pieces. Use Infinity Hammer's undo to reverse the batch.
+
+The first piece uses Valheim's build snap behavior, including **Q/E** snap-point cycling. Repeated pieces follow the route using editable per-piece profiles. A bend may deliberately overlap solid parts of neighboring pieces to close an outside gap; short or very tight turns may still need another waypoint or a spacing adjustment.
+
+| Line Tool control | Default |
 | --- | --- |
-| **BepInEx** Pack Valheim | Required (manifest). |
-| **Jötunn** | Required (manifest). |
-| **Server Devcommands** | Required by Infinity Hammer for build commands / admin tooling. Install with IH. |
-| **Infinity Hammer** | Soft-detected at runtime. Precision Area Pipette YAML + hand-off need IH. Without IH the mod loads but the pipette stays disabled. |
-| **World Edit Commands** | Soft-detected. Already required by current Infinity Hammer releases — do not add a redundant Thunderstore hard dependency unless IH drops it. |
+| Sample a placed piece | Middle-click |
+| Add a waypoint / place the batch | Click / Ctrl+click |
+| Snap a waypoint to a repeat joint | Right Alt+click |
+| Rotate repeated pieces / adjust gap | Wheel / Alt+wheel |
+| Hold one height | Shift |
+| Route settings / sampled-piece offsets | F7 / Shift+F7 |
+| Exit the tool | Esc |
 
-Compatibility targets (no direct integration for MVP): DragNBuild, Build Camera, precision rotation on ghosts, Dismantleheim. See `docs/test-matrix.md` (§18.29–33) and `docs/integration/input-friction-notes.md`.
+These bindings are configurable. The tool pane and generated Infinity Hammer description show the configured keys.
 
-## Features (0.1.0)
+### Shape the ground and surroundings
 
-- Owned Infinity Hammer tool YAML (`infinity_tools_sonicworldtools.yaml`) — never edits IH’s `infinity_tools.yaml`. Selection appears in the Hammer menu, terrain tools in the Hoe menu, and prop scatter in the Cultivator menu.
-- Precision Area Pipette: three-corner oriented volume (A→B width, C depth/height), configurable selection padding, refine add/exclude, copy hand-off to IH placement ghost.
-- Lower Terrain: direct WEC lowering from the Hoe menu, matching Infinity Hammer’s Raise tool controls for amount, smoothing and grid snapping.
-- Curved Terrain Paths: choose grass, patches, dark grass, dirt, cultivated soil, paved, mossy paved, or dark paved from the Hoe menu. Place a multi-point route and hold the IH modifier 2 key (default Left Ctrl) on the final point to finish. Also hold modifier 1 (default Left Alt) on that final point for softer terrain transitions at path edges. WEC curves and levels the terrain along the route and supports undo/redo. Mouse wheel adjusts half-width; default half-width is 2 m.
-- Scatter Props: on the Cultivator, middle-click up to eight prop types to sample/remove them; Shift+middle-click clears the list. Click to scatter the sampled mix, or the hovered prop if none are sampled. Mouse wheel adjusts radius; WEC undo/redo applies to each sampled type.
-- Piece Repeater: on the Hammer, repeat the currently selected IH build piece along a path. Pieces follow bends. Preview placements before committing.
-- Inputs only while the Sonic tool is active; switching Hammer tools or leaving place mode deactivates Sonic.
+Under **Hoe**, choose a surface path and click its route points. Hold Infinity Hammer's **modifier 2** on the last click to finish; also hold **modifier 1** there for softer edges. Scroll to change half-width. **Lower Terrain** lowers by the selected amount and can smooth with modifier 1.
 
-### Piece Repeater controls
+Under **Cultivator**, choose **Scatter Props**. Middle-click networked props to add or remove them from your sample mix; Shift+middle-click clears it. Click to scatter the mix. With no samples, the tool uses the prop under your cursor. Scroll to change the scatter radius.
 
-Choose **Piece Repeater** from the IH Hammer menu, then middle-click a placed networked building piece to sample it. Click route waypoints and Ctrl+click to place. Q/E cycle Automatic and the source piece's build snap points for the first placement. That first piece stays at its clicked position and rotation. The route begins at whichever horizontal end is nearest the second waypoint. Free waypoints shape the route; with zero added gap each later EdgeChain piece connects to the previous piece's horizontal end joint, so a tight turn can cut across the drawn corner or overlap. Hold Right Alt while clicking to move a waypoint to the nearest measured piece joint. A short snapped leg can return to its previous joint. Wheel rotates each subsequent piece around its own position; Alt+wheel adds or removes a gap, starting at zero. Repeated profiles use build-piece surfaces beneath them when available, then terrain; ground props repeat at their configured default interval plus that gap and face the route tangent by default. The F7 panel can keep prop facing fixed instead. This surface search works with any piece collider shape, not just square blocks. Shift keeps placements at the first point's height. Press F7 while this tool is active to open its settings panel, which pauses placement and frees the cursor. Hold Shift and press F7 to edit local root position, yaw, tangent-facing and ground-contact offsets for the currently sampled prefab; saving writes the profile in this profile's `VanillaPieces.yml` and refreshes the preview. Escape exits the tool and opens the game menu. The F7 key and modifiers are configurable in the BepInEx config.
+With **Precision Select**, click three corners to define a volume. Alt+left-click adds an individual piece, Alt+middle-click excludes one, and Shift+middle-click hands the selection to Infinity Hammer's copy placement. Ctrl+Delete dismantles; Shift+Delete permanently removes. The selection preview and padding are configurable.
 
-`src/SonicWorldTools/Resources/PrefabPlacement/VanillaPieces.yml` is the source-of-truth catalog embedded in the DLL and copied to `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml` on first run; an existing profile copy is never overwritten. The embedded catalog includes profiles discovered in the DEV build tables. At runtime, the plugin appends newly discovered build pieces to each profile's config copy, preserving configured values. Run `sonic_piece_catalog_refresh` after installing new building mods. The previous `PieceProfiles.yml` is merged into `VanillaPieces.yml` on startup and then removed, so existing profile edits are retained without maintaining two live files. Profiles support per-prefab local `JoinStart`/`JoinEnd`, `ShapeCenterOffset`, `ShapePositionOffset` (x,y,z root correction in metres), `ShapeYawOffset`, and `ShapeBottomOffset`; these can be tuned per piece when prefab origins or join geometry differ. Horizontal joints determine EdgeChain spacing; vertical placement resolves against any build-piece collider beneath the repeat, then terrain. Catalog rows record `ProfileType` (`EdgeChain` or `GroundProp`), `Status` (`Ready` or disabled `NeedsReview`), `ShapeAxis`, joins, and `MeasurementSource`. Standard floor panels and modular 1×1 walls repeat along measured snap edges. Standalone vertical columns use GroundProp spacing and curve-facing behavior, like lamps. Free-standing ground props use the configurable 2 m shared spacing unless their YAML entry sets `DefaultSpacing`; `TangentYawOffset` corrects only their tangent-facing repeats without changing the first piece. Correct questionable entries and change `Status` to `Ready` before using them. `sonic_piece_geometry_dump` exports catalog, join, snap, visible geometry, and applied offsets for calibration. YAML edits reload automatically. Piece Repeater placement attempts and delayed survival checks are appended to `BepInEx/logs/SonicWorldTools-PieceRepeater.log`.
+## Install
 
-In-game publish checks: `docs/test-matrix.md`. Offline selection/refinement tests: `dotnet test`.
+Install through your mod manager, or put `SonicWorldTools.dll` in `BepInEx/plugins`. Enter a world, then look in Infinity Hammer's Hammer, Hoe, and Cultivator menus.
 
-## Dev
+**Requirements:** BepInEx and Jötunn load the plugin. Infinity Hammer, Server Devcommands, and World Edit Commands provide its menus and world-editing commands; install compatible versions together. The plugin can load without Infinity Hammer, but its menu tools will be unavailable.
 
-```powershell
-.\build.ps1
-..\tools\dev.ps1 deploy -Mod SonicWorldTools
+SonicWorldTools creates its own `infinity_tools_sonicworldtools.yaml` under `BepInEx/config/tools/`. It does not edit Infinity Hammer's `infinity_tools.yaml`.
+
+## Tune it
+
+The main settings file is `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg`.
+
+| Section | Controls |
+| --- | --- |
+| `LineTool` | Keys, gap, curve smoothing, height and prop facing, default prop spacing, optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
+| `TerrainPaths`, `LowerTerrain` | Initial path width and edge smoothing; initial lowering amount and smoothing. |
+| `ScatterProps` | Sample and clear keys, palette limit, objects per click, initial radius. |
+| `PrecisionAreaPipette`, `Preview` | Selection keys, padding, and visual feedback. |
+| `Integration`, `Debug` | Infinity Hammer tool installation and optional diagnostics. Detailed logging defaults to off. |
+
+Changes to relevant settings refresh the generated tool YAML. Infinity Hammer may need you to reselect the tool or restart the game before its menu shows the new description. If you edit that generated YAML yourself, the plugin keeps your changes and writes its newer template to `BepInEx/config/infinity_tools_sonicworldtools.yaml.new` for comparison.
+
+Line Tool profiles live in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`. They hold each piece's repeat geometry, ground offset, and enabled status. Existing edits survive catalog refreshes; newly discovered build pieces are appended. A `NeedsReview` profile stays disabled until its geometry is corrected. Profile YAML edits reload automatically. Use `sonic_piece_catalog_refresh` after adding building mods, or `sonic_piece_geometry_dump` to inspect a piece's measured geometry. The embedded release defaults come from [the source catalog](src/SonicWorldTools/Resources/PrefabPlacement/VanillaPieces.yml).
+
+## Remove or reset
+
+Removing the DLL leaves the Infinity Hammer tool definition and your profile edits on disk. For a clean reset, close Valheim and remove the plugin's files from the profile:
+
+```text
+BepInEx/plugins/SonicWorldTools.dll
+BepInEx/scripts/SonicWorldTools.dll       (DEV ScriptEngine installs only)
+BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg
+BepInEx/config/SonicWorldTools/
+BepInEx/config/tools/infinity_tools_sonicworldtools.yaml
+BepInEx/config/infinity_tools_sonicworldtools.yaml      (older installs)
+BepInEx/config/infinity_tools_sonicworldtools.yaml.new  (if present)
 ```
 
-## License
+Back up `VanillaPieces.yml` first if you tuned piece profiles. If enabled, Line Tool diagnostics are in `BepInEx/logs/SonicWorldTools-LineTool.log`.
 
-See repository license file when published.
+## Development
+
+Build with `./build.ps1`; run tests with `dotnet test tests/SonicWorldTools.Tests/SonicWorldTools.Tests.csproj`. The DEV ScriptEngine workflow is `../tools/dev.ps1 deploy -Mod SonicWorldTools -ProfileBepInEx <DEV profile BepInEx path>`. See the [in-game test matrix](docs/test-matrix.md).

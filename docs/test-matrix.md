@@ -68,13 +68,13 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 2. **Pass:** `Precision Select` appears under the Hammer **Tools** tab and `Lower Terrain` plus the terrain path variants appear under the Hoe **Tools** tab; no duplicate entries after F9.
 3. **Fail:** tool missing until full restart, or duplicates after reload.
 
-### S06p — Piece Repeater settings hotkey
-**Rule:** The settings key belongs to Piece Repeater only while that tool is selected.
-1. Select another Hammer tool and press F7. **Pass:** no Piece Repeater panel opens.
-2. Select Piece Repeater and press F7. **Pass:** one panel opens, the cursor is free, and the key does not activate another game action.
+### S06p — Line Tool settings hotkey
+**Rule:** The settings key belongs to Line Tool only while that tool is selected.
+1. Select another Hammer tool and press F7. **Pass:** no Line Tool panel opens.
+2. Select Line Tool and press F7. **Pass:** one panel opens, the cursor is free, and the key does not activate another game action.
 3. Change corner mode, radius, gap, height, and ground-prop facing. **Pass:** the preview updates, and clicks in the panel place no pieces.
 4. Press F7 again, then reopen and press Escape. **Pass:** F7 closes the panel and resumes the tool; Escape exits the tool and opens the game menu.
-5. Re-equip the Hammer and select Piece Repeater again. **Pass:** settings persist and the hotkey works once, without duplicate panels or handlers.
+5. Re-equip the Hammer and select Line Tool again. **Pass:** settings persist and the hotkey works once, without duplicate panels or handlers.
 
 ### S06a — Curved Terrain Path Surface Variants (WEC / IH multi-point tool)
 **Rule:** The custom tools draw WEC curves on the selected surface, level the route, and finish reliably.

@@ -31,7 +31,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			});
 			new Terminal.ConsoleCommand(
 				CommandName,
-				"Activate SonicWorldTools Piece Repeater. Select a build piece first, or middle-click a placed piece to sample it.",
+				"Activate Line Tool. Select a build piece first, or use the configured sample key on a placed piece.",
 				_ => PieceRepeaterController.CaptureAndActivate());
 		}
 	}

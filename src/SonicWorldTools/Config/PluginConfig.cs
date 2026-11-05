@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using System.IO;
 using UnityEngine;
 
 namespace SonicWorldTools.Config
@@ -69,6 +70,9 @@ namespace SonicWorldTools.Config
 
 		internal static ConfigEntry<bool> DryRunSelection;
 		internal static ConfigEntry<KeyCode> PieceRepeaterPlaceModifier;
+		internal static ConfigEntry<KeyCode> PieceRepeaterSampleKey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterWaypointKey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterOffsetEditorModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterSpacingModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterLevelModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterJointModifier;
@@ -79,9 +83,22 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<float> PieceRepeaterCornerRadius;
 		internal static ConfigEntry<bool> PieceRepeaterLevelByDefault;
 		internal static ConfigEntry<bool> PieceRepeaterPropFollowCurve;
+		internal static ConfigEntry<bool> LineToolDiagnostics;
+		internal static ConfigEntry<KeyCode> ScatterSampleKey;
+		internal static ConfigEntry<KeyCode> ScatterClearModifier;
+		internal static ConfigEntry<int> ScatterMaxSamples;
+		internal static ConfigEntry<int> ScatterObjectsPerClick;
+		internal static ConfigEntry<float> ScatterInitialRadius;
+		internal static ConfigEntry<float> TerrainPathInitialHalfWidth;
+		internal static ConfigEntry<float> TerrainPathEdgeSmoothness;
+		internal static ConfigEntry<float> LowerTerrainInitialHeight;
+		internal static ConfigEntry<float> LowerTerrainSmoothness;
+		private static bool _migrateLegacyLineTool;
 
 		internal static void Bind(ConfigFile config)
 		{
+			_migrateLegacyLineTool = File.Exists(config.ConfigFilePath)
+				&& File.ReadAllText(config.ConfigFilePath).Contains("[PieceRepeater]");
 			Enabled = config.Bind(
 				"General",
 				"Enabled",
@@ -217,8 +234,6 @@ namespace SonicWorldTools.Config
 				+ bindNote
 				+ " Default Shift+Delete. LeftShift also accepts RightShift. Requires no Ctrl.");
 
-			MigrateCollidingPipetteBinds();
-
 			ShowBox = config.Bind(
 				"Preview",
 				"ShowBox",
@@ -246,8 +261,8 @@ namespace SonicWorldTools.Config
 			VerboseLogging = config.Bind(
 				"Debug",
 				"VerboseLogging",
-				true,
-				"Verbose diagnostic logging (corners, selection counts). Default on during bring-up; set false to quiet.");
+				false,
+				"Verbose diagnostic logging for selection and integration. Off by default.");
 
 			DryRunSelection = config.Bind(
 				"Debug",
@@ -255,17 +270,42 @@ namespace SonicWorldTools.Config
 				false,
 				"When true, PickUp logs the effective selection and skips Infinity Hammer hand-off.");
 
-			PieceRepeaterPlaceModifier = config.Bind("PieceRepeater", "PlaceModifier", KeyCode.LeftControl, "Hold with click to place the repeated pieces.");
-			PieceRepeaterSpacingModifier = config.Bind("PieceRepeater", "SpacingModifier", KeyCode.LeftAlt, "Hold with the mouse wheel to add or remove a gap between repeated pieces.");
-			PieceRepeaterLevelModifier = config.Bind("PieceRepeater", "LevelHeightModifier", KeyCode.LeftShift, "Hold to keep the path at one height.");
-			PieceRepeaterJointModifier = config.Bind("PieceRepeater", "WaypointJointModifier", KeyCode.RightAlt, "Hold while clicking a waypoint to align it to the nearest piece joint.");
-			PieceRepeaterSettingsHotkey = config.Bind("PieceRepeater", "SettingsHotkey", KeyCode.F7, "Open Piece Repeater settings; hold Shift to edit offsets for the sampled prefab. Only active while the tool is selected.");
-			PieceRepeaterGroundPropSpacing = config.Bind("PieceRepeater", "GroundPropDefaultSpacing", 2f, "Default interval in metres for free-standing ground props. Per-piece YAML can override it.");
-			PieceRepeaterGap = config.Bind("PieceRepeater", "GapMeters", 0f, "Horizontal spacing adjustment for repeated pieces, in metres. Negative values bring pieces closer; the minimum repeat interval is 0.1 m.");
-			PieceRepeaterRoundedCorners = config.Bind("PieceRepeater", "RoundedCorners", true, "Interpolate the complete waypoint sequence with a Catmull-Rom curve before fitting rigid pieces.");
-			PieceRepeaterCornerRadius = config.Bind("PieceRepeater", "CornerRadius", 1.5f, "Maximum Catmull-Rom tangent handle length in metres; adjusts how strongly the curve rounds between clicked waypoints.");
-			PieceRepeaterLevelByDefault = config.Bind("PieceRepeater", "LevelHeightByDefault", false, "Keep all pieces at the first point's height without holding the level modifier.");
-			PieceRepeaterPropFollowCurve = config.Bind("PieceRepeater", "PropFollowCurve", true, "Align repeated ground props to the path tangent. Disable to keep the first prop's facing.");
+			PieceRepeaterSampleKey = BindLineTool(config, "SampleKey", KeyCode.Mouse2, "Sample a placed build piece while Line Tool is active.");
+			PieceRepeaterWaypointKey = BindLineTool(config, "WaypointKey", KeyCode.Mouse0, "Add a waypoint; hold PlaceModifier with this key to place. Mouse0 works best with the hammer's placement interception.");
+			PieceRepeaterPlaceModifier = BindLineTool(config, "PlaceModifier", KeyCode.LeftControl, "Hold with WaypointKey to place the batch.");
+			PieceRepeaterSpacingModifier = BindLineTool(config, "SpacingModifier", KeyCode.LeftAlt, "Hold with the wheel to adjust the gap between pieces.");
+			PieceRepeaterLevelModifier = BindLineTool(config, "LevelHeightModifier", KeyCode.LeftShift, "Hold to keep the path at one height.");
+			PieceRepeaterJointModifier = BindLineTool(config, "WaypointJointModifier", KeyCode.RightAlt, "Hold while clicking a waypoint to align it to a piece joint.");
+			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the tool is selected.");
+			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
+			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
+			PieceRepeaterGap = BindLineTool(config, "GapMeters", 0f, "Gap between repeated pieces in metres. Negative values bring pieces closer.");
+			PieceRepeaterRoundedCorners = BindLineTool(config, "RoundedCorners", true, "Use Catmull-Rom interpolation through route waypoints.");
+			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 1.5f, "Maximum curve tangent handle length in metres.");
+			PieceRepeaterLevelByDefault = BindLineTool(config, "LevelHeightByDefault", false, "Keep all pieces at the first point's height by default.");
+			PieceRepeaterPropFollowCurve = BindLineTool(config, "PropFollowCurve", true, "Align ground props to the route tangent; disable for fixed facing.");
+			LineToolDiagnostics = config.Bind("LineTool", "WriteDiagnostics", false, "Write detailed Line Tool path and placement diagnostics to BepInEx/logs/SonicWorldTools-LineTool.log. Off by default.");
+
+			ScatterSampleKey = config.Bind("ScatterProps", "SampleKey", KeyCode.Mouse2, "While Scatter Props is selected, sample or remove the aimed networked prop. Mouse2's normal remove action is suppressed by this tool.");
+			ScatterClearModifier = config.Bind("ScatterProps", "ClearModifier", KeyCode.LeftShift, "Hold with SampleKey to clear the sample list. Set None to disable this chord; the sonic_scatter clear console command still works.");
+			ScatterMaxSamples = config.Bind("ScatterProps", "MaximumSampleTypes", 8, new ConfigDescription("Maximum distinct prop types in the scatter palette (1–32).", new AcceptableValueRange<int>(1, 32)));
+			ScatterObjectsPerClick = config.Bind("ScatterProps", "ObjectsPerClick", 20, new ConfigDescription("Total objects spawned per click, shared across sampled types (1–200).", new AcceptableValueRange<int>(1, 200)));
+			ScatterInitialRadius = config.Bind("ScatterProps", "InitialRadius", 3f, new ConfigDescription("Initial scatter radius in metres in the Infinity Hammer Cultivator menu. Takes effect when its generated tool YAML is refreshed on game start.", new AcceptableValueRange<float>(0.5f, 30f)));
+			TerrainPathInitialHalfWidth = config.Bind("TerrainPaths", "InitialHalfWidth", 2f, new ConfigDescription("Initial path half-width in metres; the full path is twice this wide. The wheel can change it in the Hoe menu.", new AcceptableValueRange<float>(0.25f, 20f)));
+			TerrainPathEdgeSmoothness = config.Bind("TerrainPaths", "EdgeSmoothness", 0.5f, new ConfigDescription("WEC edge smoothing strength when Infinity Hammer modifier 1 is held on the final waypoint (0–1).", new AcceptableValueRange<float>(0f, 1f)));
+			LowerTerrainInitialHeight = config.Bind("LowerTerrain", "InitialHeight", 0.2f, new ConfigDescription("Initial lowering amount in metres in the Hoe menu; the tool height control can change it.", new AcceptableValueRange<float>(0.1f, 10f)));
+			LowerTerrainSmoothness = config.Bind("LowerTerrain", "Smoothness", 0.5f, new ConfigDescription("WEC smoothing strength when Infinity Hammer modifier 1 is held while lowering terrain (0–1).", new AcceptableValueRange<float>(0f, 1f)));
+		}
+
+		private static ConfigEntry<T> BindLineTool<T>(ConfigFile config, string key, T defaultValue, string description)
+		{
+			if (_migrateLegacyLineTool)
+			{
+				var legacy = config.Bind("PieceRepeater", key, defaultValue, description);
+				defaultValue = legacy.Value;
+				config.Remove(new ConfigDefinition("PieceRepeater", key));
+			}
+			return config.Bind("LineTool", key, defaultValue, description);
 		}
 
 		internal static bool IsVerboseLogging()
@@ -307,72 +347,6 @@ namespace SonicWorldTools.Config
 			       && (PrecisionAreaPipetteEnabled == null || PrecisionAreaPipetteEnabled.Value);
 		}
 
-		/// <summary>
-		/// One-shot: rewrite saved binds that collide with IH Place/Remove, chat, or Use.
-		/// Existing cfg keeps old values otherwise — without this, Alt+MMB/Enter stay sticky.
-		/// </summary>
-		private static void MigrateCollidingPipetteBinds()
-		{
-			bool changed = false;
-
-			// Restore Alt+mouse refine if a prior migrate forced = / - / no modifier.
-			if (AddPieceKey != null && AddPieceKey.Value == KeyCode.Equals)
-			{
-				AddPieceKey.Value = KeyCode.Mouse0;
-				changed = true;
-			}
-
-			if (ExcludePieceKey != null && ExcludePieceKey.Value == KeyCode.Minus)
-			{
-				ExcludePieceKey.Value = KeyCode.Mouse2;
-				changed = true;
-			}
-
-			if (RefineModifierKey != null && RefineModifierKey.Value == KeyCode.None
-			    && AddPieceKey != null && AddPieceKey.Value == KeyCode.Mouse0)
-			{
-				RefineModifierKey.Value = KeyCode.LeftAlt;
-				changed = true;
-			}
-
-			if (PickUpKey != null
-			    && (PickUpKey.Value == KeyCode.Return
-			        || PickUpKey.Value == KeyCode.KeypadEnter
-			        || PickUpKey.Value == KeyCode.P))
-			{
-				PickUpKey.Value = KeyCode.Mouse2;
-				changed = true;
-			}
-
-			if (PickUpModifierKey != null
-			    && PickUpModifierKey.Value == KeyCode.None
-			    && PickUpKey != null
-			    && PickUpKey.Value == KeyCode.Mouse2)
-			{
-				PickUpModifierKey.Value = KeyCode.LeftShift;
-				changed = true;
-			}
-
-			if (ResetRefinementKey != null && ResetRefinementKey.Value == KeyCode.X)
-			{
-				ResetRefinementKey.Value = KeyCode.Backspace;
-				changed = true;
-			}
-
-			if (ResetCornersKey != null && ResetCornersKey.Value == KeyCode.R)
-			{
-				ResetCornersKey.Value = KeyCode.Home;
-				changed = true;
-			}
-
-			if (changed)
-			{
-				SonicWorldToolsPlugin.ModLogger?.LogInfo(
-					"[SonicWorldTools] Migrated Precision Area Pipette binds "
-					+ "(Alt+LMB add, Alt+MMB exclude, Shift+MMB pick up, Home reset corners).");
-			}
-		}
-
 		/// <summary>HUD label for pick-up chord (e.g. Shift+MMB).</summary>
 		internal static string FormatPickUpChordLabel()
 		{
@@ -398,14 +372,17 @@ namespace SonicWorldTools.Config
 				case KeyCode.Mouse2:
 					return "MMB";
 				case KeyCode.LeftAlt:
+					return "Left Alt";
 				case KeyCode.RightAlt:
-					return "Alt";
+					return "Right Alt";
 				case KeyCode.LeftControl:
-				case KeyCode.RightControl:
 					return "Ctrl";
+				case KeyCode.RightControl:
+					return "Right Ctrl";
 				case KeyCode.LeftShift:
-				case KeyCode.RightShift:
 					return "Shift";
+				case KeyCode.RightShift:
+					return "Right Shift";
 				case KeyCode.Return:
 				case KeyCode.KeypadEnter:
 					return "Enter";

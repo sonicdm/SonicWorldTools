@@ -99,12 +99,21 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		}
 
 		internal static bool IsActive => _instance != null && _instance._active;
+		private static string PlaceChordLabel => PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterPlaceModifier.Value)
+			+ "+" + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterWaypointKey.Value);
 		internal static bool OwnsPlayerInput => IsActive && Player.m_localPlayer && Player.m_localPlayer.InPlaceMode();
 		internal static PieceRepeaterController Instance => _instance;
+		internal static void RefreshKeyHints()
+		{
+			if (_instance?._keyHints == null) return;
+			KeyHintManager.Instance.RemoveKeyHint(_instance._keyHints);
+			_instance._keyHints = null;
+		}
 		internal static bool IsPlacingBatch { get; private set; }
 		internal static bool OwnsMiddleClick(Player player)
 		{
 			if (!player || player != Player.m_localPlayer) return false;
+			if (PluginConfig.PieceRepeaterSampleKey.Value != KeyCode.Mouse2) return false;
 			if (IsActive) return OwnsPlayerInput;
 			if (!InfinityHammerBridge.TryGetActiveToolSelectionName(out string selectedTool)
 			    || !ToolInstaller.IsPieceRepeaterToolName(selectedTool))
@@ -125,8 +134,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (controller == null || !controller._active || !Player.m_localPlayer) return false;
 			KeyCode key = PluginConfig.PieceRepeaterSettingsHotkey.Value;
 			if (key == KeyCode.None || key == KeyCode.Escape || !Input.GetKeyDown(key)) return false;
-			bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-			if (shift)
+			KeyCode editorModifier = PluginConfig.PieceRepeaterOffsetEditorModifier.Value;
+			if (editorModifier != KeyCode.None && PrecisionAreaPipetteInput.WasKeyHeld(editorModifier))
 			{
 				if (controller._offsetEditor.IsOpen)
 				{
@@ -245,9 +254,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			EnsurePreview();
 			UpdatePreview();
 			Notify(_prefabId == null
-				? "Piece Repeater: middle-click a placed build piece to choose it."
-				: "Piece Repeater ready: " + _prefabId + ". Settings: " + PluginConfig.PieceRepeaterSettingsHotkey.Value + "; click path points; Ctrl+click places.");
-			SonicWorldToolsPlugin.ModLogger?.LogInfo("[PieceRepeater] Activated; prefab=" + (_prefabId ?? "<sample required>"));
+				? "Line Tool: " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSampleKey.Value) + " samples a placed build piece."
+				: "Line Tool ready: " + _prefabId + ". Settings: " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSettingsHotkey.Value)
+				  + "; " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterWaypointKey.Value) + " adds waypoints.");
+			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Activated; prefab=" + (_prefabId ?? "<sample required>"));
 		}
 
 		internal void Deactivate(string reason = "cancel")
@@ -275,7 +285,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_outline.Clear();
 			_awaitPrimaryRelease = false;
 			ClearPreview();
-			SonicWorldToolsPlugin.ModLogger?.LogInfo("[PieceRepeater] Deactivated: " + reason + ".");
+			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Deactivated: " + reason + ".");
 		}
 
 		internal void Shutdown()
@@ -368,7 +378,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				UpdatePreview();
 			}
 
-			if (PrecisionAreaPipetteInput.WasMouseButtonDown(2))
+			if (PrecisionAreaPipetteInput.WasBoundKeyOrMouseDown(PluginConfig.PieceRepeaterSampleKey.Value))
 			{
 				SampleHoveredPiece(player);
 				return;
@@ -378,25 +388,25 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			UpdatePreview();
 			if (_awaitPrimaryRelease)
 			{
-				if (!Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Mouse0))
+				if (!PrecisionAreaPipetteInput.WasKeyHeld(PluginConfig.PieceRepeaterWaypointKey.Value))
 				{
 					_awaitPrimaryRelease = false;
 				}
 				return;
 			}
 
-			if (!PrecisionAreaPipetteInput.WasMouseButtonDown(0) || !_hasAim)
+			if (!PrecisionAreaPipetteInput.WasBoundKeyOrMouseDown(PluginConfig.PieceRepeaterWaypointKey.Value) || !_hasAim)
 			{
 				return;
 			}
 
 			if (string.IsNullOrWhiteSpace(_prefabId))
 			{
-				Notify("Piece Repeater: middle-click a placed building piece to sample it first.");
+				Notify("Line Tool: " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSampleKey.Value) + " samples a placed building piece first.");
 				return;
 			}
 
-			bool finish = Input.GetKey(PluginConfig.PieceRepeaterPlaceModifier.Value);
+			bool finish = PrecisionAreaPipetteInput.WasKeyHeld(PluginConfig.PieceRepeaterPlaceModifier.Value);
 			if (_mode == PieceRepeaterMode.Path)
 			{
 				List<Placement> previousPreview = null;
@@ -407,7 +417,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				    || !ResolvePlacementMetadata(selectedPrefab).Enabled
 				    || ResolvePlacementMetadata(selectedPrefab).Status != RepeatProfileStatus.Ready)
 				{
-					Notify("Piece Repeater: enable this piece and give it a Ready profile in VanillaPieces.yml.");
+					Notify("Line Tool: enable this piece and give it a Ready profile in VanillaPieces.yml.");
 					return;
 				}
 				if (_points.Count == 0 && ZNetScene.instance
@@ -480,7 +490,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				{
 					UpdatePreview();
 					if (waypointAdded) LogWaypointSolve(previousPreview, committedWaypoint);
-					Notify("Path point " + _points.Count + "; Ctrl+click to finish and place.");
+					Notify("Path point " + _points.Count + "; " + PlaceChordLabel + " to finish and place.");
 				}
 				return;
 			}
@@ -489,7 +499,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				_points.Add(_aim);
 				UpdatePreview();
-				Notify(_mode + ": set size with the cursor, then Ctrl+click to place.");
+				Notify(_mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
 				return;
 			}
 
@@ -499,7 +509,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			else
 			{
-				Notify("Ctrl+click to place the previewed " + _mode.ToString().ToLowerInvariant() + ".");
+				Notify(PlaceChordLabel + " to place the previewed " + _mode.ToString().ToLowerInvariant() + ".");
 			}
 		}
 
@@ -606,17 +616,17 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Piece = selected.name,
 				ButtonConfigs = new[]
 				{
-					new ButtonConfig { Name = "Attack", Key = KeyCode.Mouse0, Hint = "Waypoint / " + PluginConfig.PieceRepeaterPlaceModifier.Value + ": Place" },
-					new ButtonConfig { Name = "Remove", Key = KeyCode.Mouse2, Hint = "Sample" },
-					new ButtonConfig { Name = "Mouse ScrollWheel", Axis = "Mouse ScrollWheel", Hint = "Rotate pieces / " + PluginConfig.PieceRepeaterSpacingModifier.Value + ": gap" },
+					new ButtonConfig { Name = "Attack", Key = PluginConfig.PieceRepeaterWaypointKey.Value, Hint = "Waypoint / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterPlaceModifier.Value) + ": Place" },
+					new ButtonConfig { Name = "Remove", Key = PluginConfig.PieceRepeaterSampleKey.Value, Hint = "Sample" },
+					new ButtonConfig { Name = "Mouse ScrollWheel", Axis = "Mouse ScrollWheel", Hint = "Rotate pieces / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSpacingModifier.Value) + "+wheel: gap" },
 					new ButtonConfig { Name = "TabRight", Key = KeyCode.E, Hint = "Cycle snap points (Q/E)" },
-					new ButtonConfig { Name = "Run", Key = PluginConfig.PieceRepeaterLevelModifier.Value, Hint = "Level height; " + PluginConfig.PieceRepeaterJointModifier.Value + "+click: joint" }
+					new ButtonConfig { Name = "Run", Key = PluginConfig.PieceRepeaterLevelModifier.Value, Hint = "Level height; " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterJointModifier.Value) + "+click: joint" }
 				}
 			};
 			if (KeyHintManager.Instance.AddKeyHint(config))
 			{
 				_keyHints = config;
-				SonicWorldToolsPlugin.ModLogger?.LogInfo("[PieceRepeater] Registered key hints for " + config + ".");
+				SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Registered key hints for " + config + ".");
 			}
 		}
 
@@ -625,7 +635,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Piece hovering = player.GetHoveringPiece();
 			if (!hovering)
 			{
-				Notify("Aim at a placed building piece and middle-click to sample it.");
+				Notify("Aim at a placed building piece and press " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSampleKey.Value) + " to sample it.");
 				return;
 			}
 
@@ -651,14 +661,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_hasLockedStartPlacement = false;
 			_snapPointIndex = -1;
 			_sampledYaw = hovering.transform.eulerAngles.y;
-			Notify("Piece Repeater selected " + prefab + ".");
+			Notify("Line Tool selected " + prefab + ".");
 		}
 
 		private void BuildAndPlace(Player player)
 		{
 			if (!ZNetScene.instance)
 			{
-				Notify("Piece Repeater: prefab scene is unavailable.");
+				Notify("Line Tool: prefab scene is unavailable.");
 				_points.Clear();
 				return;
 			}
@@ -667,7 +677,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Piece piece = prefab ? prefab.GetComponent<Piece>() : null;
 			if (!piece)
 			{
-				Notify("Piece Repeater: selected prefab is no longer available.");
+				Notify("Line Tool: selected prefab is no longer available.");
 				_prefabId = null;
 				_points.Clear();
 				return;
@@ -676,13 +686,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			GenerateLayout(prefab);
 			if (_placements.Count == 0)
 			{
-				Notify("Piece Repeater: add more points or increase the size.");
+				Notify("Line Tool: add more points or increase the size.");
 				_points.Clear();
 				return;
 			}
 			if (_placements.Count > MaximumPlacements)
 			{
-				Notify("Piece Repeater: " + _placements.Count + " placements exceeds the safe limit of " + MaximumPlacements + ". Increase spacing or reduce the shape.");
+				Notify("Line Tool: " + _placements.Count + " placements exceeds the safe limit of " + MaximumPlacements + ". Increase spacing or reduce the shape.");
 				_points.Clear();
 				return;
 			}
@@ -699,7 +709,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				+ " gap=" + _gapMeters.ToString("0.###") + " smoothing=" + PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##"));
 			if (!InfinityHammerBridge.TrySuspendPlacementInterception(out IDisposable restoreIhPlacement))
 			{
-				Notify("Piece Repeater: could not safely bypass IH's active tool placement hook; no pieces placed.");
+				Notify("Line Tool: could not safely bypass IH's active tool placement hook; no pieces placed.");
 				_points.Clear();
 				UpdatePreview();
 				return;
@@ -740,7 +750,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			catch (Exception ex)
 			{
 				PieceRepeaterDiagnostics.Log("BatchException", "requests=" + requests + " error=" + ex);
-				SonicWorldToolsPlugin.ModLogger?.LogWarning("[PieceRepeater] Placement stopped after " + requests + " requests: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("[Line Tool] Placement stopped after " + requests + " requests: " + ex.Message);
 			}
 			finally
 			{
@@ -750,8 +760,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			PieceRepeaterDiagnostics.Log("BatchEnd", "prefab=" + _prefabId + " requests=" + requests
 				+ " withImmediateInstance=" + matchedInstances + " pendingDelayedVerification=" + _placementVerifications.Count);
-			Notify("Piece Repeater sent " + requests + " " + _prefabId + " placement request(s); detected " + matchedInstances
-				+ " structural instances immediately. Diagnostics: BepInEx/logs/SonicWorldTools-PieceRepeater.log. Use IH undo to reverse the batch.");
+			Notify("Line Tool sent " + requests + " " + _prefabId + " placement request(s); detected " + matchedInstances
+				+ " structural instances immediately. Use IH undo to reverse the batch."
+				+ (PluginConfig.LineToolDiagnostics.Value ? " Diagnostics: BepInEx/logs/SonicWorldTools-LineTool.log." : ""));
 			_points.Clear();
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
@@ -1914,7 +1925,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			float renderedAxisMax = metadata.Axis == PrefabRepeatAxis.X
 				? renderedBounds.max.x
 				: renderedBounds.max.z;
-			details.Append("[PieceRepeater] PathTrace prefab=").Append(_prefabId)
+			details.Append("[Line Tool] PathTrace prefab=").Append(_prefabId)
 				.Append(" profileType=").Append(metadata.ProfileType)
 				.Append(" axis=").Append(metadata.Axis)
 				.Append(" metadataSpacing=").Append(metadata.Spacing.ToString("0.###"))

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using BepInEx;
 
@@ -59,6 +60,7 @@ namespace SonicWorldTools
 		private PrecisionAreaPipetteController _pipetteController;
 
 		private PieceRepeaterController _pieceRepeaterController;
+		private readonly List<Action> _generatedToolUnhooks = new List<Action>();
 
 
 
@@ -296,8 +298,45 @@ namespace SonicWorldTools
 
 			HookPreviewSetting(PluginConfig.ShowHighlights);
 
+			HookGeneratedToolSetting(PluginConfig.RefineModifierKey);
+			HookGeneratedToolSetting(PluginConfig.AddPieceKey);
+			HookGeneratedToolSetting(PluginConfig.ExcludePieceKey);
+			HookGeneratedToolSetting(PluginConfig.PickUpModifierKey);
+			HookGeneratedToolSetting(PluginConfig.PickUpKey);
+			HookGeneratedToolSetting(PluginConfig.DismantleModifierKey);
+			HookGeneratedToolSetting(PluginConfig.PermanentDeleteModifierKey);
+			HookGeneratedToolSetting(PluginConfig.SelectionRemovalKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSampleKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterWaypointKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterPlaceModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSpacingModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterLevelModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterJointModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSettingsHotkey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterOffsetEditorModifier);
+			HookGeneratedToolSetting(PluginConfig.ScatterSampleKey);
+			HookGeneratedToolSetting(PluginConfig.ScatterClearModifier);
+			HookGeneratedToolSetting(PluginConfig.TerrainPathInitialHalfWidth);
+			HookGeneratedToolSetting(PluginConfig.TerrainPathEdgeSmoothness);
+			HookGeneratedToolSetting(PluginConfig.LowerTerrainInitialHeight);
+			HookGeneratedToolSetting(PluginConfig.LowerTerrainSmoothness);
+			HookGeneratedToolSetting(PluginConfig.ScatterInitialRadius);
+
 			// HUD count/dimensions re-read in UpdateHudText each frame — no clear needed.
 
+		}
+
+		private void OnGeneratedToolSettingChanged(object sender, EventArgs e)
+		{
+			ToolInstallerBridge.EnsureInstalled();
+			PieceRepeaterController.RefreshKeyHints();
+		}
+
+		private void HookGeneratedToolSetting<T>(BepInEx.Configuration.ConfigEntry<T> entry)
+		{
+			if (entry == null) return;
+			entry.SettingChanged += OnGeneratedToolSettingChanged;
+			_generatedToolUnhooks.Add(() => entry.SettingChanged -= OnGeneratedToolSettingChanged);
 		}
 
 
@@ -441,6 +480,8 @@ namespace SonicWorldTools
 			UnhookPreviewSetting(PluginConfig.ShowCornerMarkers);
 
 			UnhookPreviewSetting(PluginConfig.ShowHighlights);
+			foreach (Action unhook in _generatedToolUnhooks) unhook();
+			_generatedToolUnhooks.Clear();
 
 
 

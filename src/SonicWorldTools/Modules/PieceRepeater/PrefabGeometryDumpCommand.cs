@@ -101,7 +101,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				catch (Exception ex)
 				{
 					failed++;
-					SonicWorldToolsPlugin.ModLogger?.LogWarning("[PieceRepeater] Geometry dump skipped " + prefab.name + ": " + ex.Message);
+					SonicWorldToolsPlugin.ModLogger?.LogWarning("[Line Tool] Geometry dump skipped " + prefab.name + ": " + ex.Message);
 				}
 			}
 
@@ -112,7 +112,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			File.WriteAllText(path, output.ToString(), new UTF8Encoding(true));
 			string message = "Piece geometry dump wrote " + exported + " build-table pieces" + (failed > 0 ? " (" + failed + " skipped)" : string.Empty) + ": " + path;
 			context.AddString(message);
-			SonicWorldToolsPlugin.ModLogger?.LogInfo("[PieceRepeater] " + message);
+			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] " + message);
 		}
 
 		private static string Number(float value)

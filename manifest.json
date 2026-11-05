@@ -2,7 +2,7 @@
   "name": "SonicWorldTools",
   "version_number": "0.1.0",
   "website_url": "https://github.com/sonicdm/SonicWorldTools",
-  "description": "Precision Area Pipette for Infinity Hammer: two-corner volume select, refine, copy hand-off. Requires IH stack (Server Devcommands + Infinity Hammer; WEC comes with IH).",
+  "description": "Valheim world tools for Infinity Hammer: precision selection, curved terrain paths, prop scatter, and a build-piece Line Tool.",
   "author": "SonicDM",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2202",

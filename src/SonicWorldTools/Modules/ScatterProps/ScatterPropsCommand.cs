@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using SonicWorldTools.Config;
 using SonicWorldTools.Integration;
 using SonicWorldTools.Modules.PrecisionAreaPipette;
 using UnityEngine;
@@ -11,9 +12,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 	internal static class ScatterPropsCommand
 	{
 		internal const string CommandName = "sonic_scatter";
-		private const int MaximumSamples = 8;
-		private const int TotalObjects = 20;
 		private const float DefaultRadius = 3f;
+		private static int MaximumSamples => Mathf.Clamp(PluginConfig.ScatterMaxSamples?.Value ?? 8, 1, 32);
+		private static int TotalObjects => Mathf.Clamp(PluginConfig.ScatterObjectsPerClick?.Value ?? 20, 1, 200);
+		private static string SampleLabel => PluginConfig.FormatKeyLabel(PluginConfig.ScatterSampleKey?.Value ?? KeyCode.Mouse2);
 		private static readonly List<SampledPrefab> Samples = new List<SampledPrefab>();
 		private static bool _registered;
 
@@ -39,7 +41,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			_registered = true;
 			new Terminal.ConsoleCommand(
 				CommandName,
-				"Middle-click props to sample; Shift+middle-click to clear the sample list.",
+				"Sample networked props with the configured Scatter Props key; hold the clear modifier to empty the list.",
 				HandleCommand);
 		}
 
@@ -55,12 +57,13 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			if (PrecisionAreaPipetteInput.IsTextInputBlocking()
-			    || !PrecisionAreaPipetteInput.WasMouseButtonDown(2))
+			    || !PrecisionAreaPipetteInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
 			{
 				return;
 			}
 
-			if (IsAltPlaceHeld())
+			if (PluginConfig.ScatterClearModifier.Value != KeyCode.None
+			    && PrecisionAreaPipetteInput.WasKeyHeld(PluginConfig.ScatterClearModifier.Value))
 			{
 				Samples.Clear();
 				Notify("Scatter sample list cleared.");
@@ -69,7 +72,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 
 			if (!TryGetAimedPrefab(player, out string prefab, out Vector3 scale))
 			{
-				Notify("Aim at a networked prop and middle-click to sample it.");
+				Notify("Aim at a networked prop and press " + SampleLabel + " to sample it.");
 				return;
 			}
 
@@ -80,6 +83,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 		{
 			return player == Player.m_localPlayer
 			       && player.InPlaceMode()
+			       && PluginConfig.ScatterSampleKey.Value == KeyCode.Mouse2
 			       && (Input.GetMouseButton(2) || ZInput.GetMouseButton(2))
 			       && InfinityHammerBridge.TryGetActiveToolSelectionName(out string toolName)
 			       && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
@@ -147,28 +151,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 			return Utils.GetPrefabName(view.gameObject);
 		}
 
-		private static bool IsAltPlaceHeld()
-		{
-			try
-			{
-				if (ZInput.GetButton("AltPlace"))
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Use physical Shift as a fallback if the configured action is unavailable.
-			}
-
-			return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-		}
-
 		private static void HandleCommand(Terminal.ConsoleEventArgs args)
 		{
 			if (args.Length < 2)
 			{
-				Notify(args, "Scatter Props: click to scatter; middle-click samples, Shift+middle-click clears.");
+				Notify(args, "Scatter Props: click to scatter; " + SampleLabel + " samples; "
+				             + PluginConfig.FormatKeyLabel(PluginConfig.ScatterClearModifier.Value) + "+" + SampleLabel + " clears.");
 				return;
 			}
 
@@ -218,12 +206,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 
 			if (Samples.Count >= MaximumSamples)
 			{
-				Notify("Scatter Props holds up to " + MaximumSamples + " prop types. Middle-click a sampled prop to remove it.");
+				Notify("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
 				return;
 			}
 
 			Samples.Add(new SampledPrefab(prefab, scale));
-			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Middle-click it again to remove.");
+			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Press " + SampleLabel + " again to remove.");
 		}
 
 		private static void Place(Terminal.ConsoleEventArgs args)
@@ -249,7 +237,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				Player player = Player.m_localPlayer;
 				if (!player || !TryGetAimedPrefab(player, out string hoveredPrefab, out Vector3 hoveredScale))
 				{
-					Notify(args, "Sample props with middle-click, or aim at a prop before clicking to scatter it.");
+					Notify(args, "Sample props with " + SampleLabel + ", or aim at a prop before clicking to scatter it.");
 					return;
 				}
 

@@ -24,7 +24,7 @@ namespace SonicWorldTools.Integration
 				return false;
 			}
 
-			// This identity belongs only to Precision Select. Piece Repeater has its
+			// This identity belongs only to Precision Select. Line Tool has its
 			// own controller and must never arm the pipette when its menu entry commits.
 			return label.IndexOf(ToolInstaller.ToolName, System.StringComparison.OrdinalIgnoreCase) >= 0;
 		}

@@ -71,7 +71,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
 				530f, 370f, true);
 			_panel.SetActive(false);
-			Label("Piece Repeater settings", 0f, -34f, 28, 490f, gui.ValheimOrange);
+			Label("Line Tool settings", 0f, -34f, 28, 490f, gui.ValheimOrange);
 			Label("Changes update the preview. Placement pauses while this is open.", 0f, -66f, 14, 490f, Color.white);
 
 			Label("Path interpolation", -145f, -112f, 18, 190f, Color.white);

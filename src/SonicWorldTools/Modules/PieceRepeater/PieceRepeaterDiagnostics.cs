@@ -2,10 +2,11 @@ using System;
 using System.IO;
 using System.Text;
 using BepInEx;
+using SonicWorldTools.Config;
 
 namespace SonicWorldTools.Modules.PieceRepeater
 {
-	/// <summary>Append-only, low-volume diagnostics for reproducing Piece Repeater placement issues.</summary>
+	/// <summary>Optional Line Tool placement diagnostics.</summary>
 	internal static class PieceRepeaterDiagnostics
 	{
 		private static readonly object FileLock = new object();
@@ -13,6 +14,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		internal static void Log(string category, string message)
 		{
+			if (PluginConfig.LineToolDiagnostics == null || !PluginConfig.LineToolDiagnostics.Value) return;
 			try
 			{
 				lock (FileLock)
@@ -21,15 +23,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					{
 						string directory = Path.Combine(Paths.BepInExRootPath, "logs");
 						Directory.CreateDirectory(directory);
-						_path = Path.Combine(directory, "SonicWorldTools-PieceRepeater.log");
-						File.AppendAllText(_path, "\r\n=== Piece Repeater diagnostics " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===\r\n", new UTF8Encoding(false));
+						_path = Path.Combine(directory, "SonicWorldTools-LineTool.log");
+						File.AppendAllText(_path, "\r\n=== Line Tool diagnostics " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " ===\r\n", new UTF8Encoding(false));
 					}
 					File.AppendAllText(_path, DateTime.Now.ToString("HH:mm:ss.fff") + " [" + category + "] " + message + "\r\n", new UTF8Encoding(false));
 				}
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogWarning("[PieceRepeater] Could not write dedicated diagnostics: " + ex.Message);
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("[Line Tool] Could not write dedicated diagnostics: " + ex.Message);
 			}
 		}
 	}
