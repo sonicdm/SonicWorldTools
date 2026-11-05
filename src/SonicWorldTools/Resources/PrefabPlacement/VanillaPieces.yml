@@ -1,0 +1,5533 @@
+# Sonic World Tools Piece Repeater prefab catalog (source of truth).
+# This file is embedded in SonicWorldTools.dll and copied to each profile on first run.
+# Edit profiles here for release defaults; the runtime profile copy may append pieces
+# discovered from mods installed in that game profile and is not the source catalog.
+# ProfileType is editable per piece: EdgeChain (requires ShapeAxis + JoinStart/JoinEnd)
+# or GroundProp (uses DefaultSpacing or the shared setting and follows terrain).
+# Enabled: false opts a profiled piece out; missing Enabled defaults to true.
+# Status: NeedsReview still blocks use until the geometry profile is verified.
+# ShapeJoinStartOffset / ShapeJoinEndOffset are local XYZ corrections to each
+# join point. Editing either re-solves the repeat chain from its anchored first piece.
+# ShapePositionOffset instead applies the same local root correction to each piece.
+
+woodwall:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.064
+  JoinEnd: 1,0,-0.064
+  ShapeBottomOffset: -1.01
+
+woodwall_half:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+wood_wall_half:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.064
+  JoinEnd: 1,0,-0.064
+  ShapeBottomOffset: -0.501
+
+wood_wall_quarter:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,-0.064
+  JoinEnd: 0.5,0,-0.064
+  ShapeBottomOffset: -0.001
+
+wood_wall_log:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.264
+
+wood_wall_log_4m:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+wood_wall_log_4x0.5:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,0
+  JoinEnd: 2,0,0
+  ShapeBottomOffset: -0.264
+
+wood_door:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.01
+
+wood_pole:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.5
+
+wood_pole2:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1
+
+wood_pole_log:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.108
+
+wood_pole_log_4:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -2.215
+
+wood_beam:
+  Directions: LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.2
+
+wood_beam1:
+  Directions: LeftRight, ForwardBackward
+
+wood_beam2:
+  Directions: LeftRight, ForwardBackward
+
+wood_beam_1:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.2
+
+wood_beam26:
+  Directions: ForwardBackward
+
+wood_beam45:
+  Directions: ForwardBackward
+
+wood_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.268
+
+wood_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.213
+
+wood_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.168
+
+wood_log_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.356
+
+wood_log_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.334
+
+wood_log_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.127
+
+wood_floor:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.14
+
+wood_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,0.5
+  JoinStart: 0,0,-0.5
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.019
+
+wood_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.13
+
+wood_stepladder:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-1
+  JoinEnd: 0,0,1
+  ShapeBottomOffset: -0.075
+
+wood_roof:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.349
+
+wood_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.399
+
+wood_roof_67:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 4
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.82
+
+wood_roof_top:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.168
+
+wood_roof_top_45:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.122
+
+wood_roof_top_67:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.724
+
+wood_wall_roof:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+
+wood_wall_roof_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.007
+
+wood_wall_roof_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.204
+
+wood_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: 0.046
+
+wood_wall_roof_a:
+  Directions: LeftRight
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.257
+
+wood_wall_roof_67_a:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.168
+
+wood_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.002
+  JoinEnd: 1,0,0.002
+  ShapeBottomOffset: -4.146
+
+stave_wall_2x2:
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -1.019
+
+stave_pole_2m:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.015
+
+stave_pole_4m:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.023
+
+stave_beam_2m:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.353
+
+stave_beam_4m:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,-0.001
+  JoinEnd: 2,0,-0.001
+  ShapeBottomOffset: -0.358
+
+stave_beam_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.35
+
+stave_beam_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -1.269
+
+stave_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.15
+
+stave_deco_wall_2x2:
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.004
+
+stave_deco_pole_2m:
+  Directions: UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: 0,0,0
+  JoinEnd: 0,0,0
+  ShapeBottomOffset: -0.995
+
+stave_deco_beam_2m:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.253
+
+stave_deco_beam_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.104
+
+stave_deco_beam_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.227
+
+stave_deco_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.044
+
+scale_quarterwall_1x1:
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,-0.006
+  JoinEnd: 0.5,0,-0.006
+  ShapeBottomOffset: -0.004
+
+scale_halfwall_1x2:
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.019
+  JoinEnd: 1,0,-0.019
+  ShapeBottomOffset: -0.029
+
+scale_wall_2x2:
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.019
+  JoinEnd: 1,0,-0.019
+  ShapeBottomOffset: -1.029
+
+scale_wall_roof_26:
+  Directions: LeftRight
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.084
+
+scale_wall_roof_26_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.084
+
+scale_wall_roof_26_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.095
+
+scale_wall_roof_26_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.096
+
+scale_wall_roof_45:
+  Directions: LeftRight
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.069
+
+scale_wall_roof_45_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.069
+
+scale_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.057
+
+scale_wall_roof_45_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.057
+
+scale_wall_roof_67:
+  Directions: LeftRight
+  AddedLRHeight: -4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.053
+
+scale_wall_roof_67_flipped:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.053
+
+scale_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.078
+
+scale_wall_roof_67_upsidedown_flipped:
+  Directions: LeftRight
+  AddedLRHeight: -4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.084
+
+darkwood_decowall:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,-0.003
+  JoinEnd: 0.5,0,-0.003
+  ShapeBottomOffset: -0.001
+
+darkwood_pole:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.012
+
+darkwood_pole4:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -2.012
+
+darkwood_beam:
+  Directions: LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: 0.051
+
+darkwood_beam2:
+  Directions: LeftRight, ForwardBackward
+
+darkwood_beam4x4:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,0
+  JoinEnd: 2,0,0
+  ShapeBottomOffset: 0.045
+
+darkwood_arch:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: 0,0,0.002
+  JoinEnd: 2,0,0.002
+  ShapeBottomOffset: -0.012
+
+darkwood_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.501
+
+darkwood_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.185
+
+darkwood_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: -4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.13
+
+darkwood_roof:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.085
+
+darkwood_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.396
+
+darkwood_roof_67:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 4
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.653
+
+darkwood_roof_top:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.238
+
+darkwood_roof_top_45:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.448
+
+darkwood_decoroof:
+  Directions: LeftRight, ForwardBackward
+
+darkwood_decoroof_45:
+  Directions: LeftRight, ForwardBackward
+
+ashwood_wall_2x2:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.035
+  JoinEnd: 1,0,0.035
+  ShapeBottomOffset: -1
+
+ashwood_halfwall_1x2:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.034
+  JoinEnd: 1,0,0.034
+  ShapeBottomOffset: 0
+
+ashwood_quarterwall_1x1:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0.034
+  JoinEnd: 0.5,0,0.034
+  ShapeBottomOffset: -0.001
+
+ashwood_wall_arch:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.001
+
+ashwood_decowall_2x2:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.003
+  JoinEnd: 1,0,-0.003
+  ShapeBottomOffset: -1
+
+ashwood_decowall_tree:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.999
+
+ashwood_decowall_divider:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,-0.004
+  JoinEnd: 0.5,0,-0.004
+  ShapeBottomOffset: -1.001
+
+ashwood_door:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,-0.003
+  JoinEnd: 0,0,-0.003
+  ShapeBottomOffset: -0.005
+
+ashwood_pole_1m:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.003
+
+ashwood_pole_2m:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.012
+
+ashwood_beam_1m:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.2
+
+ashwood_beam_2m:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.2
+
+ashwood_arch_big:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: 0,0,0.001
+  JoinEnd: 2,0,0.001
+  ShapeBottomOffset: -0.015
+
+ashwood_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.099
+
+ashwood_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,0.5
+  JoinStart: 0,0,-0.5
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.1
+
+ashwood_deco_floor:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.07
+
+ashwood_stair:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-1
+  JoinEnd: 0,0,1
+  ShapeBottomOffset: -0.402
+
+ashwood_wall_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.273
+
+ashwood_wall_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.227
+
+ashwood_wall_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.158
+
+ashwood_wall_roof_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.003
+  JoinEnd: 1,0,-0.003
+  ShapeBottomOffset: -0.371
+
+ashwood_wall_roof_26_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.003
+  JoinEnd: 1,0,0.003
+  ShapeBottomOffset: -0.072
+
+ashwood_wall_roof_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.264
+
+ashwood_wall_roof_45_upsidedown:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: -2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.015
+
+ashwood_wall_roof_67_a:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.16
+
+ashwood_wall_roof_67_upsidedown:
+  Directions: LeftRight
+  AddedLRHeight: -4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.002
+  JoinEnd: 1,0,0.002
+  ShapeBottomOffset: -4.143
+
+stone_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+  JoinEnd: 0,0,0.5
+  JoinStart: 0,0,-0.5
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.576
+
+stone_wall_2x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.007
+  JoinEnd: 1,0,0.007
+  ShapeBottomOffset: -0.576
+
+stone_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,-0.015
+  JoinEnd: 2,0,-0.015
+  ShapeBottomOffset: -1.111
+
+stone_pillar:
+  Directions: UpDown
+  DefaultSpacing: 2
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1
+
+stone_arch:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.007
+  JoinEnd: 1,0,-0.007
+  ShapeBottomOffset: -0.525
+
+stone_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.5
+
+stone_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+stone_fence:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.027
+  JoinEnd: 1,0,0.027
+  ShapeBottomOffset: -0.058
+
+blackmarble_1x1:
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.5
+
+blackmarble_2x1x1:
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.002
+  JoinEnd: 1,0,0.002
+  ShapeBottomOffset: -0.5
+
+blackmarble_2x2x2:
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1
+
+blackmarble_wall_1x1:
+  Directions: UpDown, LeftRight
+
+blackmarble_wall_2x1:
+  Directions: UpDown, LeftRight
+
+blackmarble_wall_2x2:
+  Directions: UpDown, LeftRight
+
+blackmarble_column_1:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.501
+
+blackmarble_column_2:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.501
+
+blackmarble_column_3:
+  Directions: UpDown
+
+blackmarble_base_1:
+  Directions: ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.003
+  JoinEnd: 1,0,0.003
+  ShapeBottomOffset: -0.999
+
+blackmarble_out_1:
+  Directions: ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.003
+  JoinEnd: 1,0,-0.003
+  ShapeBottomOffset: -1.009
+
+blackmarble_arch:
+  Directions: LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.999
+
+blackmarble_floor:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.5
+
+blackmarble_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+
+blackmarble_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+
+blackmarble_stair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+blackmarble_stair_corner:
+  Directions: LeftRight
+
+blackmarble_head_big:
+  Directions: UpDown, LeftRight
+
+grausten_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+grausten_wall_2x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+grausten_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+
+Piece_grausten_wall_1x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0.004
+  JoinEnd: 0.5,0,0.004
+  ShapeBottomOffset: -0.007
+
+Piece_grausten_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.004
+  JoinEnd: 1,0,0.004
+  ShapeBottomOffset: -0.02
+
+Piece_grausten_wall_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,0.004
+  JoinEnd: 2,0,0.004
+  ShapeBottomOffset: -0.02
+
+Piece_grausten_wall_arch:
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, UpDown
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: 0
+
+Piece_grausten_wall_arch_inverted:
+  Axis: X
+  ShapeSpacing: 2
+  ShapeAnchor: SnapCenter
+  Directions: LeftRight, ForwardBackward
+  AddedLRHeight: -2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: 0
+
+Piece_grausten_window_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: 0.004
+
+Piece_grausten_window_4x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,0
+  JoinEnd: 2,0,0
+  ShapeBottomOffset: 0.004
+
+grausten_pillar_1x1:
+  Directions: UpDown
+
+grausten_pillar_2x2:
+  Directions: UpDown
+
+Piece_grausten_pillarbase_small:
+  Directions: UpDown
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+Piece_grausten_pillarbase_medium:
+  Directions: UpDown
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+Piece_grausten_pillarbase_tapered:
+  Directions: UpDown
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+Piece_grausten_pillarbase_tapered_inverted:
+  Directions: UpDown
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+Piece_grausten_pillarbeam_small:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0.001
+  JoinEnd: 0.5,0,0.001
+  ShapeBottomOffset: -0.283
+
+Piece_grausten_pillarbeam_medium:
+  Directions: LeftRight
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.499
+
+grausten_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+
+grausten_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+
+Piece_grausten_floor_1x1:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,0.5
+  JoinStart: 0,0,-0.5
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.25
+
+Piece_grausten_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.25
+
+Piece_grausten_floor_4x4:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,2
+  JoinStart: 0,0,-2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.25
+
+grausten_stair:
+  Directions: LeftRight
+
+piece_grausten_stonestair:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 1
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+Piece_grausten_stone_ladder:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.009,0,-1.25
+  JoinEnd: -0.009,0,0.75
+  ShapeBottomOffset: -0.271
+
+grausten_roof_45:
+  Directions: LeftRight
+
+piece_grausten_roof_45:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.331
+
+piece_grausten_roof_45_arch:
+  Directions: LeftRight, ForwardBackward
+  AddedFBHeight: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.006
+
+wood_iron_pole:
+  Directions: UpDown
+
+woodiron_pole:
+  Directions: UpDown
+  ProfileType: GroundProp
+  DefaultSpacing: 2.0
+  Status: Ready
+  MeasurementSource: ConfiguredGroundContact
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.005
+
+wood_iron_beam:
+  Directions: LeftRight, ForwardBackward
+
+woodiron_beam:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.005
+  JoinEnd: 1,0,0.005
+  ShapeBottomOffset: -0.152
+
+woodiron_beam_26:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.006
+  JoinEnd: 1,0,0.006
+  ShapeBottomOffset: -0.68
+
+woodiron_beam_45:
+  Directions: LeftRight
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 0
+  AddedLRHeight: 2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.005
+  JoinEnd: 1,0,0.005
+  ShapeBottomOffset: -1.172
+
+woodiron_beam_67:
+  Directions: LeftRight
+  AddedLRHeight: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.005
+  JoinEnd: 1,0,-0.005
+  ShapeBottomOffset: -0.062
+
+iron_grate:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight, ForwardBackward
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.998
+
+iron_floor_1x1_v2:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,0
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.537
+
+iron_floor_2x2:
+  Directions: LeftRight, ForwardBackward
+  JoinEnd: 0,0,1
+  JoinStart: 0,0,-1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: Z
+  ShapeBottomOffset: -0.038
+
+iron_wall_1x1:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.09
+
+iron_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.023
+  JoinEnd: 1,0,-0.023
+  ShapeBottomOffset: -1.09
+
+piece_dvergr_metal_wall_2x2:
+  ShapeAnchor: SnapCenter
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1
+
+crystal_wall_1x1:
+  Directions: UpDown, LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: Medium
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.076
+
+Piece_flametal_pillar:
+  Directions: UpDown
+  DefaultSpacing: 2
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: Medium
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+Piece_flametal_beam:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.001
+  JoinEnd: 1,0,0.001
+  ShapeBottomOffset: -0.283
+
+piece_icecube:
+  Directions: LeftRight, ForwardBackward, UpDown
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.076
+
+wood_fence:
+  Directions: LeftRight
+  Dimensions:
+    X: 2.5
+    Y: 0
+    Z: 0
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.1,0,0
+  JoinEnd: 0.9,0,0
+  ShapeBottomOffset: -0.158
+
+roundlog_fence:
+  Directions: LeftRight
+
+stake_wall:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.08
+  JoinEnd: 1,0,-0.08
+  ShapeBottomOffset: -0.202
+
+piece_sharpstakes:
+  Directions: LeftRight
+  Dimensions:
+    X: 2.3
+    Y: 0
+    Z: 0
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.386
+
+dvergr_stake:
+  Directions: LeftRight
+
+piece_dvergr_sharpstakes:
+  Directions: ForwardBackward
+  Dimensions:
+    X: 0
+    Y: 0
+    Z: 4
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.812
+
+piece_dvergr_stake_wall:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.01
+  JoinEnd: 1,0,0.01
+  ShapeBottomOffset: -0.505
+
+piece_stakewall_blackwood:
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-1.421
+  JoinEnd: 1,0,-1.421
+  ShapeBottomOffset: -0.01
+
+ashlands_wall_spike:
+  Directions: LeftRight
+
+piece_chest:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.8
+    Y: 1
+    Z: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.919,0,-0.003
+  JoinEnd: 0.919,0,-0.003
+  ShapeBottomOffset: -0.002
+
+piece_chest_wood:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 0.75
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.822,0,0.008
+  JoinEnd: 0.822,0,0.008
+  ShapeBottomOffset: 0
+
+piece_chest_private:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.9
+    Y: 0
+    Z: 0.5
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.459,0,-0.002
+  JoinEnd: 0.459,0,-0.002
+  ShapeBottomOffset: -0.001
+
+piece_chest_blackmetal:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 1.4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.159,0,-0.023
+  JoinEnd: 1.155,0,-0.023
+  ShapeBottomOffset: 0.002
+
+piece_chest_grausten:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.7
+    Y: 1
+    Z: 1.2
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.859,0,-0.006
+  JoinEnd: 0.858,0,-0.006
+  ShapeBottomOffset: 0.002
+
+piece_chest_barrel:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.75
+    Y: 0
+    Z: 0.75
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+piece_chest_treasure:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 1
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.026
+
+piece_chest_warderobe:
+  Directions: LeftRight
+  Dimensions:
+    X: 1.5
+    Y: 1
+    Z: 1
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.837,0,-0.003
+  JoinEnd: 0.839,0,-0.003
+  ShapeBottomOffset: 0.006
+
+wood_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.583
+
+wood_fine_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.084
+
+wood_core_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.045
+
+wood_yggdrasil_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 3
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.008,0,-1.535
+  JoinEnd: 0.008,0,1.521
+  ShapeBottomOffset: -0.516
+
+blackwood_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.334
+
+stone_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.092
+
+coal_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.087
+
+blackmarble_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.5
+    Y: 0
+    Z: 1.5
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.078
+
+grausten_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2.25
+    Y: 0
+    Z: 2.25
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.153
+
+skull_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.8
+    Y: 0
+    Z: 0.8
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.07
+
+bone_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1
+    Y: 0
+    Z: 1
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.061
+
+treasure_pile:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 1.9
+    Y: 0
+    Z: 1.9
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.043
+
+treasure_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.33
+    Y: 0
+    Z: 0.33
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.008
+
+bar_tin_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_copper_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_bronze_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_iron_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_silver_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_blackmetal_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_flametal_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.005
+
+bar_gold_stack:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 0.6
+    Y: 1
+    Z: 0.6
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.01
+
+hearth:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 3
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.009
+
+portal_wood:
+  Directions: LeftRight
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 0
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.132,0,0.148
+  JoinEnd: 2.102,0,0.148
+  ShapeBottomOffset: -0.007
+
+portal_stone:
+  Directions: LeftRight
+  Dimensions:
+    X: 8
+    Y: 0
+    Z: 0
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -4.152,0,0.29
+  JoinEnd: 4.47,0,0.29
+  ShapeBottomOffset: -0.42
+
+piece_turret:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 4
+    Y: 0
+    Z: 4
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.532
+
+piece_TrainingDummy:
+  Directions: LeftRight, ForwardBackward
+  Dimensions:
+    X: 2
+    Y: 0
+    Z: 2
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 1
+    # Y: 0
+    # Z: 1
+    # X: 1
+    # Y: 0
+    # Z: 1
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 0.7
+    # Y: 0
+    # Z: 0.7
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.167,0,0
+  JoinEnd: 1.364,0,0
+  ShapeBottomOffset: -0.002
+
+piece_dvergr_lantern_pole:
+  TangentYawOffset: 180
+    # X: 4
+    # Y: 0
+    # Z: 4
+    # X: 4
+    # Y: 0
+    # Z: 4
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -3.002
+
+"ArmorStand":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"artisan_ext1":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.681,0,0
+  JoinEnd: 0.679,0,0
+  ShapeBottomOffset: -0.004
+
+"ashwood_bed":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.022,0,-1.454
+  JoinEnd: -0.022,0,1.648
+  ShapeBottomOffset: -0.078
+
+"ashwood_wall_cross_26":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.273
+
+"ashwood_wall_cross_45":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.227
+
+"ashwood_wall_cross_67":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.158
+
+"BakedPoteitr":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.081
+
+"BarleyWine":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"BatteringRam":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.228
+
+"bed":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.036,0,-1.465
+  JoinEnd: 0.036,0,1.665
+  ShapeBottomOffset: -0.003
+
+"Beech_Sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.024
+
+"Birch_Sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.048
+
+"blackforge_ext1":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.79,0,0
+  JoinEnd: 0.79,0,0
+  ShapeBottomOffset: -0.003
+
+"blackforge_ext2_vise":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.017
+
+"blackforge_ext3_metalcutter":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"blackforge_ext4_gemcutter":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"blackforge_ext5_apron":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.639,0,0.1
+  JoinEnd: 0.656,0,0.1
+  ShapeBottomOffset: -0.667
+
+"blackmarble_basecorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.997
+
+"blackmarble_floor_triangle":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.5
+
+"blackmarble_outcorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.003
+
+"blackmarble_tip":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.024
+
+"BlackSoup":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+"blastfurnace":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.259
+
+"BloodPudding":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"Blueberries":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.03
+
+"BoarJerky":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.019
+
+"bonfire":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.496
+
+"Bread":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.001,0,-0.46
+  JoinEnd: 0.001,0,0.45
+  ShapeBottomOffset: 0.004
+
+"Candle_resin":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.025
+
+"Carrot":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.23
+  JoinEnd: 0,0,0.659
+  ShapeBottomOffset: -0.103
+
+"CarrotSoup":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.013
+
+"Cart":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.004,0,-1.059
+  JoinEnd: -0.004,0,2.208
+  ShapeBottomOffset: -0.054
+
+"Catapult":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.008,0,-3.884
+  JoinEnd: -0.008,0,2.487
+  ShapeBottomOffset: 0.228
+
+"cauldron_ext1_spice":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.097,0,-0.005
+  JoinEnd: 1.052,0,-0.005
+  ShapeBottomOffset: -0.967
+
+"cauldron_ext3_butchertable":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.006
+
+"cauldron_ext4_pots":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.408
+  JoinEnd: 0.999,0,0.408
+  ShapeBottomOffset: -1.186
+
+"cauldron_ext5_mortarandpestle":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.31,0,0.039
+  JoinEnd: 0.677,0,0.039
+  ShapeBottomOffset: -0.006
+
+"cauldron_ext6_rollingpins":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.432,0,-0.031
+  JoinEnd: 0.432,0,-0.031
+  ShapeBottomOffset: -0.167
+
+"cauldron_ext7_smoker":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"charcoal_kiln":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.631
+
+"Cloudberry":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.023
+
+"CookedAsksvinMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.42
+  JoinEnd: 0,0,0.435
+  ShapeBottomOffset: -0.006
+
+"CookedBjornMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.375,0,-0.014
+  JoinEnd: 0.37,0,-0.014
+  ShapeBottomOffset: -0.122
+
+"CookedBoneMawSerpentMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.664
+  JoinEnd: 0,0,0.765
+  ShapeBottomOffset: -0.15
+
+"CookedBugMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.601,0,0
+  JoinEnd: 0.68,0,0
+  ShapeBottomOffset: 0.004
+
+"CookedChickenMeat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"CookedDeerMeat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.013
+
+"CookedEgg":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"CookedHareMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.635,0,0
+  JoinEnd: 0.688,0,0
+  ShapeBottomOffset: -0.002
+
+"CookedLoxMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.009,0,-0.468
+  JoinEnd: 0.009,0,0.424
+  ShapeBottomOffset: -0.216
+
+"CookedMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.026,0,-0.214
+  JoinEnd: 0.026,0,0.401
+  ShapeBottomOffset: -0.08
+
+"CookedMooseMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.057,0,0.139
+  JoinEnd: 1.689,0,0.139
+  ShapeBottomOffset: -0.223
+
+"CookedSealBlubber":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.012,0,-0.262
+  JoinEnd: 0.012,0,0.275
+  ShapeBottomOffset: -0.024
+
+"CookedVoltureMeat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.018
+
+"CookedWolfMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.05,0,-0.275
+  JoinEnd: 0.05,0,0.681
+  ShapeBottomOffset: -0.039
+
+"cultivate_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"darkwood_gate":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.002
+  JoinEnd: 1,0,-0.002
+  ShapeBottomOffset: -0.005
+
+"darkwood_raven":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0.001,0,0
+  JoinEnd: 0.001,0,0
+  ShapeBottomOffset: -0.244
+
+"darkwood_roof_icorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.084
+
+"darkwood_roof_icorner_45":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.111
+
+"darkwood_roof_icorner_67":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.619
+
+"darkwood_roof_ocorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.26
+
+"darkwood_roof_ocorner_45":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.422
+
+"darkwood_roof_ocorner_67":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.576
+
+"darkwood_roof_top_67":
+  Directions: LeftRight
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.625
+
+"darkwood_wolf":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0,0,0
+  JoinEnd: 0,0,0
+  ShapeBottomOffset: -0.719
+
+"DeerStew":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"eitrrefinery":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.822,0,-0.017
+  JoinEnd: 2.819,0,-0.017
+  ShapeBottomOffset: -0.008
+
+"Eyescream":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+"FeastAshlands":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.104
+
+"FeastBlackforest":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.002
+
+"FeastDeepNorth":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.132,0,-0.083
+  JoinEnd: 1.245,0,-0.083
+  ShapeBottomOffset: -0.004
+
+"FeastMeadows":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.995,0,0.082
+  JoinEnd: 1.131,0,0.082
+  ShapeBottomOffset: 0.002
+
+"FeastMistlands":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.168,0,-0.05
+  JoinEnd: 1.154,0,-0.05
+  ShapeBottomOffset: 0.002
+
+"FeastMountains":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.818,0,0
+  JoinEnd: 0.818,0,0
+  ShapeBottomOffset: -0.002
+
+"FeastOceans":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.093,0,0.009
+  JoinEnd: 1.097,0,0.009
+  ShapeBottomOffset: -0.037
+
+"FeastPlains":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.018
+
+"FeastSwamps":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.788,0,0.038
+  JoinEnd: 1.699,0,0.038
+  ShapeBottomOffset: -0.005
+
+"fermenter":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"Fiddleheadfern":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.115
+
+"FierySvinstew":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"fire_pit":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.091
+
+"fire_pit_iron":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"FirTree_big_Sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.007
+
+"FirTree_Sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"FishAndBread":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.303,0,-0.008
+  JoinEnd: 0.238,0,-0.008
+  ShapeBottomOffset: -0.017
+
+"FishCooked":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.05,0,-0.178
+  JoinEnd: 0.05,0,0.412
+  ShapeBottomOffset: -0.11
+
+"FishSoup":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.045
+
+"FishWraps":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.001,0,-0.219
+  JoinEnd: -0.001,0,0.352
+  ShapeBottomOffset: -0.009
+
+"flametal_gate":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.55,0,0
+  JoinEnd: 0.95,0,0
+  ShapeBottomOffset: 0.014
+
+"flint_pile":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.058
+
+"forge_ext1":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.002
+
+"forge_ext2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"forge_ext3":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"forge_ext4":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.476
+  JoinEnd: 0,0,0.79
+  ShapeBottomOffset: 0.043
+
+"forge_ext5":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"forge_ext6":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.25,0,0.106
+  JoinEnd: 1.25,0,0.106
+  ShapeBottomOffset: -0.696
+
+"guard_stone":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.002
+
+"Honey":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.064
+
+"HoneyGlazedChicken":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+"incinerator":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.182,0,0.252
+  JoinEnd: 1.217,0,0.252
+  ShapeBottomOffset: -0.023
+
+"itemstand":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.25
+
+"itemstandh":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.025
+
+"jute_carpet":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.028
+
+"jute_carpet_blue":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.03
+
+"Kale":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.27
+  JoinEnd: 0,0,0.255
+  ShapeBottomOffset: -0.015
+
+"KaleChips":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.072
+
+"Karve":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.083
+
+"Lingonberry":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.131
+
+"Lingondricka":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.057
+
+"LoxPie":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.017
+
+"MagicallyStuffedShroom":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.327,0,0.006
+  JoinEnd: 0.256,0,0.006
+  ShapeBottomOffset: -0.021
+
+"MarinatedGreens":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.328,0,0
+  JoinEnd: 0.326,0,0
+  ShapeBottomOffset: -0.006
+
+"MashedMeat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MeadBugRepellent":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.04
+
+"MeadBzerker":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MeadEitrLingering":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.002
+
+"MeadEitrMinor":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MeadFrostResist":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.022
+
+"MeadHasty":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.009
+
+"MeadHealthLingering":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"MeadHealthMajor":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"MeadHealthMedium":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"MeadHealthMinor":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.008
+
+"MeadLightfoot":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"MeadPoisonResist":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.015
+
+"MeadStaminaLingering":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"MeadStaminaMedium":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.015
+
+"MeadStaminaMinor":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.015
+
+"MeadStrength":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"MeadSwimmer":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"MeadTamer":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MeadTasty":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.018
+
+"MeadTrollPheromones":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MeatballsMashedPoteitr":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.018
+
+"MeatPlatter":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.407,0,-0.013
+  JoinEnd: 0.493,0,-0.013
+  ShapeBottomOffset: 0.008
+
+"MinceMeatSauce":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.003
+
+"MisthareSupreme":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.003
+
+"MooseKebab":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.039
+
+"mud_road_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"Mushroom":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.046
+
+"MushroomBzerker":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.012
+
+"MushroomJotunPuffs":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.003
+
+"MushroomMagecap":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"MushroomOmelette":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"MushroomSmokePuff":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.006
+
+"MushroomYellow":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.081
+
+"NeckTailGrilled":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.753
+  JoinEnd: 0,0,1.414
+  ShapeBottomOffset: -50.349
+
+"Oak_Sapling":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.113
+
+"Oat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.014
+
+"OatmealLingonberryJam":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.019
+
+"OatMilk":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.036
+
+"Onion":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.016
+
+"OnionSoup":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+"OvenPancake":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.364,0,0
+  JoinEnd: 0.364,0,0
+  ShapeBottomOffset: 0.075
+
+"Pancakes":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.04
+
+"path_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"paved_road_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"piece_ArcheryTarget":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.022,0,0.034
+  JoinEnd: 1.026,0,0.034
+  ShapeBottomOffset: -1.001
+
+"piece_asksvinskeleton":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.609,0,0
+  JoinEnd: 1.73,0,0
+  ShapeBottomOffset: -0.012
+
+"piece_banner01":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner02":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner03":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner04":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner05":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner06":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner07":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner08":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner09":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner10":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_banner11":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.705
+  JoinEnd: 0,0,0.705
+  ShapeBottomOffset: -2.926
+
+"piece_barber":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"piece_bathtub":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.029
+
+"piece_bed02":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.009
+
+"piece_beehive":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.024
+
+"piece_bench01":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.234,0,-0.033
+  JoinEnd: 1.266,0,-0.033
+  ShapeBottomOffset: -0.001
+
+"piece_bench_runed":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.054,0,0.003
+  JoinEnd: 1.054,0,0.003
+  ShapeBottomOffset: -0.002
+
+"piece_birdnest":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.59
+
+"piece_blackmarble_bench":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.273,0,0.001
+  JoinEnd: 1.273,0,0.001
+  ShapeBottomOffset: 0
+
+"piece_blackmarble_table":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.281,0,0
+  JoinEnd: 1.281,0,0
+  ShapeBottomOffset: 0
+
+"piece_blackmarble_throne":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"piece_blackwood_bench01":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"piece_bone_throne":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.78,0,-0.076
+  JoinEnd: 0.78,0,-0.076
+  ShapeBottomOffset: -0.037
+
+"piece_brazierceiling01":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.034
+
+"piece_brazierfloor01":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.058
+
+"piece_brazierfloor02":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.058
+
+"piece_cartographytable":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.065,0,0.034
+  JoinEnd: 2.173,0,0.034
+  ShapeBottomOffset: 0.001
+
+"piece_CelebrationGarland":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.091,0,0
+  JoinEnd: 2.085,0,0
+  ShapeBottomOffset: -0.354
+
+"piece_chair":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.071
+
+"piece_chair02":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.749
+  JoinEnd: 0,0,0.387
+  ShapeBottomOffset: -0.015
+
+"piece_chair03":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.012
+
+"piece_chair_runed":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.002,0,-0.744
+  JoinEnd: -0.002,0,0.386
+  ShapeBottomOffset: -0.027
+
+"piece_cloth_hanging_door":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.563
+  JoinEnd: 0,0,0.563
+  ShapeBottomOffset: -2.4
+
+"piece_cloth_hanging_door_blue":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-1
+  JoinEnd: 0,0,1
+  ShapeBottomOffset: 0.002
+
+"piece_cloth_hanging_door_blue2":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-2.202
+  JoinEnd: 0,0,2.202
+  ShapeBottomOffset: 0
+
+"piece_cookingstation":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.844,0,0.007
+  JoinEnd: 0.889,0,0.007
+  ShapeBottomOffset: -0.18
+
+"piece_cookingstation_iron":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.442,0,0
+  JoinEnd: 2.292,0,0
+  ShapeBottomOffset: -0.299
+
+"piece_drawbridge":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.072,0,-2
+  JoinEnd: 0.072,0,2
+  ShapeBottomOffset: -1.213
+
+"piece_drawbridge_log":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.199,0,-1
+  JoinEnd: -0.199,0,1
+  ShapeBottomOffset: -1.187
+
+"piece_dvergr_lantern":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.888
+
+"piece_dvergr_spiralstair":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.076
+
+"piece_dvergr_spiralstair_right":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.076
+
+"piece_EternalPyre":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.011
+
+"piece_FairylightGarland":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.07,0,-0.005
+  JoinEnd: 2.07,0,-0.005
+  ShapeBottomOffset: -0.472
+
+"piece_FrostFoundry":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.014,0,-2.75
+  JoinEnd: 0.014,0,2.75
+  ShapeBottomOffset: -0.267
+
+"piece_FrostKiln":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.017
+
+"piece_gift1":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.313,0,0.003
+  JoinEnd: 0.304,0,0.003
+  ShapeBottomOffset: -0.011
+
+"piece_gift2":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.376,0,0.003
+  JoinEnd: 0.365,0,0.003
+  ShapeBottomOffset: -0.013
+
+"piece_gift3":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.469,0,0.004
+  JoinEnd: 0.456,0,0.004
+  ShapeBottomOffset: -0.017
+
+"Piece_grausten_pillar_arch":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.01
+
+"Piece_grausten_pillar_arch_small":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 0,0,0
+  ShapeBottomOffset: -0.005
+
+"piece_grausten_roof_45_arch_corner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.045
+
+"piece_grausten_roof_45_arch_corner2":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.045
+
+"piece_grausten_roof_45_corner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.023
+
+"piece_grausten_roof_45_corner2":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.028
+
+"piece_groundtorch":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.654
+
+"piece_groundtorch_blue":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.654
+
+"piece_groundtorch_green":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.654
+
+"piece_groundtorch_mist":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.647
+
+"piece_groundtorch_wood":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.652
+
+"piece_hexagonal_door":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: X
+  JoinStart: 0,0,0.001
+  JoinEnd: 0,0,0.001
+  ShapeBottomOffset: -2.098
+
+"piece_hoodedlantern":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"piece_jackoturnip":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.001
+
+"piece_Lavalantern":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.01
+
+"piece_logbench01":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.348,0,0.004
+  JoinEnd: 1.348,0,0.004
+  ShapeBottomOffset: -0.103
+
+"piece_magetable_ext":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.007
+
+"piece_magetable_ext2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.003
+
+"piece_magetable_ext3":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.698,0,0.006
+  JoinEnd: 0.663,0,0.006
+  ShapeBottomOffset: -0.664
+
+"piece_magetable_ext4":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.527,0,-0.103
+  JoinEnd: 0.533,0,-0.103
+  ShapeBottomOffset: -0.017
+
+"piece_maypole":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.091,0,-2.082
+  JoinEnd: -0.091,0,2.122
+  ShapeBottomOffset: -0.05
+
+"piece_mistletoe":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.605
+
+"piece_moose_throne":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.126,0,-0.09
+  JoinEnd: 1.126,0,-0.09
+  ShapeBottomOffset: -0.006
+
+"piece_oven":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.004
+
+"piece_pot1":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.005
+
+"piece_pot2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.005
+
+"piece_pot3":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.005
+
+"piece_remove_feaster":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"piece_repair":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"piece_sapcollector":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.384,0,0
+  JoinEnd: 1.258,0,0
+  ShapeBottomOffset: -0.813
+
+"piece_shieldgenerator":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.018
+
+"piece_snowlantern":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.035
+
+"piece_spinningwheel":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.047,0,-1.508
+  JoinEnd: 0.047,0,1.455
+  ShapeBottomOffset: -0.007
+
+"piece_table":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.246,0,-0.016
+  JoinEnd: 1.254,0,-0.016
+  ShapeBottomOffset: -0.014
+
+"piece_table_oak":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -3.249,0,-0.007
+  JoinEnd: 3.355,0,-0.007
+  ShapeBottomOffset: -0.011
+
+"piece_table_round":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.022
+
+"piece_table_runed":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -2.025,0,-0.002
+  JoinEnd: 2.034,0,-0.002
+  ShapeBottomOffset: 0
+
+"piece_table_runed_small":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"piece_throne01":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.06,0,0.02
+  JoinEnd: 1.06,0,0.02
+  ShapeBottomOffset: -0.005
+
+"piece_throne02":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.811,0,-0.054
+  JoinEnd: 0.811,0,-0.054
+  ShapeBottomOffset: 0.001
+
+"piece_trap_troll":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.977,0,0.02
+  JoinEnd: 0.986,0,0.02
+  ShapeBottomOffset: -0.566
+
+"piece_walltorch":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.333
+
+"piece_wisplure":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.18
+
+"piece_workbench_ext1":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.712,0,0
+  JoinEnd: 0.342,0,0
+  ShapeBottomOffset: -0.002
+
+"piece_workbench_ext2":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.207,0,-0.344
+  JoinEnd: 1.206,0,-0.344
+  ShapeBottomOffset: -0.039
+
+"piece_workbench_ext3":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.094,0,0
+  JoinEnd: 1.094,0,0
+  ShapeBottomOffset: -0.357
+
+"piece_workbench_ext4":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.908,0,0.017
+  JoinEnd: 0.893,0,0.017
+  ShapeBottomOffset: -0.372
+
+"piece_xmascrown":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.072,0,-0.851
+  JoinEnd: -0.072,0,0.867
+  ShapeBottomOffset: -0.824
+
+"piece_xmasgarland":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-2.202
+  JoinEnd: 0,0,2.202
+  ShapeBottomOffset: 0.19
+
+"piece_xmastree":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.167
+
+"PineTree_Sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.006
+
+"PiquantPie":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.007
+
+"placeable_bigrock_01":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.19
+
+"placeable_bigrock_02":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.147
+
+"Placeable_HardRock":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.041
+
+"Placeable_Stone":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.075
+
+"Poteitr":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.112
+
+"Pukeberries":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.008
+
+"PulledBear":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.292,0,-0.006
+  JoinEnd: 0.264,0,-0.006
+  ShapeBottomOffset: 0.001
+
+"QueensJam":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"Raft":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -1.474
+
+"raise_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"Raspberry":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.01
+
+"replant_v2":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.125
+
+"RoastedCrustPie":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.017
+
+"RottenMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.013,0,-0.519
+  JoinEnd: 0.013,0,0.322
+  ShapeBottomOffset: -0.086
+
+"RoyalJelly":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.161
+
+"rug_asksvin":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.03
+
+"rug_Bjorn":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.161
+
+"rug_deer":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.059
+
+"rug_fur":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.03
+
+"rug_hare":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0,0,-0.927
+  JoinEnd: 0,0,0.927
+  ShapeBottomOffset: 0.029
+
+"rug_moose":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.033
+
+"rug_seal":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.058
+
+"rug_straw":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.034
+
+"rug_wolf":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.03
+
+"Salad":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001
+
+"sapling_barley":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.086
+
+"sapling_carrot":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.023
+
+"sapling_flax":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.041
+
+"sapling_jotunpuffs":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.316,0,0.008
+  JoinEnd: 0.305,0,0.008
+  ShapeBottomOffset: -0.422
+
+"sapling_Kale":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.012
+
+"sapling_magecap":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.139
+
+"sapling_oat":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.043
+
+"sapling_onion":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"sapling_poteitr":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.023
+
+"sapling_seedcarrot":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.32
+
+"sapling_seedkale":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.012
+
+"sapling_seedonion":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.144
+
+"sapling_seedturnip":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.201
+
+"sapling_turnip":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.003
+
+"Sausages":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"ScorchingMedley":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.03
+
+"SealSoup":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.051
+
+"SeekerAspic":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"SerpentMeatCooked":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.16
+
+"SerpentStew":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"ShocklateSmoothie":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.002
+
+"sign":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.5,0,0
+  JoinEnd: 0.5,0,0
+  ShapeBottomOffset: -0.25
+
+"SizzlingBerryBroth":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.003
+
+"smelter":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"SmokedFish":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: -0.005,0,-0.407
+  JoinEnd: -0.005,0,0.239
+  ShapeBottomOffset: -0.073
+
+"SmokedMooseMeat":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.315,0,0.008
+  JoinEnd: 0.301,0,0.008
+  ShapeBottomOffset: -0.043
+
+"SparklingShroomshake":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.003
+
+"SpicyMarmalade":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.002
+
+"stave_gate":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.036
+
+"stave_wall_cross_26":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.021
+  JoinEnd: 1,0,0.021
+  ShapeBottomOffset: -0.299
+
+"stave_wall_cross_45":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.005
+  JoinEnd: 1,0,-0.005
+  ShapeBottomOffset: -0.246
+
+"stave_wall_cross_67":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,-0.001
+  JoinEnd: 1,0,-0.001
+  ShapeBottomOffset: -0.15
+
+"TurnipStew":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0
+
+"VikingCupcake":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: 0.008
+
+"VikingShip":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0,0,-11.237
+  JoinEnd: 0,0,11.347
+  ShapeBottomOffset: -1.567
+
+"VikingShip_Ashlands":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0,0,-17.26
+  JoinEnd: 0,0,17.948
+  ShapeBottomOffset: -1.845
+
+"VineAsh_sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.169
+
+"Vineberry":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -0.346,0,-0.027
+  JoinEnd: 0.385,0,-0.027
+  ShapeBottomOffset: -0.047
+
+"VineGreen_sapling":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.169
+
+"windmill":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.048
+
+"WolfJerky":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.018,0,-0.244
+  JoinEnd: 0.018,0,0.268
+  ShapeBottomOffset: 0.002
+
+"WolfMeatSkewer":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: IntactMeshEdges
+  Confidence: High
+  ShapeAxis: Z
+  JoinStart: 0.001,0,-0.37
+  JoinEnd: 0.001,0,0.395
+  ShapeBottomOffset: -0.047
+
+"wood_dragon1":
+  ProfileType: EdgeChain
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Z
+  JoinStart: 0,0,0
+  JoinEnd: 0,0,0
+  ShapeBottomOffset: -0.257
+
+"wood_fence_gate":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1.2,0,-0.003
+  JoinEnd: 0.8,0,-0.003
+  ShapeBottomOffset: -1.025
+
+"wood_frost_stack":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.113
+
+"wood_gate":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -1.026
+
+"wood_roof_icorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.108
+
+"wood_roof_icorner_45":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.21
+
+"wood_roof_icorner_67":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.469
+
+"wood_roof_ocorner":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.247
+
+"wood_roof_ocorner_45":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.274
+
+"wood_roof_ocorner_67":
+  ProfileType: GroundProp
+  Status: NeedsReview
+  MeasurementSource: Uncertain
+  Confidence: Low
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.593
+
+"wood_wall_roof_top":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.002
+  JoinEnd: 1,0,0.002
+  ShapeBottomOffset: -0.322
+
+"wood_wall_roof_top_45":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0.003
+  JoinEnd: 1,0,0.003
+  ShapeBottomOffset: -0.264
+
+"wood_wall_roof_top_67":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 1,0,0
+  ShapeBottomOffset: -0.187
+
+"wood_window":
+  ProfileType: EdgeChain
+  Status: Ready
+  MeasurementSource: ProjectedSnapEdges
+  Confidence: High
+  ShapeAxis: X
+  JoinStart: -1,0,0
+  JoinEnd: 0,0,0
+  ShapeBottomOffset: -0.525
+
+"YggdrasilPorridge":
+  ProfileType: GroundProp
+  Status: Ready
+  MeasurementSource: GroundFootprint
+  Confidence: High
+  ShapeAxis: Auto
+  ShapeBottomOffset: -0.001

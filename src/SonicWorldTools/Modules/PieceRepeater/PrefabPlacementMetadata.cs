@@ -29,6 +29,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		internal PrefabRepeatAxis Axis;
 		internal float Spacing;
 		internal Vector3 CenterOffset;
+		internal Vector3 PositionOffset;
+		internal Vector3 JoinStartOffset;
+		internal Vector3 JoinEndOffset;
 		internal float YawOffset;
 		internal float TangentYawOffset;
 		internal float BottomOffset;
@@ -37,6 +40,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		internal bool SupportsZ;
 		internal RepeatProfileType ProfileType;
 		internal RepeatProfileStatus Status;
+		internal bool Enabled;
 		internal Vector3 JoinStart;
 		internal Vector3 JoinEnd;
 		internal string MeasurementSource;
@@ -47,6 +51,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Axis = axis;
 			Spacing = spacing;
 			CenterOffset = centerOffset;
+			PositionOffset = Vector3.zero;
+			JoinStartOffset = Vector3.zero;
+			JoinEndOffset = Vector3.zero;
 			YawOffset = yawOffset;
 			TangentYawOffset = 0f;
 			BottomOffset = bottomOffset;
@@ -55,6 +62,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			SupportsZ = supportsZ;
 			ProfileType = RepeatProfileType.EdgeChain;
 			Status = RepeatProfileStatus.NeedsReview;
+			Enabled = false;
 			JoinStart = Vector3.zero;
 			JoinEnd = Vector3.zero;
 			MeasurementSource = "legacy-fallback";
@@ -62,11 +70,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		}
 	}
 
-	/// <summary>Loads editable placement profiles and generates a catalog from loaded build tables.</summary>
+	/// <summary>Loads the shipped editable placement catalog and appends profiles discovered from loaded build tables.</summary>
 	internal static class PrefabPlacementMetadata
 	{
-		private const float MinimumSpacing = 0.25f;
-		private const string CatalogName = "PieceProfiles.yml";
+		private const float MinimumSpacing = 0.1f;
+		private const string CatalogName = "VanillaPieces.yml";
+		private const string LegacyCatalogName = "PieceProfiles.yml";
+		private const string EmbeddedCatalogName = "SonicWorldTools.PrefabPlacement.VanillaPieces.yml";
 		private static Dictionary<string, Entry> Entries = new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase);
 		private static ManualLogSource _log;
 		private static FileSystemWatcher _watcher;
@@ -74,7 +84,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private static string _configDirectory;
 		private static readonly object ReloadTimerLock = new object();
 		private static readonly Dictionary<int, Bounds> RendererBoundsCache = new Dictionary<int, Bounds>();
+		private static readonly object PreviewOffsetsLock = new object();
+		private static readonly Dictionary<string, EditableOffsetOverride> PreviewOffsets = new Dictionary<string, EditableOffsetOverride>(StringComparer.OrdinalIgnoreCase);
 		private static bool _catalogInitialized;
+		private static int _catalogRevision;
 		private static bool _refreshCommandRegistered;
 		private static float _nextCatalogAttempt;
 
@@ -97,7 +110,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		internal static void RegisterRefreshCommand()
 		{
 			if (_refreshCommandRegistered) return;
-			new Terminal.ConsoleCommand("sonic_piece_catalog_refresh", "Append newly loaded build pieces to the editable Piece Repeater catalog.", args =>
+			new Terminal.ConsoleCommand("sonic_piece_catalog_refresh", "Append newly loaded build pieces to VanillaPieces.yml.", args =>
 			{
 				try
 				{
@@ -109,32 +122,110 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_refreshCommandRegistered = true;
 		}
 
+		internal static int CatalogRevision => Volatile.Read(ref _catalogRevision);
+
 		private static int RefreshCatalog()
 		{
 			if (!ZNetScene.instance) return 0;
 			RendererBoundsCache.Clear();
 			string path = Path.Combine(_configDirectory, CatalogName);
 			var existing = new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase);
-			if (File.Exists(path)) Parse(File.ReadAllLines(path), existing);
+			string currentYaml = File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+			if (!string.IsNullOrEmpty(currentYaml)) Parse(File.ReadAllLines(path), existing);
 			var candidates = GetBuildTableCandidates();
 			if (candidates.Count == 0) return 0;
 			var yaml = new StringBuilder();
 			int added = 0;
 			foreach (KeyValuePair<string, GameObject> candidate in candidates)
 			{
-				if (existing.ContainsKey(candidate.Key)) continue;
+				if (existing.TryGetValue(candidate.Key, out Entry configured)
+				    && configured.HasProfileType
+				    && (configured.ProfileType != RepeatProfileType.EdgeChain || (configured.HasJoinStart && configured.HasJoinEnd))) continue;
 				AppendGeneratedProfile(yaml, candidate.Key, candidate.Value);
 				added++;
 			}
-			if (!File.Exists(path))
+			if (added > 0)
 			{
 				Directory.CreateDirectory(_configDirectory);
-				File.WriteAllText(path, "# Generated from build-piece tables. Edit profiles here; refresh only appends new pieces.\n" + yaml, new System.Text.UTF8Encoding(false));
+				currentYaml = MergeYamlSections(currentYaml, yaml.ToString());
+				File.WriteAllText(path, currentYaml, new System.Text.UTF8Encoding(false));
 			}
-			else if (added > 0) File.AppendAllText(path, yaml.ToString(), new System.Text.UTF8Encoding(false));
 			if (added > 0) Reload(_log);
-			_log?.LogInfo("[PieceRepeater] Catalog scanned " + candidates.Count + " build pieces; appended " + added + " profiles at " + path);
+			_log?.LogInfo("[PieceRepeater] Catalog scanned " + candidates.Count + " build pieces; added " + added + " profiles to " + path);
 			return candidates.Count;
+		}
+
+		private sealed class YamlSection
+		{
+			internal string Id;
+			internal readonly List<string> Lines = new List<string>();
+		}
+
+		private static string MergeYamlSections(string primary, string additions)
+		{
+			var lines = new List<string>((primary ?? string.Empty).Replace("\r", string.Empty).Split('\n'));
+			if (lines.Count == 1 && lines[0].Length == 0) lines.Clear();
+			foreach (YamlSection addition in GetYamlSections(additions))
+			{
+				List<YamlSection> targets = GetYamlSections(string.Join("\n", lines));
+				YamlSection target = targets.FirstOrDefault(section => string.Equals(section.Id, addition.Id, StringComparison.OrdinalIgnoreCase));
+				if (target == null)
+				{
+					while (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[lines.Count - 1])) lines.RemoveAt(lines.Count - 1);
+					if (lines.Count > 0) lines.Add(string.Empty);
+					lines.AddRange(addition.Lines);
+					continue;
+				}
+
+				int targetStart = lines.FindIndex(line => GetYamlHeaderId(line) is string id && string.Equals(id, target.Id, StringComparison.OrdinalIgnoreCase));
+				if (targetStart < 0) continue;
+				int targetEnd = targetStart + 1;
+				while (targetEnd < lines.Count && GetYamlHeaderId(lines[targetEnd]) == null) targetEnd++;
+				var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				for (int i = targetStart + 1; i < targetEnd; i++)
+					if (GetIndent(lines[i]) == 2 && TryReadPair(lines[i].Trim(), out string key, out _)) keys.Add(key);
+				var missing = new List<string>();
+				foreach (string line in addition.Lines.Skip(1))
+				{
+					if (GetIndent(line) != 2 || !TryReadPair(line.Trim(), out string key, out _)) continue;
+					if (keys.Add(key)) missing.Add(line);
+				}
+				if (missing.Count > 0) lines.InsertRange(targetEnd, missing);
+			}
+			return string.Join("\n", lines).TrimEnd() + "\n";
+		}
+
+		private static List<YamlSection> GetYamlSections(string yaml)
+		{
+			var result = new List<YamlSection>();
+			YamlSection current = null;
+			foreach (string line in (yaml ?? string.Empty).Replace("\r", string.Empty).Split('\n'))
+			{
+				string id = GetYamlHeaderId(line);
+				if (id != null)
+				{
+					current = new YamlSection { Id = id };
+					current.Lines.Add(line);
+					result.Add(current);
+				}
+				else if (current != null) current.Lines.Add(line);
+			}
+			return result;
+		}
+
+		private static string GetYamlHeaderId(string line)
+		{
+			if (string.IsNullOrWhiteSpace(line) || GetIndent(line) != 0) return null;
+			string trimmed = line.Trim();
+			if (trimmed.StartsWith("#", StringComparison.Ordinal) || !trimmed.EndsWith(":", StringComparison.Ordinal)) return null;
+			return trimmed.Substring(0, trimmed.Length - 1).Trim().Trim('"', '\'');
+		}
+
+		private static int GetIndent(string line)
+		{
+			int indent = 0;
+			while (indent < line.Length && line[indent] == ' ') indent++;
+			return indent;
 		}
 
 		internal static SortedDictionary<string, GameObject> GetBuildTableCandidates()
@@ -202,8 +293,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				if (hasSnap) snapBounds.Encapsulate(local);
 				else { snapBounds = new Bounds(local, Vector3.zero); hasSnap = true; }
 			}
-			float x = hasSnap ? snapBounds.size.x : bounds.size.x;
-			float z = hasSnap ? snapBounds.size.z : bounds.size.z;
+			// Use the intact renderer footprint to identify a likely repeat axis, but
+			// prefer the projected horizontal snap-edge centers as joins when those
+			// anchors agree with the rendered ends. Renderer bounds often include
+			// decorative mesh overhang that is not part of the connection interval.
+			float x = bounds.size.x;
+			float z = bounds.size.z;
 			bool axisX = x > 0.5f && x > z * 1.4f;
 			bool axisZ = z > 0.5f && z > x * 1.4f;
 			if (!axisX && !axisZ)
@@ -218,8 +313,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (floorPanel && !axisX && !axisZ)
 			{
 				axisZ = true;
-				x = hasSnap ? snapBounds.size.x : bounds.size.x;
-				z = hasSnap ? snapBounds.size.z : bounds.size.z;
+				x = bounds.size.x;
+				z = bounds.size.z;
 			}
 			// A narrow standing prop can have a long arm, but its horizontal edges
 			// are not repeat joints. Do not classify those arms as fence segments.
@@ -244,20 +339,29 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				|| id.IndexOf("banner", StringComparison.OrdinalIgnoreCase) >= 0;
 			bool ready = chain ? Mathf.Max(bounds.size.x, bounds.size.z) > 0.5f && bounds.size.y < 12f && snapEdgesConsistent
 				: (!hasSnap || standingProp) && (centered || standingProp) && grounded && !likelyWallMount && horizontalExtent < 1.5f;
-			string source = chain && hasSnap ? "ProjectedSnapEdges" : chain ? "IntactMeshEdges" : "GroundFootprint";
-			float start = axisX ? (hasSnap ? snapBounds.min.x : bounds.min.x) : (hasSnap ? snapBounds.min.z : bounds.min.z);
-			float end = axisX ? (hasSnap ? snapBounds.max.x : bounds.max.x) : (hasSnap ? snapBounds.max.z : bounds.max.z);
+			bool useProjectedSnapEdges = chain && hasSnap && snapEdgesConsistent;
+			string source = chain ? useProjectedSnapEdges ? "ProjectedSnapEdges" : "IntactRendererBounds" : "GroundFootprint";
+			float start = axisX
+				? (useProjectedSnapEdges ? snapBounds.min.x : bounds.min.x)
+				: (useProjectedSnapEdges ? snapBounds.min.z : bounds.min.z);
+			float end = axisX
+				? (useProjectedSnapEdges ? snapBounds.max.x : bounds.max.x)
+				: (useProjectedSnapEdges ? snapBounds.max.z : bounds.max.z);
 			float transverse = axisX ? bounds.center.z : bounds.center.x;
+			if (useProjectedSnapEdges)
+				transverse = axisX ? snapBounds.center.z : snapBounds.center.x;
 			Vector3 joinStart = axisX ? new Vector3(start, 0f, transverse) : new Vector3(transverse, 0f, start);
 			Vector3 joinEnd = axisX ? new Vector3(end, 0f, transverse) : new Vector3(transverse, 0f, end);
 			yaml.Append('\n').Append('"').Append(id.Replace("\"", "")).AppendLine("\":");
 			yaml.Append("  ProfileType: ").AppendLine(chain ? "EdgeChain" : "GroundProp");
+			yaml.Append("  Enabled: ").AppendLine(ready ? "true" : "false");
 			yaml.Append("  Status: ").AppendLine(ready ? "Ready" : "NeedsReview");
 			yaml.Append("  MeasurementSource: ").AppendLine(ready ? source : "Uncertain");
 			yaml.Append("  Confidence: ").AppendLine(ready ? "High" : "Low");
 			yaml.Append("  ShapeAxis: ").AppendLine(axisX ? "X" : axisZ ? "Z" : "Auto");
 			if (chain)
 			{
+				yaml.AppendLine("  # To keep hand-tuned joins, change MeasurementSource to Manual.");
 				yaml.Append("  JoinStart: ").AppendLine(FormatVector(joinStart));
 				yaml.Append("  JoinEnd: ").AppendLine(FormatVector(joinEnd));
 			}
@@ -267,6 +371,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				yaml.AppendLine("  TangentYawOffset: 0");
 			}
 			yaml.Append("  ShapeBottomOffset: ").AppendLine(bounds.min.y.ToString("0.###", CultureInfo.InvariantCulture));
+			yaml.AppendLine("  # Optional per-prefab local-space placement corrections (metres / degrees).");
+			yaml.AppendLine("  ShapePositionOffset: 0,0,0");
+			yaml.AppendLine("  ShapeYawOffset: 0");
 		}
 
 		private static string FormatVector(Vector3 value) => value.x.ToString("0.###", CultureInfo.InvariantCulture) + "," + value.y.ToString("0.###", CultureInfo.InvariantCulture) + "," + value.z.ToString("0.###", CultureInfo.InvariantCulture);
@@ -284,6 +391,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			internal bool HasShapeSpacing;
 			internal Vector3 ShapeCenterOffset;
 			internal bool HasShapeCenterOffset;
+			internal Vector3 ShapePositionOffset;
+			internal bool HasShapePositionOffset;
+			internal Vector3 ShapeJoinStartOffset;
+			internal Vector3 ShapeJoinEndOffset;
 			internal bool UseSnapCenter;
 			internal float ShapeYawOffset;
 			internal float TangentYawOffset;
@@ -291,6 +402,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			internal bool HasShapeBottomOffset;
 			internal RepeatProfileType ProfileType;
 			internal bool HasProfileType;
+			internal bool Enabled = true;
 			internal RepeatProfileStatus Status = RepeatProfileStatus.NeedsReview;
 			internal Vector3 JoinStart;
 			internal Vector3 JoinEnd;
@@ -302,13 +414,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			internal string Confidence = "Low";
 		}
 
-		internal static void Load(string configRoot, ManualLogSource log, ConfigEntry<bool> droppedDefaultYaml, ConfigFile config)
+		internal static void Load(string configRoot, ManualLogSource log)
 		{
 			_log = log;
 			_configDirectory = Path.Combine(configRoot ?? string.Empty, "SonicWorldTools", "PrefabPlacement");
 			try
 			{
 				Directory.CreateDirectory(_configDirectory);
+				EnsureDefaultCatalog();
+				MigrateLegacyCatalog();
 				Reload(log);
 				StartWatcher();
 			}
@@ -317,6 +431,30 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				log?.LogWarning("Could not initialize prefab placement metadata in " + _configDirectory + ": " + ex.Message + ". Using prefab geometry fallback.");
 			}
+		}
+
+		private static void EnsureDefaultCatalog()
+		{
+			string path = Path.Combine(_configDirectory, CatalogName);
+			if (File.Exists(path)) return;
+			using (Stream resource = Assembly.GetExecutingAssembly().GetManifestResourceStream(EmbeddedCatalogName))
+			{
+				if (resource == null) throw new InvalidOperationException("Embedded prefab placement catalog not found: " + EmbeddedCatalogName);
+				using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+					resource.CopyTo(output);
+			}
+			_log?.LogInfo("Installed default Piece Repeater catalog at " + path);
+		}
+
+		private static void MigrateLegacyCatalog()
+		{
+			string oldPath = Path.Combine(_configDirectory, LegacyCatalogName);
+			if (!File.Exists(oldPath)) return;
+			string path = Path.Combine(_configDirectory, CatalogName);
+			string merged = MergeYamlSections(File.ReadAllText(path), File.ReadAllText(oldPath));
+			File.WriteAllText(path, merged, new System.Text.UTF8Encoding(false));
+			File.Delete(oldPath);
+			_log?.LogInfo("Merged the previous PieceProfiles.yml into VanillaPieces.yml and removed the duplicate catalog.");
 		}
 
 		internal static void Shutdown()
@@ -369,11 +507,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			try
 			{
 				var parsed = new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase);
-				foreach (string file in Directory.GetFiles(_configDirectory, "*.yml", SearchOption.AllDirectories).OrderBy(f => Path.GetFileName(f) == CatalogName ? 0 : 1))
-					Parse(File.ReadAllLines(file), parsed);
-				foreach (string file in Directory.GetFiles(_configDirectory, "*.yaml", SearchOption.AllDirectories).OrderBy(f => Path.GetFileName(f) == CatalogName ? 0 : 1))
-					Parse(File.ReadAllLines(file), parsed);
+				string catalogPath = Path.Combine(_configDirectory, CatalogName);
+				if (File.Exists(catalogPath)) Parse(File.ReadAllLines(catalogPath), parsed);
 				Interlocked.Exchange(ref Entries, parsed);
+				Interlocked.Increment(ref _catalogRevision);
 				log?.LogInfo("Loaded " + parsed.Count + " prefab placement metadata entries from " + _configDirectory);
 			}
 			catch (Exception ex)
@@ -388,15 +525,27 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			entries.TryGetValue(prefabId ?? string.Empty, out Entry entry);
 			Bounds geometryBounds = GetLocalRendererBounds(prefab);
 			bool hasSnapBounds = TryGetLocalSnapBounds(prefab, out Bounds snapBounds);
+			// Catalog joins are explicit placement metadata. Never silently replace
+			// them with renderer bounds: those bounds can include decorative overhang
+			// and create visible gaps even on a straight run.
 			Bounds dimensions = hasSnapBounds ? snapBounds : geometryBounds;
 			PrefabRepeatAxis axis = axisOverride == PrefabRepeatAxis.Auto ? ResolveAxis(entry, dimensions) : axisOverride;
 			float spacing = ResolveSpacing(entry, axis, dimensions, geometryBounds);
 			bool hasJoins = entry != null && entry.HasJoinStart && entry.HasJoinEnd;
+			Vector3 joinStart = hasJoins ? entry.JoinStart : Vector3.zero;
+			Vector3 joinEnd = hasJoins ? entry.JoinEnd : Vector3.zero;
+			Vector3 joinStartOffset = entry != null ? entry.ShapeJoinStartOffset : Vector3.zero;
+			Vector3 joinEndOffset = entry != null ? entry.ShapeJoinEndOffset : Vector3.zero;
+			if (hasJoins)
+			{
+				joinStart += joinStartOffset;
+				joinEnd += joinEndOffset;
+			}
 			if (entry != null && entry.HasProfileType && entry.ProfileType == RepeatProfileType.GroundProp)
 				spacing = entry.HasDefaultSpacing ? entry.DefaultSpacing : PluginConfig.PieceRepeaterGroundPropSpacing?.Value ?? 2f;
 			else if (hasJoins)
 			{
-				Vector3 delta = entry.JoinEnd - entry.JoinStart;
+				Vector3 delta = joinEnd - joinStart;
 				delta.y = 0f;
 				spacing = delta.magnitude;
 			}
@@ -408,29 +557,206 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				: dimensions.size.z > MinimumSpacing;
 			Vector3 centerOffset = entry != null && entry.HasProfileType && entry.ProfileType == RepeatProfileType.GroundProp
 				&& !entry.HasShapeCenterOffset ? Vector3.zero : hasJoins
-				? (entry.JoinStart + entry.JoinEnd) * 0.5f
+				? (joinStart + joinEnd) * 0.5f
 				: entry != null && entry.HasShapeCenterOffset
 				? entry.ShapeCenterOffset
 				: entry != null && entry.UseSnapCenter && hasSnapBounds
 					? new Vector3(snapBounds.center.x, 0f, snapBounds.center.z)
 					: Vector3.zero;
+			Vector3 positionOffset = entry != null && entry.HasShapePositionOffset ? entry.ShapePositionOffset : Vector3.zero;
+			float yawOffset = entry != null ? entry.ShapeYawOffset : 0f;
+			float tangentYawOffset = entry != null ? entry.TangentYawOffset : 0f;
 			bool hasBottomOffsetOverride = entry != null && (entry.HasShapeBottomOffset || entry.HasDimensionBottomOffset);
 			float bottomOffset = entry != null && entry.HasShapeBottomOffset
 				? entry.ShapeBottomOffset
 				: entry != null && entry.HasDimensionBottomOffset
 					? entry.DimensionBottomOffset
-					: hasSnapBounds ? snapBounds.min.y : geometryBounds.min.y;
-			var result = new ResolvedPrefabPlacement(axis, Mathf.Max(MinimumSpacing, spacing), centerOffset, entry != null ? entry.ShapeYawOffset : 0f, bottomOffset, hasBottomOffsetOverride, supportsX, supportsZ);
-			result.TangentYawOffset = entry != null ? entry.TangentYawOffset : 0f;
+				: hasSnapBounds ? snapBounds.min.y : geometryBounds.min.y;
+			if (!string.IsNullOrWhiteSpace(prefabId))
+			{
+				lock (PreviewOffsetsLock)
+				{
+					if (PreviewOffsets.TryGetValue(prefabId, out EditableOffsetOverride previewOffsets))
+					{
+						positionOffset = previewOffsets.Position;
+						joinStartOffset = previewOffsets.JoinStart;
+						joinEndOffset = previewOffsets.JoinEnd;
+						if (hasJoins)
+						{
+							joinStart = entry.JoinStart + joinStartOffset;
+							joinEnd = entry.JoinEnd + joinEndOffset;
+						}
+						if (hasJoins) centerOffset = (joinStart + joinEnd) * 0.5f;
+						yawOffset = previewOffsets.Yaw;
+						tangentYawOffset = previewOffsets.TangentYaw;
+						bottomOffset = previewOffsets.Bottom;
+						hasBottomOffsetOverride = true;
+					}
+				}
+			}
+			// Endpoint overrides can change the true repeat span. Resolve it after
+			// live editor values are applied so path sampling and the displayed
+			// spacing agree with the edited profile.
+			if (hasJoins && entry != null && entry.ProfileType == RepeatProfileType.EdgeChain)
+			{
+				Vector3 adjustedJoinDelta = joinEnd - joinStart;
+				adjustedJoinDelta.y = 0f;
+				spacing = adjustedJoinDelta.magnitude;
+			}
+			var result = new ResolvedPrefabPlacement(axis, Mathf.Max(MinimumSpacing, spacing), centerOffset, yawOffset, bottomOffset, hasBottomOffsetOverride, supportsX, supportsZ);
+			result.TangentYawOffset = tangentYawOffset;
+			result.PositionOffset = positionOffset;
+			result.JoinStartOffset = joinStartOffset;
+			result.JoinEndOffset = joinEndOffset;
 			result.ProfileType = entry != null ? entry.ProfileType : RepeatProfileType.EdgeChain;
 			result.Status = entry != null ? entry.Status : RepeatProfileStatus.NeedsReview;
+			result.Enabled = entry != null && entry.Enabled;
 			if (result.ProfileType == RepeatProfileType.EdgeChain && (!hasJoins || spacing <= MinimumSpacing))
 				result.Status = RepeatProfileStatus.NeedsReview;
-			result.JoinStart = hasJoins ? entry.JoinStart : Vector3.zero;
-			result.JoinEnd = hasJoins ? entry.JoinEnd : Vector3.zero;
+			result.JoinStart = hasJoins ? joinStart : Vector3.zero;
+			result.JoinEnd = hasJoins ? joinEnd : Vector3.zero;
 			result.MeasurementSource = entry != null ? entry.MeasurementSource : "unprofiled";
 			result.Confidence = entry != null ? entry.Confidence : "Low";
 			return result;
+		}
+
+		internal static bool TryGetEditableOffsets(string prefabId, out Vector3 positionOffset,
+			out Vector3 joinStartOffset, out Vector3 joinEndOffset, out float yawOffset,
+			out float tangentYawOffset, out float bottomOffset)
+		{
+			positionOffset = Vector3.zero;
+			joinStartOffset = Vector3.zero;
+			joinEndOffset = Vector3.zero;
+			yawOffset = 0f;
+			tangentYawOffset = 0f;
+			bottomOffset = 0f;
+			Dictionary<string, Entry> entries = Interlocked.CompareExchange(ref Entries, null, null);
+			if (!entries.TryGetValue(prefabId ?? string.Empty, out Entry entry)) return false;
+			positionOffset = entry.ShapePositionOffset;
+			joinStartOffset = entry.ShapeJoinStartOffset;
+			joinEndOffset = entry.ShapeJoinEndOffset;
+			yawOffset = entry.ShapeYawOffset;
+			tangentYawOffset = entry.TangentYawOffset;
+			if (entry.HasShapeBottomOffset) bottomOffset = entry.ShapeBottomOffset;
+			else if (entry.HasDimensionBottomOffset) bottomOffset = entry.DimensionBottomOffset;
+			else
+			{
+				GameObject prefab = null;
+				if (ZNetScene.instance) prefab = ZNetScene.instance.GetPrefab(prefabId);
+				if (prefab) bottomOffset = GetLocalRendererBounds(prefab).min.y;
+			}
+			return true;
+		}
+
+		internal static void SetPreviewOffsets(string prefabId, Vector3 positionOffset, Vector3 joinStartOffset,
+			Vector3 joinEndOffset, float yawOffset, float tangentYawOffset, float bottomOffset)
+		{
+			if (string.IsNullOrWhiteSpace(prefabId)) return;
+			lock (PreviewOffsetsLock)
+				PreviewOffsets[prefabId] = new EditableOffsetOverride(positionOffset, joinStartOffset, joinEndOffset,
+					yawOffset, tangentYawOffset, bottomOffset);
+		}
+
+		internal static void ClearPreviewOffsets(string prefabId)
+		{
+			if (string.IsNullOrWhiteSpace(prefabId)) return;
+			lock (PreviewOffsetsLock) PreviewOffsets.Remove(prefabId);
+		}
+
+		private readonly struct EditableOffsetOverride
+		{
+			internal readonly Vector3 Position;
+			internal readonly Vector3 JoinStart;
+			internal readonly Vector3 JoinEnd;
+			internal readonly float Yaw;
+			internal readonly float TangentYaw;
+			internal readonly float Bottom;
+
+			internal EditableOffsetOverride(Vector3 position, Vector3 joinStart, Vector3 joinEnd,
+				float yaw, float tangentYaw, float bottom)
+			{
+				Position = position;
+				JoinStart = joinStart;
+				JoinEnd = joinEnd;
+				Yaw = yaw;
+				TangentYaw = tangentYaw;
+				Bottom = bottom;
+			}
+		}
+
+		internal static bool SaveEditableOffsets(string prefabId, Vector3 positionOffset,
+			Vector3 joinStartOffset, Vector3 joinEndOffset, float yawOffset,
+			float tangentYawOffset, float bottomOffset, out string error)
+		{
+			error = null;
+			if (string.IsNullOrWhiteSpace(prefabId))
+			{
+				error = "No prefab is selected. Sample a build piece first.";
+				return false;
+			}
+			try
+			{
+				string path = Path.Combine(_configDirectory, CatalogName);
+				string yaml = File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+				YamlSection existingSection = GetYamlSections(yaml).FirstOrDefault(item => string.Equals(item.Id, prefabId, StringComparison.OrdinalIgnoreCase));
+				if (existingSection == null)
+				{
+					error = "This prefab is not in the placement catalog yet. Run sonic_piece_catalog_refresh and try again.";
+					return false;
+				}
+
+				string section = string.Join("\n", existingSection.Lines);
+				string updated = SetYamlValue(section, "ShapePositionOffset", FormatVector(positionOffset));
+				updated = SetYamlValue(updated, "ShapeJoinStartOffset", FormatVector(joinStartOffset));
+				updated = SetYamlValue(updated, "ShapeJoinEndOffset", FormatVector(joinEndOffset));
+				updated = SetYamlValue(updated, "ShapeYawOffset", yawOffset.ToString("0.###", CultureInfo.InvariantCulture));
+				updated = SetYamlValue(updated, "TangentYawOffset", tangentYawOffset.ToString("0.###", CultureInfo.InvariantCulture));
+				updated = SetYamlValue(updated, "ShapeBottomOffset", bottomOffset.ToString("0.###", CultureInfo.InvariantCulture));
+				yaml = ReplaceYamlSection(yaml, prefabId, updated);
+				File.WriteAllText(path, yaml, new System.Text.UTF8Encoding(false));
+				Reload(_log);
+				_log?.LogInfo("[PieceRepeater] Saved per-piece offsets for " + prefabId + " to " + path);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				error = "Could not save this profile: " + ex.Message;
+				_log?.LogWarning("[PieceRepeater] Could not save offsets for " + prefabId + ": " + ex);
+				return false;
+			}
+		}
+
+		private static string SetYamlValue(string section, string key, string value)
+		{
+			string[] lines = section.Replace("\r", string.Empty).Split('\n');
+			string prefix = "  " + key + ":";
+			for (int i = 1; i < lines.Length; i++)
+			{
+				if (lines[i].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+				{
+					lines[i] = prefix + " " + value;
+					return string.Join("\n", lines);
+				}
+			}
+			int insertAt = lines.Length;
+			while (insertAt > 1 && string.IsNullOrWhiteSpace(lines[insertAt - 1])) insertAt--;
+			var result = lines.Take(insertAt).ToList();
+			result.Add(prefix + " " + value);
+			result.AddRange(lines.Skip(insertAt));
+			return string.Join("\n", result);
+		}
+
+		private static string ReplaceYamlSection(string yaml, string prefabId, string updatedSection)
+		{
+			List<string> lines = (yaml ?? string.Empty).Replace("\r", string.Empty).Split('\n').ToList();
+			int start = lines.FindIndex(line => string.Equals(GetYamlHeaderId(line), prefabId, StringComparison.OrdinalIgnoreCase));
+			if (start < 0) throw new InvalidOperationException("Prefab section disappeared while saving.");
+			int end = start + 1;
+			while (end < lines.Count && GetYamlHeaderId(lines[end]) == null) end++;
+			List<string> replacement = updatedSection.Replace("\r", string.Empty).Split('\n').ToList();
+			lines.RemoveRange(start, end - start);
+			lines.InsertRange(start, replacement);
+			return string.Join("\n", lines).TrimEnd() + "\n";
 		}
 
 		private static PrefabRepeatAxis ResolveAxis(Entry entry, Bounds bounds)
@@ -603,6 +929,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					{
 						current.HasShapeCenterOffset = TryParseVector3(value, out current.ShapeCenterOffset);
 					}
+					else if (string.Equals(key, "ShapePositionOffset", StringComparison.OrdinalIgnoreCase))
+					{
+						current.HasShapePositionOffset = TryParseVector3(value, out current.ShapePositionOffset);
+					}
+					else if (string.Equals(key, "ShapeJoinStartOffset", StringComparison.OrdinalIgnoreCase))
+						TryParseVector3(value, out current.ShapeJoinStartOffset);
+					else if (string.Equals(key, "ShapeJoinEndOffset", StringComparison.OrdinalIgnoreCase))
+						TryParseVector3(value, out current.ShapeJoinEndOffset);
 					else if (string.Equals(key, "ShapeYawOffset", StringComparison.OrdinalIgnoreCase))
 					{
 						if (TryParseFloat(value, out float yawOffset)) current.ShapeYawOffset = yawOffset;
@@ -621,6 +955,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					}
 					else if (string.Equals(key, "ProfileType", StringComparison.OrdinalIgnoreCase))
 						current.HasProfileType = Enum.TryParse(value, true, out current.ProfileType);
+					else if (string.Equals(key, "Enabled", StringComparison.OrdinalIgnoreCase))
+						current.Enabled = !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase)
+							&& !string.Equals(value, "0", StringComparison.OrdinalIgnoreCase)
+							&& !string.Equals(value, "no", StringComparison.OrdinalIgnoreCase);
 					else if (string.Equals(key, "Status", StringComparison.OrdinalIgnoreCase))
 						Enum.TryParse(value, true, out current.Status);
 					else if (string.Equals(key, "JoinStart", StringComparison.OrdinalIgnoreCase))

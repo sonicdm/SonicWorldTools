@@ -39,7 +39,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 
 			var output = new StringBuilder(128 * 1024);
-			output.AppendLine("PrefabId\tPieceName\tProfileType\tStatus\tMeasurementSource\tConfidence\tRepeatAxis\tResolvedSpacing\tJoinStart\tJoinEnd\tCenterOffset\tYawOffset\tBottomOffset\tHasRenderers\tRenderCenter\tRenderSize\tRenderMin\tRenderMax\tSnapMin\tSnapMax\tSnapPoints");
+			output.AppendLine("PrefabId\tPieceName\tEnabled\tProfileType\tStatus\tMeasurementSource\tConfidence\tRepeatAxis\tResolvedSpacing\tJoinStart\tJoinEnd\tCenterOffset\tShapePositionOffset\tYawOffset\tBottomOffset\tHasRenderers\tRenderCenter\tRenderSize\tRenderMin\tRenderMax\tSnapMin\tSnapMax\tSnapPoints");
 			int exported = 0;
 			int failed = 0;
 			foreach (KeyValuePair<string, GameObject> candidate in PrefabPlacementMetadata.GetBuildTableCandidates())
@@ -75,6 +75,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 					output.Append(Clean(prefab.name)).Append('\t')
 						.Append(Clean(piece.m_name)).Append('\t')
+						.Append(metadata.Enabled ? "true" : "false").Append('\t')
 						.Append(metadata.ProfileType).Append('\t')
 						.Append(metadata.Status).Append('\t')
 						.Append(Clean(metadata.MeasurementSource)).Append('\t')
@@ -84,6 +85,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 						.Append(Vector(metadata.JoinStart)).Append('\t')
 						.Append(Vector(metadata.JoinEnd)).Append('\t')
 						.Append(Vector(metadata.CenterOffset)).Append('\t')
+						.Append(Vector(metadata.PositionOffset)).Append('\t')
 						.Append(Number(metadata.YawOffset)).Append('\t')
 						.Append(Number(metadata.BottomOffset)).Append('\t')
 						.Append(renderers.Length > 0 ? "true" : "false").Append('\t')

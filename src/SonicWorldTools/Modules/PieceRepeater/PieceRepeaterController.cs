@@ -23,13 +23,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 	internal sealed class PieceRepeaterController
 	{
 		private const int MaximumPlacements = 512;
-		private const int MaximumPreviewDots = 192;
-		private const float MinimumSpacing = 0.25f;
+		private const int MaximumPreviewDots = MaximumPlacements;
+		private const float MinimumSpacing = 0.1f;
+		private const float MaximumTerrainSampleDelta = 8f;
 		private const float RotationStepDegrees = 22.5f;
 		private static PieceRepeaterController _instance;
 
 		private readonly List<Vector3> _points = new List<Vector3>();
 		private readonly List<Placement> _placements = new List<Placement>();
+		private readonly List<PlacementVerification> _placementVerifications = new List<PlacementVerification>();
 		private readonly List<Vector3> _outline = new List<Vector3>();
 		private readonly RaycastHit[] _surfaceRayHits = new RaycastHit[64];
 		private string _prefabId;
@@ -38,6 +40,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private bool _bothSides;
 		private bool _hasLockedStartPlacement;
 		private Placement _lockedStartPlacement;
+		private bool _hasLockedStartAnchor;
+		private bool _lockedStartAnchorIsSnap;
+		private Vector3 _lockedStartAnchorWorld;
+		private Vector3 _lockedStartAnchorLocal;
 		private int _snapPointIndex = -1;
 		private bool _active;
 		private KeyHintConfig _keyHints;
@@ -64,7 +70,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private int _lastPathDiagnosticPointCount = -1;
 		private Vector3 _lastPathDiagnosticAim;
 		private float _lastPathCenterDeviation;
+		private int _lastPathCenterPivotCount;
+		private int _lastPathInsidePivotCount;
+		private float _lastPathInsideEdgeErrorMax;
+		private int _catalogRevision = -1;
 		private readonly PieceRepeaterSettingsPanel _settingsPanel;
+		private readonly PieceRepeaterOffsetEditor _offsetEditor;
 
 		private struct Placement
 		{
@@ -76,6 +87,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Position = position;
 				Rotation = rotation;
 			}
+		}
+
+		private sealed class PlacementVerification
+		{
+			internal GameObject Instance;
+			internal string PrefabId;
+			internal Vector3 RequestedPosition;
+			internal Quaternion RequestedRotation;
+			internal float VerifyAfter;
 		}
 
 		internal static bool IsActive => _instance != null && _instance._active;
@@ -105,6 +125,26 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (controller == null || !controller._active || !Player.m_localPlayer) return false;
 			KeyCode key = PluginConfig.PieceRepeaterSettingsHotkey.Value;
 			if (key == KeyCode.None || key == KeyCode.Escape || !Input.GetKeyDown(key)) return false;
+			bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+			if (shift)
+			{
+				if (controller._offsetEditor.IsOpen)
+				{
+					controller._offsetEditor.Close(true);
+					return true;
+				}
+				if (controller._settingsPanel.IsOpen) return false;
+				if (!OwnsPlayerInput || PrecisionAreaPipetteInput.IsTextInputBlocking()) return false;
+				if (!InfinityHammerBridge.TryGetActiveToolSelectionName(out string offsetTool)
+				    || !ToolInstaller.IsPieceRepeaterToolName(offsetTool)) return false;
+				controller._offsetEditor.Open(controller._prefabId);
+				return controller._offsetEditor.IsOpen;
+			}
+			if (controller._offsetEditor.IsOpen)
+			{
+				controller._offsetEditor.Close(true);
+				return true;
+			}
 			if (controller._settingsPanel.IsOpen)
 			{
 				controller._settingsPanel.Close(true);
@@ -122,6 +162,52 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		{
 			_instance = this;
 			_settingsPanel = new PieceRepeaterSettingsPanel(this);
+			_offsetEditor = new PieceRepeaterOffsetEditor(this);
+		}
+
+		internal string SelectedPrefabId => _prefabId;
+		internal void RefreshOffsetPreview()
+		{
+			RefreshLockedStartForCurrentProfile();
+			UpdatePreview();
+		}
+		internal void OffsetEditorClosed()
+		{
+			_awaitPrimaryRelease = true;
+			RefreshLockedStartForCurrentProfile();
+			UpdatePreview();
+		}
+
+		private void RefreshPreviewForCatalogChanges()
+		{
+			int revision = PrefabPlacementMetadata.CatalogRevision;
+			if (_catalogRevision == revision) return;
+			_catalogRevision = revision;
+			RefreshLockedStartForCurrentProfile();
+			UpdatePreview();
+		}
+
+		private void RefreshLockedStartForCurrentProfile()
+		{
+			if (!_active || !_hasLockedStartPlacement || !_hasLockedStartAnchor
+			    || !ZNetScene.instance || string.IsNullOrWhiteSpace(_prefabId)) return;
+			GameObject prefab = ZNetScene.instance.GetPrefab(_prefabId);
+			if (!prefab) return;
+			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
+			if (metadata.ProfileType == RepeatProfileType.EdgeChain && _points.Count > 1)
+			{
+				// A profile/offset edit re-anchors the start using the first committed
+				// leg, then lets the normal full-route solve update every following ghost.
+				UpdateLockedStartForDirection(prefab, metadata, _points[1]);
+				return;
+			}
+
+			// Keep the vanilla snap anchor fixed while applying live local corrections.
+			Quaternion rotation = _lockedStartPlacement.Rotation;
+			Vector3 root = _lockedStartAnchorWorld - rotation * _lockedStartAnchorLocal
+				+ rotation * metadata.PositionOffset;
+			_lockedStartPlacement = new Placement(root, rotation);
+			if (_points.Count > 0) _points[0] = root + rotation * metadata.CenterOffset;
 		}
 
 		internal static void CaptureAndActivate()
@@ -146,8 +232,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_filled = false;
 			_bothSides = false;
 			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
 			_snapPointIndex = -1;
-			_gapMeters = Mathf.Clamp(PluginConfig.PieceRepeaterGap.Value, 0f, 5f);
+			_gapMeters = Mathf.Clamp(PluginConfig.PieceRepeaterGap.Value, -5f, 5f);
 			_rotationSteps = 0;
 			_sideOffset = 2f;
 			_points.Clear();
@@ -171,6 +259,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			_active = false;
 			_settingsPanel.Close(false);
+			_offsetEditor.Close(false);
 			if (_keyHints != null) KeyHintManager.Instance.RemoveKeyHint(_keyHints);
 			_keyHints = null;
 			_restoreIhShapeShortcut?.Dispose();
@@ -179,6 +268,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_lastPathDiagnosticKey = null;
 			_lastPathDiagnosticPointCount = -1;
 			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
 			_snapPointIndex = -1;
 			_placements.Clear();
 			_outline.Clear();
@@ -191,6 +282,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		{
 			Deactivate("plugin-destroy");
 			_settingsPanel.Shutdown();
+			_offsetEditor.Shutdown();
 			ClearPreview();
 			if (_instance == this) _instance = null;
 			IsPlacingBatch = false;
@@ -206,6 +298,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		internal void Tick()
 		{
+			VerifyRecentPlacements();
 			if (!_active && Player.m_localPlayer && Player.m_localPlayer.InPlaceMode()
 			    && InfinityHammerBridge.TryGetActiveToolSelectionName(out string armingTool)
 			    && ToolInstaller.IsPieceRepeaterToolName(armingTool))
@@ -242,7 +335,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			if (Input.GetKeyDown(KeyCode.Escape))
 			{
-				bool panelWasOpen = _settingsPanel.IsOpen;
+				bool panelWasOpen = _settingsPanel.IsOpen || _offsetEditor.IsOpen;
 				Deactivate("escape");
 				// A modal Jotunn panel blocks Valheim's normal Escape handler. Restore
 				// the expected tool-exit-and-menu behavior on this same keypress.
@@ -254,6 +347,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				return;
 			}
+			RefreshPreviewForCatalogChanges();
 			if (PrecisionAreaPipetteInput.IsTextInputBlocking()) return;
 			HandleSnapPointInput(player);
 			EnsureKeyHints(player);
@@ -263,7 +357,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				if (Input.GetKey(PluginConfig.PieceRepeaterSpacingModifier.Value))
 				{
 					SetGap(_gapMeters + wheel * 0.1f);
-					Notify("Piece gap: " + _gapMeters.ToString("0.##") + " m; repeat interval: " + GetSpacing().ToString("0.##") + " m.");
+					Notify("Spacing offset: " + _gapMeters.ToString("0.##") + " m; repeat interval: " + GetSpacing().ToString("0.##") + " m.");
 				}
 				else
 				{
@@ -305,11 +399,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			bool finish = Input.GetKey(PluginConfig.PieceRepeaterPlaceModifier.Value);
 			if (_mode == PieceRepeaterMode.Path)
 			{
+				List<Placement> previousPreview = null;
+				Vector3 committedWaypoint = Vector3.zero;
+				bool waypointAdded = false;
 				GameObject selectedPrefab = ZNetScene.instance ? ZNetScene.instance.GetPrefab(_prefabId) : null;
 				if (!selectedPrefab || PrefabPlacementMetadata.IsExcludedPiece(selectedPrefab)
+				    || !ResolvePlacementMetadata(selectedPrefab).Enabled
 				    || ResolvePlacementMetadata(selectedPrefab).Status != RepeatProfileStatus.Ready)
 				{
-					Notify("Piece Repeater: this piece needs a Ready profile in PieceProfiles.yml.");
+					Notify("Piece Repeater: enable this piece and give it a Ready profile in VanillaPieces.yml.");
 					return;
 				}
 				if (_points.Count == 0 && ZNetScene.instance
@@ -317,13 +415,29 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				{
 					ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(firstPrefab);
 					Placement startPlacement = GetInitialPlacement(firstPrefab, _aim, metadata);
-					if (TryGetInitialSnapPlacement(player, _aim, out Placement snappedStart))
+					if (TryGetInitialSnapPlacement(player, _aim, out Placement snappedStart,
+						out Vector3 snapAnchorWorld, out Vector3 snapAnchorLocal))
+					{
 						startPlacement = snappedStart;
+						_lockedStartAnchorWorld = snapAnchorWorld;
+						_lockedStartAnchorLocal = snapAnchorLocal;
+						_lockedStartAnchorIsSnap = true;
+					}
+					else
+					{
+						_lockedStartAnchorLocal = metadata.CenterOffset;
+						_lockedStartAnchorWorld = startPlacement.Position + startPlacement.Rotation * metadata.CenterOffset;
+						_lockedStartAnchorIsSnap = false;
+					}
+					_hasLockedStartAnchor = true;
 					_lockedStartPlacement = startPlacement;
 					_rotationStepsAtStart = _rotationSteps;
 					_hasLockedStartPlacement = true;
-					_points.Add(startPlacement.Position + startPlacement.Rotation *
-						(metadata.ProfileType == RepeatProfileType.EdgeChain ? metadata.JoinEnd : metadata.CenterOffset));
+					// Waypoints are stamp centers for the path solver. The first model
+					// remains at its vanilla-snapped transform, but its center is the
+					// first curve point so subsequent pieces are fitted from the actual
+					// centerline instead of starting one half-piece ahead at JoinEnd.
+					_points.Add(startPlacement.Position + startPlacement.Rotation * metadata.CenterOffset);
 				}
 				else if (_points.Count == 0)
 				{
@@ -332,14 +446,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				}
 				else
 				{
-					// Later clicks define the route and must not release the first pose lock.
-					if (_points.Count == 1 && _hasLockedStartPlacement)
-					{
-						ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(selectedPrefab);
-						if (metadata.ProfileType == RepeatProfileType.EdgeChain)
-							_points[0] = GetOutgoingJoin(metadata, _aim);
-					}
 					Vector3 waypoint = GetPathWaypoint(_aim);
+					previousPreview = new List<Placement>(_placements);
+					committedWaypoint = waypoint;
+					// The first route leg determines the starter piece's secant heading.
+					// Keep its vanilla snap target fixed while solving the new rotation.
+					// Use the committed waypoint (including Right-Alt joint snapping), so
+					// the initial piece and fitted route use the same endpoint.
 					Vector3 fromLast = waypoint - _points[_points.Count - 1];
 					fromLast.y = 0f;
 					if (fromLast.sqrMagnitude < 0.0001f && !finish)
@@ -347,7 +460,17 @@ namespace SonicWorldTools.Modules.PieceRepeater
 						Notify("Waypoint remains at the previous joint; move farther or release the joint modifier.");
 						return;
 					}
-					if (fromLast.sqrMagnitude >= 0.0001f) _points.Add(waypoint);
+					if (_points.Count == 1 && _hasLockedStartPlacement)
+					{
+						ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(selectedPrefab);
+						if (metadata.ProfileType == RepeatProfileType.EdgeChain)
+							UpdateLockedStartForDirection(selectedPrefab, metadata, waypoint);
+					}
+					if (fromLast.sqrMagnitude >= 0.0001f)
+					{
+						_points.Add(waypoint);
+						waypointAdded = true;
+					}
 				}
 				if (finish)
 				{
@@ -356,6 +479,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				else
 				{
 					UpdatePreview();
+					if (waypointAdded) LogWaypointSolve(previousPreview, committedWaypoint);
 					Notify("Path point " + _points.Count + "; Ctrl+click to finish and place.");
 				}
 				return;
@@ -383,7 +507,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		internal void SetGap(float gap)
 		{
-			_gapMeters = Mathf.Round(Mathf.Clamp(gap, 0f, 5f) * 10f) / 10f;
+			_gapMeters = Mathf.Round(Mathf.Clamp(gap, -5f, 5f) * 10f) / 10f;
 			PluginConfig.PieceRepeaterGap.Value = _gapMeters;
 			UpdatePreview();
 		}
@@ -563,7 +687,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				return;
 			}
 
-			int placed = 0;
+			int requests = 0;
+			int matchedInstances = 0;
+			ResolvedPrefabPlacement batchMetadata = PrefabPlacementMetadata.Resolve(_prefabId, prefab);
+			PieceRepeaterDiagnostics.Log("BatchBegin", "prefab=" + _prefabId + " mode=" + _mode
+				+ " waypoints=" + _points.Count + " placements=" + _placements.Count
+				+ " profile=" + batchMetadata.ProfileType + "/" + batchMetadata.Status + " axis=" + batchMetadata.Axis
+				+ " joins=" + batchMetadata.JoinStart.ToString("F3") + "->" + batchMetadata.JoinEnd.ToString("F3")
+				+ " positionOffset=" + batchMetadata.PositionOffset.ToString("F3")
+				+ " yawOffset=" + batchMetadata.YawOffset.ToString("0.###") + " bottomOffset=" + batchMetadata.BottomOffset.ToString("0.###")
+				+ " gap=" + _gapMeters.ToString("0.###") + " smoothing=" + PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##"));
 			if (!InfinityHammerBridge.TrySuspendPlacementInterception(out IDisposable restoreIhPlacement))
 			{
 				Notify("Piece Repeater: could not safely bypass IH's active tool placement hook; no pieces placed.");
@@ -578,16 +711,36 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				using (restoreIhPlacement)
 				{
-					foreach (Placement placement in _placements)
+					for (int index = 0; index < _placements.Count; index++)
 					{
+						Placement placement = _placements[index];
+						HashSet<int> before = GetWearNTearInstanceIds();
 						player.PlacePiece(piece, placement.Position, placement.Rotation, true);
-						placed++;
+						requests++;
+						List<WearNTear> created = FindNewMatchingInstances(before, _prefabId, placement);
+						if (created.Count > 0) matchedInstances++;
+						float previousJoinError = index > 0 ? GetJoinError(_placements[index - 1], placement, prefab) : 0f;
+						PieceRepeaterDiagnostics.Log("PlaceRequest", "index=" + index + " prefab=" + _prefabId
+							+ " root=" + placement.Position.ToString("F3") + " yaw=" + placement.Rotation.eulerAngles.y.ToString("0.0")
+							+ " previousJoinError=" + previousJoinError.ToString("0.000") + "m"
+							+ " matchingWearNTearCreated=" + created.Count
+							+ (created.Count > 0 ? " instance=" + created[0].name + " id=" + created[0].GetInstanceID() : string.Empty));
+						for (int createdIndex = 0; createdIndex < created.Count; createdIndex++)
+							_placementVerifications.Add(new PlacementVerification
+							{
+								Instance = created[createdIndex].gameObject,
+								PrefabId = _prefabId,
+								RequestedPosition = placement.Position,
+								RequestedRotation = placement.Rotation,
+								VerifyAfter = Time.unscaledTime + 2f
+							});
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogWarning("[PieceRepeater] Placement stopped after " + placed + " pieces: " + ex.Message);
+				PieceRepeaterDiagnostics.Log("BatchException", "requests=" + requests + " error=" + ex);
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("[PieceRepeater] Placement stopped after " + requests + " requests: " + ex.Message);
 			}
 			finally
 			{
@@ -595,9 +748,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				IsPlacingBatch = false;
 			}
 
-			Notify("Piece Repeater sent " + placed + " " + _prefabId + " placement request(s). Use IH undo to reverse the batch.");
+			PieceRepeaterDiagnostics.Log("BatchEnd", "prefab=" + _prefabId + " requests=" + requests
+				+ " withImmediateInstance=" + matchedInstances + " pendingDelayedVerification=" + _placementVerifications.Count);
+			Notify("Piece Repeater sent " + requests + " " + _prefabId + " placement request(s); detected " + matchedInstances
+				+ " structural instances immediately. Diagnostics: BepInEx/logs/SonicWorldTools-PieceRepeater.log. Use IH undo to reverse the batch.");
 			_points.Clear();
 			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
 			UpdatePreview();
 		}
 
@@ -635,8 +793,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			int pathSteps = _hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps;
 			if (_mode != PieceRepeaterMode.Path)
 				rotation = Quaternion.Euler(0f, pathSteps * RotationStepDegrees, 0f) * rotation;
-			Vector3 rootPosition = placement.Position - rotation * metadata.CenterOffset;
+			Vector3 correction = rotation * metadata.PositionOffset;
+			Vector3 rootPosition = placement.Position - rotation * metadata.CenterOffset + correction;
 			rootPosition = ApplySurfaceHeightMode(rootPosition, groundOffset, fixedHeight);
+			rootPosition.y += correction.y;
 			return new Placement(rootPosition, rotation);
 		}
 
@@ -907,7 +1067,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private bool TryGetInitialSnapPlacement(Player player, Vector3 aim, out Placement placement)
 		{
+			return TryGetInitialSnapPlacement(player, aim, out placement, out _, out _);
+		}
+
+		private bool TryGetInitialSnapPlacement(Player player, Vector3 aim, out Placement placement,
+			out Vector3 targetAnchorWorld, out Vector3 sourceAnchorLocal)
+		{
 			placement = default(Placement);
+			targetAnchorWorld = Vector3.zero;
+			sourceAnchorLocal = Vector3.zero;
 			if (!player || !ZNetScene.instance || string.IsNullOrEmpty(_prefabId)) return false;
 			GameObject prefab = ZNetScene.instance.GetPrefab(_prefabId);
 			if (!prefab || !EnsureSnapProbe(prefab)) return false;
@@ -916,23 +1084,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_snapProbe.transform.SetPositionAndRotation(initial.Position, initial.Rotation);
 			if (!InfinityHammerBridge.TryFindSnapPair(player, _snapProbe.transform, _snapPointIndex,
 				out Transform sourceSnapPoint, out Transform targetSnapPoint))
-			{ placement = initial; return true; }
+			{ placement = initial; return false; }
 
+			targetAnchorWorld = targetSnapPoint.position;
+			sourceAnchorLocal = _snapProbe.transform.InverseTransformPoint(sourceSnapPoint.position);
 			Vector3 snappedRoot = initial.Position + targetSnapPoint.position - sourceSnapPoint.position;
 			if (metadata.ProfileType == RepeatProfileType.GroundProp)
 				snappedRoot = ApplySurfaceHeightMode(snappedRoot, -metadata.BottomOffset, snappedRoot.y);
+			snappedRoot += initial.Rotation * metadata.PositionOffset;
 			placement = new Placement(snappedRoot, initial.Rotation);
 			return true;
-		}
-
-		private Vector3 GetWaypointPosition(Player player, Vector3 aim)
-		{
-			if (!ZNetScene.instance || string.IsNullOrEmpty(_prefabId)) return aim;
-			GameObject prefab = ZNetScene.instance.GetPrefab(_prefabId);
-			if (!prefab) return aim;
-			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
-			if (!TryGetInitialSnapPlacement(player, aim, out Placement placement)) return aim;
-			return placement.Position + placement.Rotation * metadata.CenterOffset;
 		}
 
 		private Placement GetInitialPlacement(GameObject prefab, Vector3 aim, ResolvedPrefabPlacement metadata)
@@ -980,6 +1141,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			if (metadata.ProfileType == RepeatProfileType.GroundProp)
 				rootPosition = ApplySurfaceHeightMode(rootPosition, groundOffset, rootPosition.y);
+			rootPosition += rotation * metadata.PositionOffset;
 			return new Placement(rootPosition, rotation);
 		}
 
@@ -1016,6 +1178,33 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				rotation *= Quaternion.Euler(0f, -90f, 0f);
 			rotation *= Quaternion.Euler(0f, metadata.YawOffset, 0f);
 			return Quaternion.Euler(0f, _rotationSteps * RotationStepDegrees, 0f) * rotation;
+		}
+
+		private void UpdateLockedStartForDirection(GameObject prefab, ResolvedPrefabPlacement metadata, Vector3 target)
+		{
+			if (!_hasLockedStartPlacement || !_hasLockedStartAnchor || !prefab) return;
+			Vector3 direction = target - _lockedStartAnchorWorld;
+			direction.y = 0f;
+			if (direction.sqrMagnitude < 0.0001f) return;
+			direction.Normalize();
+
+			Vector3 localAxis = metadata.JoinEnd - metadata.JoinStart;
+			localAxis.y = 0f;
+			if (localAxis.sqrMagnitude < 0.0001f) return;
+			float outgoingAxisSign = PieceRepeaterPathMath.ResolveOutgoingAxisSign(
+				_lockedStartAnchorLocal, metadata.JoinStart, metadata.JoinEnd, _lockedStartAnchorIsSnap);
+			localAxis.Normalize();
+			localAxis *= outgoingAxisSign;
+			float desiredYaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+			float localYaw = Mathf.Atan2(localAxis.x, localAxis.z) * Mathf.Rad2Deg;
+			float wheelYaw = (_rotationSteps - _rotationStepsAtStart) * RotationStepDegrees;
+			float yaw = desiredYaw - localYaw - metadata.YawOffset + wheelYaw;
+			Quaternion rotation = Quaternion.Euler(0f, yaw, 0f)
+				* Quaternion.Euler(0f, metadata.YawOffset, 0f);
+			Vector3 root = _lockedStartAnchorWorld - rotation * _lockedStartAnchorLocal
+				+ rotation * metadata.PositionOffset;
+			_lockedStartPlacement = new Placement(root, rotation);
+			_points[0] = root + rotation * metadata.CenterOffset;
 		}
 
 		private float GetSpacing(GameObject prefab = null)
@@ -1069,13 +1258,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					if (_mode == PieceRepeaterMode.Path)
 					{
 						var pending = new List<Vector3>(_points);
-						if (pending.Count == 1 && _hasLockedStartPlacement)
-						{
-							ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
-							if (metadata.ProfileType == RepeatProfileType.EdgeChain)
-								pending[0] = GetOutgoingJoin(metadata, _aim);
-						}
-						pending.Add(GetPathWaypoint(_aim, pending));
+						Vector3 previewWaypoint = GetPathWaypoint(_aim, pending);
+						Vector3 previewLeg = previewWaypoint - pending[pending.Count - 1];
+						previewLeg.y = 0f;
+						// A repeated endpoint creates a degenerate Catmull-Rom segment
+						// that can loop beyond the last committed point. Keep the preview
+						// identical to the committed route until the cursor advances.
+						if (previewLeg.sqrMagnitude >= 0.0001f) pending.Add(previewWaypoint);
 						if (pending.Count >= 2) GeneratePathPreview(pending, GetSpacing(prefab), prefab);
 					}
 					else if (_mode == PieceRepeaterMode.Circle || _points.Count >= 1)
@@ -1107,20 +1296,289 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_aim = savedAim;
 		}
 
+		private void LogWaypointSolve(IList<Placement> previous, Vector3 waypoint)
+		{
+			int comparable = Mathf.Min(previous != null ? previous.Count : 0, _placements.Count);
+			int changed = 0;
+			float maxPositionDelta = 0f;
+			float maxRotationDelta = 0f;
+			for (int i = 0; i < comparable; i++)
+			{
+				float positionDelta = Vector3.Distance(previous[i].Position, _placements[i].Position);
+				float rotationDelta = Quaternion.Angle(previous[i].Rotation, _placements[i].Rotation);
+				maxPositionDelta = Mathf.Max(maxPositionDelta, positionDelta);
+				maxRotationDelta = Mathf.Max(maxRotationDelta, rotationDelta);
+				if (positionDelta > 0.02f || rotationDelta > 1f) changed++;
+			}
+
+			string message = "prefab=" + _prefabId + " committed=" + _points.Count
+				+ " point=" + waypoint.ToString("F2")
+				+ " previousPreview=" + (previous != null ? previous.Count : 0)
+				+ " solvedPreview=" + _placements.Count
+				+ " changedExisting=" + changed + "/" + comparable
+				+ " maxPositionDelta=" + maxPositionDelta.ToString("0.000") + "m"
+				+ " maxRotationDelta=" + maxRotationDelta.ToString("0.0") + "deg";
+			PieceRepeaterDiagnostics.Log("WaypointSolve", message);
+		}
+
+		private static HashSet<int> GetWearNTearInstanceIds()
+		{
+			var ids = new HashSet<int>();
+			List<WearNTear> instances = WearNTear.GetAllInstances();
+			if (instances == null) return ids;
+			for (int i = 0; i < instances.Count; i++)
+				if (instances[i]) ids.Add(instances[i].GetInstanceID());
+			return ids;
+		}
+
+		private static List<WearNTear> FindNewMatchingInstances(HashSet<int> before, string prefabId, Placement requested)
+		{
+			var matches = new List<WearNTear>();
+			List<WearNTear> instances = WearNTear.GetAllInstances();
+			if (instances == null) return matches;
+			for (int i = 0; i < instances.Count; i++)
+			{
+				WearNTear instance = instances[i];
+				if (!instance || before.Contains(instance.GetInstanceID())) continue;
+				string instanceName = instance.gameObject.name;
+				if (instanceName.EndsWith("(Clone)", StringComparison.Ordinal))
+					instanceName = instanceName.Substring(0, instanceName.Length - 7);
+				if (!string.Equals(instanceName, prefabId, StringComparison.OrdinalIgnoreCase)) continue;
+				if (Vector3.Distance(instance.transform.position, requested.Position) > 0.1f
+				    || Quaternion.Angle(instance.transform.rotation, requested.Rotation) > 2f) continue;
+				matches.Add(instance);
+			}
+			return matches;
+		}
+
+		private void VerifyRecentPlacements()
+		{
+			for (int i = _placementVerifications.Count - 1; i >= 0; i--)
+			{
+				PlacementVerification verification = _placementVerifications[i];
+				if (Time.unscaledTime < verification.VerifyAfter) continue;
+				GameObject instance = verification.Instance;
+				if (!instance)
+				{
+					PieceRepeaterDiagnostics.Log("DelayedCheck", "prefab=" + verification.PrefabId + " aliveAfter2s=false");
+					_placementVerifications.RemoveAt(i);
+					continue;
+				}
+
+				WearNTear wear = instance.GetComponent<WearNTear>();
+				string support = "n/a";
+				if (wear)
+				{
+					try
+					{
+						object value = HarmonyLib.AccessTools.Method(typeof(WearNTear), "GetSupport")?.Invoke(wear, null);
+						support = value is float measured ? measured.ToString("0.###") : "unavailable";
+					}
+					catch (Exception ex) { support = "error:" + ex.GetType().Name; }
+				}
+				PieceRepeaterDiagnostics.Log("DelayedCheck", "prefab=" + verification.PrefabId
+					+ " aliveAfter2s=true instance=" + instance.name
+					+ " requested=" + verification.RequestedPosition.ToString("F3")
+					+ " actual=" + instance.transform.position.ToString("F3")
+					+ " positionDelta=" + Vector3.Distance(verification.RequestedPosition, instance.transform.position).ToString("0.000")
+					+ "m rotationDelta=" + Quaternion.Angle(verification.RequestedRotation, instance.transform.rotation).ToString("0.0")
+					+ "deg support=" + support
+					+ " health=" + (wear ? wear.GetHealthPercentage().ToString("0.###") : "n/a"));
+				_placementVerifications.RemoveAt(i);
+			}
+		}
+
+		private static float GetJoinError(Placement previous, Placement current, GameObject prefab)
+		{
+			ResolvedPrefabPlacement metadata = PrefabPlacementMetadata.Resolve(prefab.name, prefab);
+			Vector3 delta = current.Position - previous.Position;
+			delta.y = 0f;
+			if (delta.sqrMagnitude < 0.0001f) return 0f;
+			Vector3 previousAxis = previous.Rotation * (metadata.JoinEnd - metadata.JoinStart);
+			Vector3 currentAxis = current.Rotation * (metadata.JoinEnd - metadata.JoinStart);
+			previousAxis.y = currentAxis.y = 0f;
+			Vector3 direction = delta.normalized;
+			Vector3 exit = previous.Position + previous.Rotation
+				* (Vector3.Dot(previousAxis, direction) >= 0f ? metadata.JoinEnd : metadata.JoinStart);
+			Vector3 entry = current.Position + current.Rotation
+				* (Vector3.Dot(currentAxis, direction) >= 0f ? metadata.JoinStart : metadata.JoinEnd);
+			Vector3 error = entry - exit;
+			error.y = 0f;
+			return error.magnitude;
+		}
+
+		private void BuildEdgeChainPath(IList<Vector3> path, float spacing, GameObject prefab,
+			ResolvedPrefabPlacement metadata, float groundOffset, float fixedHeight,
+			IList<int> rawCounts, IList<int> duplicateCounts)
+		{
+			if (path == null || path.Count < 2) return;
+			spacing = Mathf.Max(MinimumSpacing, spacing);
+			for (int i = 0; i + 1 < path.Count; i++)
+			{
+				rawCounts?.Add(0);
+				duplicateCounts?.Add(0);
+			}
+
+			Vector3 chainStart = metadata.JoinStart;
+			Vector3 chainEnd = metadata.JoinEnd;
+			Vector3 hinge = _hasLockedStartPlacement
+				? _lockedStartPlacement.Position + _lockedStartPlacement.Rotation * metadata.CenterOffset
+				: path[0];
+			_lastPathCenterPivotCount = 0;
+			_lastPathInsidePivotCount = 0;
+			_lastPathInsideEdgeErrorMax = 0f;
+			int segment = 0;
+			float segmentT = 0f;
+			int guard = 0;
+			while (_placements.Count < MaximumPlacements && guard++ < MaximumPlacements)
+			{
+				if (!TryFindNextChordPoint(path, hinge, spacing, segment, segmentT,
+					out Vector3 nextHinge, out int nextSegment, out float nextT)) break;
+				Vector3 chord = nextHinge - hinge;
+				chord.y = 0f;
+				if (chord.sqrMagnitude < 0.0001f) break;
+				chord.Normalize();
+
+				float wheelYaw = (_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps)
+					* RotationStepDegrees;
+				Quaternion rotation = GetEdgeChainRotation(chord, chainEnd - chainStart, wheelYaw);
+				Placement previous = _placements.Count > 0
+					? _placements[_placements.Count - 1]
+					: new Placement(hinge - rotation * chainStart, rotation);
+				Placement candidate = new Placement(hinge - rotation * chainStart, rotation);
+				candidate.Position = ApplySurfaceHeightMode(candidate.Position, groundOffset, fixedHeight);
+
+			GetInsidePivotSides(previous.Rotation * (chainEnd - chainStart),
+				candidate.Rotation * (chainEnd - chainStart), out Vector3 previousInsideSide,
+				out Vector3 nextInsideSide, out float turn);
+			Vector3 previousInside = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousInsideSide);
+			Vector3 nextInside = candidate.Position + GetEdgeJoinPoint(
+				new Placement(Vector3.zero, candidate.Rotation), prefab, metadata, chainStart, nextInsideSide);
+			Vector3 insideError = nextInside - previousInside;
+			insideError.y = 0f;
+			_lastPathInsideEdgeErrorMax = Mathf.Max(_lastPathInsideEdgeErrorMax, insideError.magnitude);
+			bool pivotInside = Mathf.Abs(turn) >= 90f || insideError.magnitude > 0.02f;
+			if (pivotInside)
+			{
+				_lastPathInsidePivotCount++;
+				candidate.Position.x += previousInside.x - nextInside.x;
+				candidate.Position.z += previousInside.z - nextInside.z;
+				candidate.Position = ApplySurfaceHeightMode(candidate.Position, groundOffset, fixedHeight);
+			}
+			else _lastPathCenterPivotCount++;
+			_placements.Add(candidate);
+
+			if (pivotInside && nextInsideSide.sqrMagnitude > 0.0001f)
+				hinge = GetEdgeJoinPoint(candidate, prefab, metadata, chainEnd, nextInsideSide);
+			else
+				hinge = candidate.Position + candidate.Rotation * chainEnd;
+			segment = nextSegment;
+			segmentT = nextT;
+			if (nextSegment >= 0 && nextSegment < rawCounts.Count)
+				rawCounts[nextSegment] = rawCounts[nextSegment] + 1;
+			}
+		}
+
+		private static Quaternion GetEdgeChainRotation(Vector3 worldDirection, Vector3 localAxis, float extraYaw)
+		{
+			worldDirection.y = 0f;
+			localAxis.y = 0f;
+			if (worldDirection.sqrMagnitude < 0.0001f || localAxis.sqrMagnitude < 0.0001f)
+				return Quaternion.identity;
+			worldDirection.Normalize();
+			localAxis.Normalize();
+			float worldYaw = Mathf.Atan2(worldDirection.x, worldDirection.z) * Mathf.Rad2Deg;
+			float localYaw = Mathf.Atan2(localAxis.x, localAxis.z) * Mathf.Rad2Deg;
+			return Quaternion.Euler(0f, worldYaw - localYaw + extraYaw, 0f);
+		}
+
+		private static void GetInsidePivotSides(Vector3 previousDirection, Vector3 nextDirection,
+			out Vector3 previousInsideSide, out Vector3 nextInsideSide, out float turn)
+		{
+			previousDirection.y = nextDirection.y = 0f;
+			if (previousDirection.sqrMagnitude > 0.0001f) previousDirection.Normalize();
+			if (nextDirection.sqrMagnitude > 0.0001f) nextDirection.Normalize();
+			turn = Vector3.SignedAngle(previousDirection, nextDirection, Vector3.up);
+			if (Mathf.Abs(turn) < 0.01f)
+			{
+				previousInsideSide = nextInsideSide = Vector3.zero;
+				return;
+			}
+			// In Unity (+Z forward), positive signed yaw turns right. Cross(up, forward)
+			// is the right side; invert it for a left turn to get the curve interior.
+			float turnSign = Mathf.Sign(turn);
+			previousInsideSide = Vector3.Cross(Vector3.up, previousDirection) * turnSign;
+			nextInsideSide = Vector3.Cross(Vector3.up, nextDirection) * turnSign;
+		}
+
+		private static bool TryFindNextChordPoint(IList<Vector3> path, Vector3 from, float chordLength,
+			int startSegment, float startT, out Vector3 result, out int resultSegment, out float resultT)
+		{
+			result = Vector3.zero;
+			resultSegment = -1;
+			resultT = 0f;
+			float radiusSquared = chordLength * chordLength;
+			for (int i = Mathf.Clamp(startSegment, 0, path.Count - 2); i < path.Count - 1; i++)
+			{
+				float minT = i == startSegment ? Mathf.Clamp01(startT) : 0f;
+				Vector3 a = Vector3.Lerp(path[i], path[i + 1], minT);
+				Vector3 d = path[i + 1] - a;
+				d.y = 0f;
+				Vector3 offset = a - from;
+				offset.y = 0f;
+				float qa = Vector3.Dot(d, d);
+				if (qa < 0.000001f) continue;
+				float qb = 2f * Vector3.Dot(offset, d);
+				float qc = Vector3.Dot(offset, offset) - radiusSquared;
+				float discriminant = qb * qb - 4f * qa * qc;
+				if (discriminant < 0f) continue;
+				float root = Mathf.Sqrt(discriminant);
+				float first = (-qb - root) / (2f * qa);
+				float second = (-qb + root) / (2f * qa);
+				float fraction = first > 0.0001f && first <= 1.0001f ? first
+					: second > 0.0001f && second <= 1.0001f ? second : -1f;
+				if (fraction < 0f) continue;
+				fraction = Mathf.Clamp01(fraction);
+				result = a + d * fraction;
+				result.y = Mathf.Lerp(a.y, path[i + 1].y, fraction);
+				resultSegment = i;
+				resultT = minT + (1f - minT) * fraction;
+				return true;
+			}
+			return false;
+		}
+
 		private void GeneratePathPreview(IList<Vector3> points, float spacing, GameObject prefab)
 		{
 			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
+			// Re-solve the whole waypoint sequence as a Catmull–Rom spline. The
+			// resulting placements remain rigid; only their centers and headings
+			// are fitted to the interpolated curve. Rebuilding here is intentional:
+			// each newly clicked waypoint updates the complete preview before commit.
 			IList<Vector3> layoutPoints = PluginConfig.PieceRepeaterRoundedCorners.Value
-				? RoundOutgoingCorners(points, Mathf.Clamp(PluginConfig.PieceRepeaterCornerRadius.Value, 0.25f, 6f))
+				? PieceRepeaterPathMath.SampleCatmullRom(points, Mathf.Clamp(PluginConfig.PieceRepeaterCornerRadius.Value, 0.25f, 6f))
 				: points;
 			float groundOffset = -metadata.BottomOffset;
-			float fixedHeight = _points.Count > 0 ? _points[0].y : 0f;
+			float firstPointCenterY = _points.Count > 0 ? _points[0].y : 0f;
+			float fixedHeight = PieceRepeaterPathMath.ResolveFixedRootHeight(firstPointCenterY,
+				metadata.CenterOffset.y, _hasLockedStartPlacement, _lockedStartPlacement.Position.y);
 			var rawCounts = new List<int>();
 			var duplicateCounts = new List<int>();
+			_lastPathCenterDeviation = 0f;
+			if (metadata.ProfileType == RepeatProfileType.EdgeChain && !_bothSides)
+			{
+				foreach (Vector3 point in layoutPoints)
+					_outline.Add(ApplySurfaceHeightMode(point, groundOffset, fixedHeight));
+				if (_hasLockedStartPlacement) _placements.Add(_lockedStartPlacement);
+				BuildSplineFittedEdgeChain(layoutPoints, spacing, prefab, metadata, groundOffset, fixedHeight,
+					rawCounts, duplicateCounts);
+				LogPathDiagnostics(points, spacing, metadata, rawCounts, duplicateCounts, prefab);
+				return;
+			}
 			bool reverseEdgeChain = IsReverseEdgeChain(points, metadata);
 			Vector3 chainStart = reverseEdgeChain ? metadata.JoinEnd : metadata.JoinStart;
 			Vector3 chainEnd = reverseEdgeChain ? metadata.JoinStart : metadata.JoinEnd;
-			_lastPathCenterDeviation = 0f;
+
 			if (_bothSides)
 			{
 				List<Placement> center = SamplePolyline(layoutPoints, spacing, _hasLockedStartPlacement && !_bothSides, rawCounts, duplicateCounts);
@@ -1168,40 +1626,25 @@ namespace SonicWorldTools.Modules.PieceRepeater
 						if (reverseEdgeChain)
 							proposed.Rotation = Quaternion.Euler(0f, 180f, 0f) * proposed.Rotation;
 						Placement connected = AdjustPlacement(proposed, metadata, groundOffset, fixedHeight);
-						Vector3 previousDirection = previous.Rotation * (chainEnd - chainStart);
-						Vector3 nextDirection = connected.Rotation * (chainEnd - chainStart);
-						previousDirection.y = nextDirection.y = 0f;
-						previousDirection.Normalize();
-						nextDirection.Normalize();
-						float turn = Vector3.SignedAngle(previousDirection, nextDirection, Vector3.up);
-						Vector3 previousSide = new Vector3(-previousDirection.z, 0f, previousDirection.x);
-						// Pivot on the inside of the bend. The previous outside-side rule
-						// pushed square floor modules across their intended corner and caused
-						// the visible clipping reported for black-marble and stone floors.
-						float turnSide = turn < 0f ? 1f : -1f;
-						Vector3 previousCornerSide = Mathf.Abs(turn) < 1f
-							? Vector3.zero
-							: previousSide * turnSide;
-						Vector3 nextSide = new Vector3(-nextDirection.z, 0f, nextDirection.x);
-						Vector3 nextCornerSide = Mathf.Abs(turn) < 1f ? Vector3.zero : nextSide * turnSide;
+						GetCornerPivotSides(previous.Rotation, connected.Rotation, chainStart, chainEnd,
+							out Vector3 previousDirection, out Vector3 nextDirection,
+							out Vector3 previousCornerSide, out Vector3 nextCornerSide, out float turn);
 						Vector3 previousJoin = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousCornerSide);
 						Vector3 nextJoinOffset = GetEdgeJoinPoint(new Placement(Vector3.zero, connected.Rotation), prefab, metadata, chainStart, nextCornerSide);
 						Vector3 previousCenter = previous.Position + previous.Rotation * chainEnd;
 						Vector3 nextCenterOffset = connected.Rotation * chainStart;
 						Vector3 centeredRoot = previousCenter + nextDirection * _gapMeters - nextCenterOffset;
 						Vector3 cornerRoot = previousJoin + nextDirection * _gapMeters - nextJoinOffset;
-						// Square modules have real snap points at all four footprint corners,
-						// so use their matching inner corners directly. Long narrow pieces keep
-						// a softer center-to-corner blend to avoid swinging the far end wide.
-						Bounds profileBounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
-						float footprintLong = Mathf.Max(profileBounds.size.x, profileBounds.size.z);
-						float footprintShort = Mathf.Min(profileBounds.size.x, profileBounds.size.z);
-						bool hasSquareFootprint = footprintLong > 0.01f && footprintShort / footprintLong >= 0.8f;
-						float cornerBlend = hasSquareFootprint
-							? Mathf.Clamp01(Mathf.Abs(turn) / 45f)
-							: Mathf.Min(0.5f, Mathf.Abs(turn) / 90f * 0.5f);
-						connected.Position.x = Mathf.Lerp(centeredRoot.x, cornerRoot.x, cornerBlend);
-						connected.Position.z = Mathf.Lerp(centeredRoot.z, cornerRoot.z, cornerBlend);
+						Vector3 expectedAnchorDelta = nextDirection * _gapMeters;
+						Placement centeredCandidate = new Placement(centeredRoot, connected.Rotation);
+						float outsideBreak = GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
+							chainStart, chainEnd, previousCornerSide, nextCornerSide, expectedAnchorDelta);
+						float insideBreak = GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
+							chainStart, chainEnd, -previousCornerSide, -nextCornerSide, expectedAnchorDelta);
+						bool useOutsideCorner = ShouldPivotAtOutsideCorner(turn, outsideBreak, insideBreak);
+						Vector3 selectedRoot = useOutsideCorner ? cornerRoot : centeredRoot;
+						connected.Position.x = selectedRoot.x;
+						connected.Position.z = selectedRoot.z;
 						connected.Position = ApplySurfaceHeightMode(connected.Position, groundOffset, fixedHeight);
 						Vector3 actualCenter = connected.Position + connected.Rotation * metadata.CenterOffset;
 						Vector3 desiredCenter = proposed.Position;
@@ -1229,6 +1672,106 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			LogPathDiagnostics(points, spacing, metadata, rawCounts, duplicateCounts, prefab);
 		}
 
+		// Fits rigid edge-chain pieces to the interpolated route. Piece centers
+		// advance by the largest local step whose longitudinal projections overlap;
+		// this naturally tightens spacing through S-curves without deforming pieces.
+		private void BuildSplineFittedEdgeChain(IList<Vector3> path, float spacing, GameObject prefab,
+			ResolvedPrefabPlacement metadata, float groundOffset, float fixedHeight,
+			IList<int> rawCounts, IList<int> duplicateCounts)
+		{
+			if (path == null || path.Count < 2) return;
+			var distances = new List<float>(path.Count) { 0f };
+			for (int i = 1; i < path.Count; i++)
+			{
+				Vector3 delta = path[i] - path[i - 1]; delta.y = 0f;
+				distances.Add(distances[i - 1] + delta.magnitude);
+			}
+			float total = distances[distances.Count - 1];
+			if (total < MinimumSpacing) return;
+
+			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
+			Vector3 joinDelta = metadata.JoinEnd - metadata.JoinStart;
+			joinDelta.y = 0f;
+			float length = Mathf.Max(MinimumSpacing, joinDelta.magnitude);
+			float width = Mathf.Max(0.01f, metadata.Axis == PrefabRepeatAxis.X
+				? bounds.size.z : bounds.size.x);
+			Vector3 localAxis = metadata.JoinEnd - metadata.JoinStart;
+			localAxis.y = 0f;
+			if (localAxis.sqrMagnitude < 0.0001f) return;
+			// Use the same outgoing end chosen for the anchored first piece. The
+			// sign is applied exactly once in both the starter and fitted run.
+			if (_hasLockedStartPlacement)
+				localAxis *= PieceRepeaterPathMath.ResolveOutgoingAxisSign(
+					_lockedStartAnchorLocal, metadata.JoinStart, metadata.JoinEnd, _lockedStartAnchorIsSnap);
+
+			Placement previous = _hasLockedStartPlacement
+				? _lockedStartPlacement
+				: new Placement(path[0] - Quaternion.identity * metadata.JoinEnd, Quaternion.identity);
+			Vector3 previousCenter = previous.Position + previous.Rotation * metadata.CenterOffset;
+			float wheelYaw = (_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps) * RotationStepDegrees;
+			// The first piece may already include the user's wheel offset when its
+			// secant heading was resolved. Remove that offset for fit calculations;
+			// manual rotation changes orientation in place, not the solved centers.
+			Quaternion fitStartRotation = _hasLockedStartPlacement
+				? Quaternion.Euler(0f, -wheelYaw, 0f) * previous.Rotation
+				: previous.Rotation;
+			Vector3 previousForward = fitStartRotation * localAxis.normalized;
+			previousForward.y = 0f; previousForward.Normalize();
+			Vector3 routeForward = path[1] - path[0];
+			routeForward.y = 0f;
+			if (routeForward.sqrMagnitude > 0.0001f)
+			{
+				routeForward.Normalize();
+				// Guard against numerical disagreement at a nearly perpendicular
+				// starter heading while keeping the selected outgoing end consistent.
+				if (Vector3.Dot(previousForward, routeForward) < 0f) previousForward = -previousForward;
+			}
+			float cursor = 0f;
+			int guard = 0;
+			while (_placements.Count < MaximumPlacements && guard++ < MaximumPlacements)
+			{
+				if (!PieceRepeaterPathMath.TryFindNextCenter(path, distances, cursor, total,
+					previousCenter, previousForward, localAxis, length, width, _gapMeters,
+					MinimumSpacing, 0f, out float accepted, out Vector3 nextCenter, out Quaternion solvedRotation)) break;
+				// Wheel rotation is an in-place orientation adjustment. Keep it out of
+				// the spacing solver so rotating the pieces cannot change their centers
+				// or make the batch gain/lose pieces.
+				Quaternion placementRotation = Quaternion.Euler(0f, wheelYaw, 0f) * solvedRotation;
+				Vector3 correction = placementRotation * metadata.PositionOffset;
+				Vector3 root = nextCenter - placementRotation * metadata.CenterOffset + correction;
+				if (_placements.Count > 0)
+				{
+					Placement last = _placements[_placements.Count - 1];
+					Vector3 chainStart = Vector3.Dot(localAxis, joinDelta) >= 0f
+						? metadata.JoinStart : metadata.JoinEnd;
+					Vector3 chainEnd = Vector3.Dot(localAxis, joinDelta) >= 0f
+						? metadata.JoinEnd : metadata.JoinStart;
+					GetCornerPivotSides(last.Rotation, placementRotation, chainStart, chainEnd,
+						out _, out _, out Vector3 lastOutside, out Vector3 nextOutside, out float turn);
+					if (Mathf.Abs(turn) >= 1f)
+					{
+						Vector3 lastJoin = GetEdgeJoinPoint(last, prefab, metadata, chainEnd, lastOutside);
+						Vector3 nextJoin = GetEdgeJoinPoint(new Placement(root, placementRotation),
+							prefab, metadata, chainStart, nextOutside);
+						// A join may move the rendered piece, but never the curve cursor or
+						// the next solver center. Cap the move so a bad join cannot grow a
+						// placed run beyond its waypoints.
+						Vector3 joinCorrection = PieceRepeaterPathMath.BoundedJoinCorrection(
+							lastJoin, nextJoin, Mathf.Min(0.6f, Mathf.Max(0.1f, width * 2f)));
+						root += joinCorrection;
+					}
+				}
+				root = ApplySurfaceHeightMode(root, groundOffset, fixedHeight);
+				root.y += correction.y;
+				_placements.Add(new Placement(root, placementRotation));
+				// Keep the solver on the sampled route. Per-piece root/height
+				// corrections affect rendering, never the next center search.
+				previousCenter = nextCenter;
+				previousForward = solvedRotation * localAxis.normalized; previousForward.y = 0f; previousForward.Normalize();
+				cursor = accepted;
+			}
+		}
+
 		private static Vector3 GetEdgeJoinPoint(Placement placement, GameObject prefab,
 			ResolvedPrefabPlacement metadata, Vector3 centerJoin, Vector3 preferredWorldSide)
 		{
@@ -1237,45 +1780,63 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
 			Vector3 transverse = metadata.Axis == PrefabRepeatAxis.X ? Vector3.forward : Vector3.right;
-			float halfWidth = metadata.Axis == PrefabRepeatAxis.X ? bounds.extents.z : bounds.extents.x;
-			if (halfWidth <= 0.001f) return placement.Position + placement.Rotation * centerJoin;
+			float transverseMin = metadata.Axis == PrefabRepeatAxis.X ? bounds.min.z : bounds.min.x;
+			float transverseMax = metadata.Axis == PrefabRepeatAxis.X ? bounds.max.z : bounds.max.x;
+			if (transverseMax - transverseMin <= 0.001f)
+				return placement.Position + placement.Rotation * centerJoin;
 
-			// Use the prefab's real snap transforms at a bend. The low snap pair is
-			// what the Hammer uses for ground-level wall/floor joins; choose its inner
-			// or outer member by projecting the turn side into the piece's local frame.
-			Piece piece = prefab ? prefab.GetComponent<Piece>() : null;
-			if (piece)
+			// Repeat joints come from the intact rendered footprint. Build snap
+			// points are used only for the first vanilla-style anchor; their height
+			// and naming conventions must not steer path corners.
+			Vector3 desiredLocalSide = Quaternion.Inverse(placement.Rotation) * preferredWorldSide;
+			float desiredTransverse = Vector3.Dot(desiredLocalSide, transverse) >= 0f
+				? transverseMax : transverseMin;
+			Vector3 localCorner = centerJoin;
+			if (metadata.Axis == PrefabRepeatAxis.X) localCorner.z = desiredTransverse;
+			else localCorner.x = desiredTransverse;
+			return placement.Position + placement.Rotation * localCorner;
+		}
+
+		private static void GetCornerPivotSides(Quaternion previousRotation, Quaternion nextRotation,
+			Vector3 chainStart, Vector3 chainEnd, out Vector3 previousDirection, out Vector3 nextDirection,
+			out Vector3 previousCornerSide, out Vector3 nextCornerSide, out float turn)
+		{
+			previousDirection = previousRotation * (chainEnd - chainStart);
+			nextDirection = nextRotation * (chainEnd - chainStart);
+			previousDirection.y = nextDirection.y = 0f;
+			if (previousDirection.sqrMagnitude > 0.0001f) previousDirection.Normalize();
+			if (nextDirection.sqrMagnitude > 0.0001f) nextDirection.Normalize();
+			turn = Vector3.SignedAngle(previousDirection, nextDirection, Vector3.up);
+			if (Mathf.Abs(turn) < 1f)
 			{
-				var snapPoints = new List<Transform>();
-				piece.GetSnapPoints(snapPoints);
-				Vector3 desiredLocalSide = Quaternion.Inverse(placement.Rotation) * preferredWorldSide;
-				float desiredTransverse = (metadata.Axis == PrefabRepeatAxis.X ? bounds.center.z : bounds.center.x)
-					+ (Vector3.Dot(desiredLocalSide, transverse) >= 0f ? halfWidth : -halfWidth);
-				float targetAxis = metadata.Axis == PrefabRepeatAxis.X ? centerJoin.x : centerJoin.z;
-				float targetBottom = bounds.min.y;
-				Transform best = null;
-				float bestScore = float.PositiveInfinity;
-				foreach (Transform snap in snapPoints)
-				{
-					if (!snap) continue;
-					Vector3 local = prefab.transform.InverseTransformPoint(snap.position);
-					float axis = metadata.Axis == PrefabRepeatAxis.X ? local.x : local.z;
-					float across = metadata.Axis == PrefabRepeatAxis.X ? local.z : local.x;
-					float score = Mathf.Abs(axis - targetAxis) * 8f
-						+ Mathf.Abs(across - desiredTransverse) * 4f
-						+ Mathf.Abs(local.y - targetBottom) * 4f;
-					if (score < bestScore) { bestScore = score; best = snap; }
-				}
-				if (best)
-				{
-					Vector3 local = prefab.transform.InverseTransformPoint(best.position);
-					return placement.Position + placement.Rotation * local;
-				}
+				previousCornerSide = nextCornerSide = Vector3.zero;
+				return;
 			}
 
-			Vector3 worldPositive = placement.Rotation * transverse;
-			float side = Vector3.Dot(worldPositive, preferredWorldSide) >= 0f ? 1f : -1f;
-			return placement.Position + placement.Rotation * (centerJoin + transverse * (side * halfWidth));
+			Vector3 previousSide = new Vector3(-previousDirection.z, 0f, previousDirection.x);
+			Vector3 nextSide = new Vector3(-nextDirection.z, 0f, nextDirection.x);
+			// The outside is the same lateral side of both consecutive pieces.
+			float outsideSign = turn < 0f ? -1f : 1f;
+			previousCornerSide = previousSide * outsideSign;
+			nextCornerSide = nextSide * outsideSign;
+		}
+
+		private static bool ShouldPivotAtOutsideCorner(float turn, float outsideBreak, float insideBreak)
+		{
+			const float seamBreakTolerance = 0.02f;
+			return Mathf.Abs(turn) >= 90f || Mathf.Max(outsideBreak, insideBreak) > seamBreakTolerance;
+		}
+
+		private static float GetCenterPivotAnchorError(Placement previous, Placement next, GameObject prefab,
+			ResolvedPrefabPlacement metadata, Vector3 chainStart, Vector3 chainEnd,
+			Vector3 previousSide, Vector3 nextSide, Vector3 expectedDelta)
+		{
+			Vector3 previousAnchor = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousSide);
+			Vector3 nextAnchor = next.Position + GetEdgeJoinPoint(
+				new Placement(Vector3.zero, next.Rotation), prefab, metadata, chainStart, nextSide);
+			Vector3 error = nextAnchor - previousAnchor - expectedDelta;
+			error.y = 0f;
+			return error.magnitude;
 		}
 
 		// An outgoing-only Bezier keeps every completed leg fixed when a new
@@ -1357,9 +1918,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				.Append(" profileType=").Append(metadata.ProfileType)
 				.Append(" axis=").Append(metadata.Axis)
 				.Append(" metadataSpacing=").Append(metadata.Spacing.ToString("0.###"))
+				.Append(" joinStart=").Append(metadata.JoinStart.ToString("F3"))
+				.Append(" joinEnd=").Append(metadata.JoinEnd.ToString("F3"))
+				.Append(" joinLength=").Append((metadata.JoinEnd - metadata.JoinStart).magnitude.ToString("0.###"))
 				.Append(" gapMeters=").Append(_gapMeters.ToString("0.###"))
 				.Append(" effectiveSpacing=").Append(spacing.ToString("0.###"))
 				.Append(" centerOffset=").Append(metadata.CenterOffset.ToString("F2"))
+				.Append(" positionOffset=").Append(metadata.PositionOffset.ToString("F3"))
 				.Append(" yawOffset=").Append(metadata.YawOffset.ToString("0.###"))
 				.Append(" tangentYawOffset=").Append(metadata.TangentYawOffset.ToString("0.###"))
 				.Append(" renderLocal=").Append(renderedBounds.center.ToString("F2"))
@@ -1368,8 +1933,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				.Append(" rotationSteps=").Append(_rotationSteps)
 					.Append(" rotationStepsAtStart=").Append(_rotationStepsAtStart)
 					.Append(" pathRotationDelta=").Append(_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps)
-				.Append(" outgoingJoin=").Append(IsReverseEdgeChain(points, metadata) ? "start" : "end")
-				.Append(" snapLocal=");
+				.Append(" outgoingJoin=JoinEnd")
+				.Append(" curve=").Append(PluginConfig.PieceRepeaterRoundedCorners.Value ? "CatmullRom" : "Linear")
+				.Append(" smoothingDistance=").Append(PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##"))
+				.Append(" edgeSolver=rigid-projection-overlap-first-boundary")
+				.Append(" snapLocalDiagnosticOnly=");
 			Piece piece = prefab ? prefab.GetComponent<Piece>() : null;
 			if (piece)
 			{
@@ -1384,55 +1952,79 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				}
 			}
 			details.Append(" legs=");
+			bool fittedSpline = _mode == PieceRepeaterMode.Path
+				&& metadata.ProfileType == RepeatProfileType.EdgeChain && !_bothSides;
 			for (int i = 0; i + 1 < points.Count; i++)
 			{
 				if (i > 0) details.Append(';');
 				float length = Vector2.Distance(new Vector2(points[i].x, points[i].z), new Vector2(points[i + 1].x, points[i + 1].z));
-				int candidates = i < rawCounts.Count ? rawCounts[i] : 0;
-				int skipped = i < duplicateCounts.Count ? duplicateCounts[i] : 0;
 				details.Append(i).Append(':').Append(points[i].ToString("F1")).Append("->").Append(points[i + 1].ToString("F1"))
-					.Append("/").Append(length.ToString("0.##")).Append("m/").Append(candidates)
-					.Append(" candidates/").Append(candidates - skipped).Append(" kept/").Append(skipped).Append(" overlap-skipped");
+					.Append("/").Append(length.ToString("0.##")).Append("m");
+				if (fittedSpline)
+					details.Append("/spline-fit");
+				else
+				{
+					int candidates = i < rawCounts.Count ? rawCounts[i] : 0;
+					int skipped = i < duplicateCounts.Count ? duplicateCounts[i] : 0;
+					details.Append('/').Append(candidates).Append(" candidates/").Append(candidates - skipped)
+						.Append(" kept/").Append(skipped).Append(" overlap-skipped");
+				}
 			}
 			details.Append(" final=").Append(_placements.Count)
-				.Append(" centerDeviationMaxXZ=").Append(_lastPathCenterDeviation.ToString("0.###"))
-				.Append(" rootSteps=");
-			if (metadata.ProfileType == RepeatProfileType.EdgeChain && _placements.Count > 1)
-			{
-				bool reverseEdgeChain = IsReverseEdgeChain(points, metadata);
-				Vector3 chainStart = reverseEdgeChain ? metadata.JoinEnd : metadata.JoinStart;
-				Vector3 chainEnd = reverseEdgeChain ? metadata.JoinStart : metadata.JoinEnd;
-				float maxJointGapError = 0f;
-				int gapErrors = 0;
-				for (int i = 1; i < _placements.Count; i++)
-				{
-					Vector3 previousEnd = _placements[i - 1].Position + _placements[i - 1].Rotation * chainEnd;
-					Vector3 nextStart = _placements[i].Position + _placements[i].Rotation * chainStart;
-					previousEnd.y = nextStart.y = 0f;
-					float actualGap = Vector3.Distance(previousEnd, nextStart);
-					float error = Mathf.Abs(actualGap - _gapMeters);
-					maxJointGapError = Mathf.Max(maxJointGapError, error);
-					if (error > 0.02f) gapErrors++;
-				}
-				details.Append(" jointGapTargetXZ=").Append(_gapMeters.ToString("0.###"))
-					.Append(" jointGapErrorMaxXZ=").Append(maxJointGapError.ToString("0.###"))
-					.Append(" jointsOver2cm=").Append(gapErrors);
-			}
+				.Append(" centerIntervalsXZ=");
 			int logged = Mathf.Min(_placements.Count, 24);
 			for (int i = 0; i < logged; i++)
 			{
 				if (i > 0) details.Append(',');
 				Placement placement = _placements[i];
-				details.Append(placement.Position.ToString("F1"));
-				if (i > 0)
+				Vector3 center = placement.Position + placement.Rotation * metadata.CenterOffset;
+				details.Append(center.ToString("F1"));
+				if (i > 0 && metadata.ProfileType == RepeatProfileType.EdgeChain)
 				{
-					float interval = Vector3.Distance(_placements[i - 1].Position, placement.Position);
-					if (interval > spacing * 1.2f || interval < spacing * 0.7f)
-						details.Append('(').Append(interval.ToString("0.00")).Append("m)");
+					Placement prior = _placements[i - 1];
+					Vector3 priorCenter = prior.Position + prior.Rotation * metadata.CenterOffset;
+					Vector3 delta = center - priorCenter; delta.y = 0f;
+					float interval = delta.magnitude;
+					if (interval > 0.0001f)
+					{
+						Vector3 q = delta / interval;
+						Vector3 axis = (metadata.JoinEnd - metadata.JoinStart).normalized;
+						Vector3 f0 = prior.Rotation * axis; f0.y = 0f; f0.Normalize();
+						Vector3 f1 = placement.Rotation * axis; f1.y = 0f; f1.Normalize();
+						Vector3 side0 = Vector3.Cross(Vector3.up, f0);
+						Vector3 side1 = Vector3.Cross(Vector3.up, f1);
+						Bounds b = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
+						float len = (metadata.JoinEnd - metadata.JoinStart).magnitude;
+						float wid = metadata.Axis == PrefabRepeatAxis.X ? b.size.z : b.size.x;
+						float reach = len * 0.5f * (Vector3.Dot(f0, q) + Vector3.Dot(f1, q))
+							- wid * 0.5f * Mathf.Abs(Vector3.Dot(side0, q) - Vector3.Dot(side1, q)) + _gapMeters;
+						Vector3 centerDelta = center - priorCenter;
+						centerDelta.y = 0f;
+						Vector3 joinAxis = metadata.JoinEnd - metadata.JoinStart;
+						joinAxis.y = 0f;
+						Vector3 previousAxis = prior.Rotation * joinAxis;
+						Vector3 currentAxis = placement.Rotation * joinAxis;
+						bool previousForwardPositive = Vector3.Dot(previousAxis, centerDelta) >= 0f;
+						bool currentForwardPositive = Vector3.Dot(currentAxis, centerDelta) >= 0f;
+						Vector3 previousExit = prior.Position + prior.Rotation
+							* (previousForwardPositive ? metadata.JoinEnd : metadata.JoinStart);
+						Vector3 currentEntry = placement.Position + placement.Rotation
+							* (currentForwardPositive ? metadata.JoinStart : metadata.JoinEnd);
+						Vector3 joinError = currentEntry - previousExit;
+						joinError.y = 0f;
+						Vector3 along = centerDelta.normalized;
+						float longitudinalError = Vector3.Dot(joinError, along);
+						Vector3 lateralError = joinError - along * longitudinalError;
+						lateralError.y = 0f;
+						details.Append("(d=").Append(interval.ToString("0.00"))
+							.Append("m,slack=").Append((reach - interval).ToString("0.00"))
+							.Append("m,joinGap=").Append(longitudinalError.ToString("0.00"))
+							.Append("m,joinSide=").Append(lateralError.magnitude.ToString("0.00")).Append("m)");
+					}
 				}
 			}
 			if (_placements.Count > logged) details.Append(",...");
-			SonicWorldToolsPlugin.ModLogger?.LogInfo(details.ToString());
+			PieceRepeaterDiagnostics.Log("PathTrace", details.ToString());
 		}
 
 		private Vector3 ApplyHeightMode(Vector3 position, float groundOffset, float fixedHeight)
@@ -1512,10 +2104,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (!ZoneSystem.instance) return false;
 			ZoneSystem.instance.GetSolidHeight(position, out groundHeight, 0);
 			// GetSolidHeight can return its zero default when the requested column has no
-			// terrain sample. Never send a piece at y=offset when the aimed terrain is far away.
+			// terrain sample. A 40 m tolerance accepted that sentinel on ordinary hills
+			// and sent some pieces to y=0.5 while adjacent pieces stayed at terrain height.
+			// Waypoints are aimed at visible surfaces, so a sample farther than 8 m from
+			// the requested height is treated as unavailable and the path height is kept.
 			return !float.IsNaN(groundHeight)
 			       && !float.IsInfinity(groundHeight)
-			       && Mathf.Abs(groundHeight - position.y) <= 40f;
+			       && Mathf.Abs(groundHeight - position.y) <= MaximumTerrainSampleDelta;
 		}
 
 		private static bool IsSameHeightHeld()
@@ -1548,6 +2143,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				SetPieceGhostCount(0);
 				return;
 			}
+
+			// In the offset editor, let the real piece behind the preview remain
+			// readable so small join and root corrections can be judged against it.
+			if (_pieceGhostMaterial)
+				_pieceGhostMaterial.color = _offsetEditor != null && _offsetEditor.IsOpen
+					? new Color(0.42f, 0.62f, 0.68f, 0.14f)
+					: new Color(0.35f, 0.82f, 0.9f, 0.28f);
 
 			if (_pieceGhostPrefabId != _prefabId)
 			{

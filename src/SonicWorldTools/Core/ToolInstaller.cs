@@ -42,7 +42,7 @@ namespace SonicWorldTools.Core
 			sb.AppendLine("  command: " + ActivateCommand);
 			sb.AppendLine("  tabIndex: 0");
 			sb.AppendLine("- name: " + PieceRepeaterToolName);
-		sb.AppendLine("  description: MMB samples; click waypoints; Ctrl+click places. Q/E cycle build snap points; Right Alt+click snaps a waypoint to a piece joint. Wheel rotates repeated pieces in place; Alt+wheel adjusts the gap. Profiles follow build-piece surfaces or terrain; props face the tangent. F7 sets interpolation, smoothing, gap and height. Esc exits.");
+		sb.AppendLine("  description: MMB samples; click waypoints; Ctrl+click places. Q/E cycle build snap points; Right Alt+click snaps a waypoint to a piece joint. Wheel rotates repeated pieces in place; Alt+wheel adjusts the gap. Profiles follow build-piece surfaces or terrain; props face the tangent. F7 opens path settings; Shift+F7 edits offsets for the sampled piece. Esc exits.");
 			sb.AppendLine("  icon: Hammer");
 			sb.AppendLine("  instant: true");
 			sb.AppendLine("  command: " + PieceRepeaterCommand);

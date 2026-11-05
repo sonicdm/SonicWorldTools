@@ -17,5 +17,9 @@
     <Compile Include="..\..\src\SonicWorldTools\Core\SelectionState.cs" Link="SelectionState.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Refinement\SelectionRefinement.cs" Link="SelectionRefinement.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Core\ToolInstaller.cs" Link="ToolInstaller.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\PieceRepeaterPathMath.cs" Link="PieceRepeaterPathMath.cs" />
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\Reqs\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

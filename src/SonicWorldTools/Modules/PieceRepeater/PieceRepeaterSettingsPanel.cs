@@ -87,7 +87,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_radiusValue = Label("", 85f, -158f, 18, 90f, Color.white);
 			Button("+", 162f, -158f, 34f, () => ChangeRadius(0.25f));
 
-			Label("Added gap", -145f, -204f, 18, 150f, Color.white);
+			Label("Spacing offset", -145f, -204f, 18, 150f, Color.white);
 			Button("-", 5f, -204f, 34f, () => { _controller.SetGap(_controller.GapMeters - 0.1f); RefreshLabels(); });
 			_gapValue = Label("", 85f, -204f, 18, 90f, Color.white);
 			Button("+", 162f, -204f, 34f, () => { _controller.SetGap(_controller.GapMeters + 0.1f); RefreshLabels(); });
@@ -145,7 +145,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private void RefreshLabels()
 		{
-			if (_curveValue) _curveValue.text = PluginConfig.PieceRepeaterRoundedCorners.Value ? "Bezier" : "Linear";
+			if (_curveValue) _curveValue.text = PluginConfig.PieceRepeaterRoundedCorners.Value ? "Catmull-Rom" : "Linear";
 			if (_radiusValue) _radiusValue.text = PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") + " m";
 			if (_gapValue) _gapValue.text = _controller.GapMeters.ToString("0.##") + " m";
 			if (_heightValue) _heightValue.text = PluginConfig.PieceRepeaterLevelByDefault.Value ? "Level" : "Follow surface";

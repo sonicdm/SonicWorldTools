@@ -94,7 +94,7 @@ namespace SonicWorldTools
 
 			PluginConfig.Bind(Config);
 
-			PrefabPlacementMetadata.Load(BepInEx.Paths.ConfigPath, ModLogger, PluginConfig.DroppedDefaultPrefabPlacementYaml, Config);
+			PrefabPlacementMetadata.Load(BepInEx.Paths.ConfigPath, ModLogger);
 
 			// Infinity Hammer may be loaded later in the BepInEx chainloader order.
 

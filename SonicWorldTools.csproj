@@ -27,6 +27,7 @@
       <Private>false</Private>
     </Reference>
     <EmbeddedResource Include="assets\terrain-surface-atlas.png" LogicalName="SonicWorldTools.terrain-surface-atlas.png" />
+    <EmbeddedResource Include="src\SonicWorldTools\Resources\PrefabPlacement\VanillaPieces.yml" LogicalName="SonicWorldTools.PrefabPlacement.VanillaPieces.yml" />
   </ItemGroup>
 
   <Target Name="ValidateValheimLibDir" BeforeTargets="ResolveReferences">

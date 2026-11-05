@@ -67,8 +67,6 @@ namespace SonicWorldTools.Config
 
 		internal static ConfigEntry<bool> VerboseLogging;
 
-		internal static ConfigEntry<bool> DroppedDefaultPrefabPlacementYaml;
-
 		internal static ConfigEntry<bool> DryRunSelection;
 		internal static ConfigEntry<KeyCode> PieceRepeaterPlaceModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterSpacingModifier;
@@ -89,12 +87,6 @@ namespace SonicWorldTools.Config
 				"Enabled",
 				true,
 				"Enable SonicWorldTools.");
-
-			DroppedDefaultPrefabPlacementYaml = config.Bind(
-				"PrefabPlacement",
-				"DroppedDefaultYml",
-				false,
-				"Tracks whether the default prefab placement YAML has been created in the config folder.");
 
 			PrecisionAreaPipetteEnabled = config.Bind(
 				"PrecisionAreaPipette",
@@ -267,11 +259,11 @@ namespace SonicWorldTools.Config
 			PieceRepeaterSpacingModifier = config.Bind("PieceRepeater", "SpacingModifier", KeyCode.LeftAlt, "Hold with the mouse wheel to add or remove a gap between repeated pieces.");
 			PieceRepeaterLevelModifier = config.Bind("PieceRepeater", "LevelHeightModifier", KeyCode.LeftShift, "Hold to keep the path at one height.");
 			PieceRepeaterJointModifier = config.Bind("PieceRepeater", "WaypointJointModifier", KeyCode.RightAlt, "Hold while clicking a waypoint to align it to the nearest piece joint.");
-			PieceRepeaterSettingsHotkey = config.Bind("PieceRepeater", "SettingsHotkey", KeyCode.F7, "Open Piece Repeater settings while that tool is active. The key is ignored otherwise.");
+			PieceRepeaterSettingsHotkey = config.Bind("PieceRepeater", "SettingsHotkey", KeyCode.F7, "Open Piece Repeater settings; hold Shift to edit offsets for the sampled prefab. Only active while the tool is selected.");
 			PieceRepeaterGroundPropSpacing = config.Bind("PieceRepeater", "GroundPropDefaultSpacing", 2f, "Default interval in metres for free-standing ground props. Per-piece YAML can override it.");
-			PieceRepeaterGap = config.Bind("PieceRepeater", "GapMeters", 0f, "Extra horizontal gap between repeated pieces, in metres.");
-			PieceRepeaterRoundedCorners = config.Bind("PieceRepeater", "RoundedCorners", false, "Enable local cubic Bezier interpolation at path turns. Previously completed legs stay fixed.");
-			PieceRepeaterCornerRadius = config.Bind("PieceRepeater", "CornerRadius", 1.5f, "Smoothing distance in metres for local Bezier interpolation at each path turn.");
+			PieceRepeaterGap = config.Bind("PieceRepeater", "GapMeters", 0f, "Horizontal spacing adjustment for repeated pieces, in metres. Negative values bring pieces closer; the minimum repeat interval is 0.1 m.");
+			PieceRepeaterRoundedCorners = config.Bind("PieceRepeater", "RoundedCorners", true, "Interpolate the complete waypoint sequence with a Catmull-Rom curve before fitting rigid pieces.");
+			PieceRepeaterCornerRadius = config.Bind("PieceRepeater", "CornerRadius", 1.5f, "Maximum Catmull-Rom tangent handle length in metres; adjusts how strongly the curve rounds between clicked waypoints.");
 			PieceRepeaterLevelByDefault = config.Bind("PieceRepeater", "LevelHeightByDefault", false, "Keep all pieces at the first point's height without holding the level modifier.");
 			PieceRepeaterPropFollowCurve = config.Bind("PieceRepeater", "PropFollowCurve", true, "Align repeated ground props to the path tangent. Disable to keep the first prop's facing.");
 		}
