@@ -188,6 +188,68 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			return sampled;
 		}
 
+		/// <summary>
+		/// WEC-style centripetal Catmull-Rom. Keeps the existing sampler's sample count
+		/// so A/B comparisons primarily measure the curve shape, not solver resolution.
+		/// </summary>
+		internal static List<Vector3> SampleCentripetalCatmullRom(IList<Vector3> points, int samplesPerSegment = 30)
+		{
+			var sampled = new List<Vector3>();
+			if (points == null || points.Count == 0) return sampled;
+
+			var controls = new List<Vector3>(points.Count);
+			for (int i = 0; i < points.Count; i++)
+				if (controls.Count == 0 || (points[i] - controls[controls.Count - 1]).sqrMagnitude > 0.000001f)
+					controls.Add(points[i]);
+			if (controls.Count == 1)
+			{
+				sampled.Add(controls[0]);
+				return sampled;
+			}
+
+			samplesPerSegment = Mathf.Max(1, samplesPerSegment);
+			for (int segment = 0; segment < controls.Count - 1; segment++)
+			{
+				Vector3 p1 = controls[segment];
+				Vector3 p2 = controls[segment + 1];
+				Vector3 p0 = segment > 0 ? controls[segment - 1] : 2f * p1 - p2;
+				Vector3 p3 = segment < controls.Count - 2 ? controls[segment + 2] : 2f * p2 - p1;
+				int first = segment == 0 ? 0 : 1;
+				for (int i = first; i <= samplesPerSegment; i++)
+				{
+					Vector3 value = CentripetalCatmullRom(p0, p1, p2, p3, (float)i / samplesPerSegment);
+					if (sampled.Count == 0 || (value - sampled[sampled.Count - 1]).sqrMagnitude > 0.000001f)
+						sampled.Add(value);
+				}
+			}
+			return sampled;
+		}
+
+		private static float CentripetalKnot(Vector3 a, Vector3 b)
+		{
+			return Mathf.Max(Mathf.Sqrt(Vector3.Distance(a, b)), 0.01f);
+		}
+
+		private static Vector3 CentripetalInterpolate(Vector3 a, Vector3 b, float ta, float tb, float t)
+		{
+			return Vector3.LerpUnclamped(a, b, (t - ta) / (tb - ta));
+		}
+
+		private static Vector3 CentripetalCatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+		{
+			float t0 = 0f;
+			float t1 = t0 + CentripetalKnot(p0, p1);
+			float t2 = t1 + CentripetalKnot(p1, p2);
+			float t3 = t2 + CentripetalKnot(p2, p3);
+			float u = Mathf.Lerp(t1, t2, t);
+			Vector3 a1 = CentripetalInterpolate(p0, p1, t0, t1, u);
+			Vector3 a2 = CentripetalInterpolate(p1, p2, t1, t2, u);
+			Vector3 a3 = CentripetalInterpolate(p2, p3, t2, t3, u);
+			Vector3 b1 = CentripetalInterpolate(a1, a2, t0, t2, u);
+			Vector3 b2 = CentripetalInterpolate(a2, a3, t1, t3, u);
+			return CentripetalInterpolate(b1, b2, t1, t2, u);
+		}
+
 		internal static Vector3 SamplePathDistance(IList<Vector3> path, IList<float> distances, float distance)
 		{
 			if (distance <= 0f) return path[0];

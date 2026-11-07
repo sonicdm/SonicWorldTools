@@ -1566,9 +1566,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			// resulting placements remain rigid; only their centers and headings
 			// are fitted to the interpolated curve. Rebuilding here is intentional:
 			// each newly clicked waypoint updates the complete preview before commit.
-			IList<Vector3> layoutPoints = PluginConfig.PieceRepeaterRoundedCorners.Value
-				? PieceRepeaterPathMath.SampleCatmullRom(points, Mathf.Clamp(PluginConfig.PieceRepeaterCornerRadius.Value, 0.25f, 6f))
-				: points;
+			IList<Vector3> layoutPoints = points;
+			if (PluginConfig.PieceRepeaterRoundedCorners.Value)
+			{
+				layoutPoints = PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CentripetalCatmullRom
+					? PieceRepeaterPathMath.SampleCentripetalCatmullRom(points)
+					: PieceRepeaterPathMath.SampleCatmullRom(points, Mathf.Clamp(PluginConfig.PieceRepeaterCornerRadius.Value, 0.25f, 6f));
+			}
 			float groundOffset = -metadata.BottomOffset;
 			float firstPointCenterY = _points.Count > 0 ? _points[0].y : 0f;
 			float fixedHeight = PieceRepeaterPathMath.ResolveFixedRootHeight(firstPointCenterY,
@@ -1945,8 +1949,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					.Append(" rotationStepsAtStart=").Append(_rotationStepsAtStart)
 					.Append(" pathRotationDelta=").Append(_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps)
 				.Append(" outgoingJoin=JoinEnd")
-				.Append(" curve=").Append(PluginConfig.PieceRepeaterRoundedCorners.Value ? "CatmullRom" : "Linear")
-				.Append(" smoothingDistance=").Append(PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##"))
+				.Append(" curve=").Append(PluginConfig.PieceRepeaterRoundedCorners.Value
+					? (PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CentripetalCatmullRom ? "CentripetalCatmullRom-B" : "CurrentHermite-A")
+					: "Linear")
+				.Append(" smoothingDistance=").Append(PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CurrentHermite
+					? PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") : "ignored")
 				.Append(" edgeSolver=rigid-projection-overlap-first-boundary")
 				.Append(" snapLocalDiagnosticOnly=");
 			Piece piece = prefab ? prefab.GetComponent<Piece>() : null;

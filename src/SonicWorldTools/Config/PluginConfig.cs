@@ -4,6 +4,12 @@ using UnityEngine;
 
 namespace SonicWorldTools.Config
 {
+	internal enum LineToolCurveAlgorithm
+	{
+		CurrentHermite = 0,
+		CentripetalCatmullRom = 1,
+	}
+
 	/// <summary>MVP inclusion rule. Collider is reserved and falls back to Origin.</summary>
 	internal enum SelectionIntersectionMode
 	{
@@ -81,6 +87,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<float> PieceRepeaterGap;
 		internal static ConfigEntry<bool> PieceRepeaterRoundedCorners;
 		internal static ConfigEntry<float> PieceRepeaterCornerRadius;
+		internal static ConfigEntry<LineToolCurveAlgorithm> PieceRepeaterCurveAlgorithm;
 		internal static ConfigEntry<bool> PieceRepeaterLevelByDefault;
 		internal static ConfigEntry<bool> PieceRepeaterPropFollowCurve;
 		internal static ConfigEntry<bool> LineToolDiagnostics;
@@ -280,8 +287,9 @@ namespace SonicWorldTools.Config
 			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
 			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
 			PieceRepeaterGap = BindLineTool(config, "GapMeters", 0f, "Gap between repeated pieces in metres. Negative values bring pieces closer.");
-			PieceRepeaterRoundedCorners = BindLineTool(config, "RoundedCorners", true, "Use Catmull-Rom interpolation through route waypoints.");
-			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 1.5f, "Maximum curve tangent handle length in metres.");
+			PieceRepeaterRoundedCorners = BindLineTool(config, "RoundedCorners", true, "Use curved interpolation through route waypoints; false uses straight segments.");
+			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 4f, "Maximum tangent handle length in metres for curve sampler A (CurrentHermite); ignored by sampler B.");
+			PieceRepeaterCurveAlgorithm = BindLineTool(config, "CurveSampler", LineToolCurveAlgorithm.CentripetalCatmullRom, "A/B test: A CurrentHermite; B CentripetalCatmullRom (default, adapts to waypoint spacing and passes through each waypoint). Changes the preview immediately.");
 			PieceRepeaterLevelByDefault = BindLineTool(config, "LevelHeightByDefault", false, "Keep all pieces at the first point's height by default.");
 			PieceRepeaterPropFollowCurve = BindLineTool(config, "PropFollowCurve", true, "Align ground props to the route tangent; disable for fixed facing.");
 			LineToolDiagnostics = config.Bind("LineTool", "WriteDiagnostics", false, "Write detailed Line Tool path and placement diagnostics to BepInEx/logs/SonicWorldTools-LineTool.log. Off by default.");
