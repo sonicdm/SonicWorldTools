@@ -104,7 +104,9 @@ namespace SonicWorldTools.Core
 				sb.AppendLine("  description: " + options.ScatterDescription);
 			sb.AppendLine("  icon: Cultivator");
 			sb.AppendLine("  commands:");
-			sb.AppendLine("  - command: sonic_scatter place <x>,<z> radius=<r>");
+			// Keep IH's native area placeholders in this command so its ToolSelection
+			// builds and displays the same radius ruler as its standard area tools.
+			sb.AppendLine("  - command: sonic_scatter place <x>,<z> radius=<r> <area>");
 				sb.AppendLine("  initialSize: " + Number(options.ScatterRadius));
 			sb.AppendLine("  initialShape: circle");
 			sb.AppendLine("  snapGround: true");
