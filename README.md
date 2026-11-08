@@ -1,6 +1,6 @@
 # SonicWorldTools
 
-**Draw the route. Preview the build. Place the whole line.**
+**Building, selection, and terrain tools for Valheim.**
 
 SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Hammer, Hoe, and Cultivator menus. Line a winding road with fences or lamps, paint a curved path beneath it, scatter the surrounding props, and select an area when you want to move or remove a larger build.
 
