@@ -226,20 +226,18 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			int hitCount = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, rayMask,
-				QueryTriggerInteraction.Collide);
+				QueryTriggerInteraction.Ignore);
 			while (hitCount == HitBuffer.Length)
 			{
 				HitBuffer = new RaycastHit[HitBuffer.Length * 2];
 				hitCount = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, rayMask,
-					QueryTriggerInteraction.Collide);
+					QueryTriggerInteraction.Ignore);
 			}
 			Array.Sort(HitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
 			for (int i = 0; i < hitCount; i++)
 			{
 				RaycastHit hit = HitBuffer[i];
-				if (!hit.collider
-				    || IsOwnedByLocalPlayer(hit.collider.gameObject, player)
-				    || hit.collider.attachedRigidbody)
+				if (!hit.collider || IsOwnedByLocalPlayer(hit.collider.gameObject, player))
 				{
 					continue;
 				}
@@ -247,12 +245,15 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ZNetView view = hit.collider.GetComponentInParent<ZNetView>();
 				if (!view)
 				{
-					continue;
+					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+						"[Scatter] Sample ray stopped at nearest non-player collider '" + hit.collider.name
+						+ "' (" + Utils.GetPrefabName(hit.collider.gameObject) + ") without a ZNetView; farther objects were not considered.");
+					return false;
 				}
 				if (IsOwnedByLocalPlayer(view.gameObject, player))
 				{
-					SonicWorldToolsPlugin.ModLogger?.LogDebug(
-						"[Scatter] Ignored player-owned ray hit '" + hit.collider.name + "'.");
+					// The collider can be outside the player's root while sharing a
+					// parent ZNetView. Treat the player's own hierarchy as transparent.
 					continue;
 				}
 
@@ -265,6 +266,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 						+ "' at scale " + FormatScale(scale) + ".");
 					return true;
 				}
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[Scatter] Sample ray stopped at nearest networked collider '" + hit.collider.name
+					+ "' because its prefab could not be resolved; farther objects were not considered.");
+				return false;
 			}
 
 			return false;
@@ -361,17 +366,24 @@ namespace SonicWorldTools.Modules.ScatterProps
 			if (existing >= 0)
 			{
 				Samples.RemoveAt(existing);
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[Scatter] Removed sample '" + prefab + "'; palette now has " + Samples.Count + " sample(s).");
 				Notify("Removed " + prefab + " from Scatter Props (" + Samples.Count + " sampled).");
 				return;
 			}
 
 			if (Samples.Count >= MaximumSamples)
 			{
+				SonicWorldToolsPlugin.ModLogger?.LogWarning(
+					"[Scatter] Could not add sample '" + prefab + "'; palette is at its " + MaximumSamples + " type limit.");
 				Notify("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
 				return;
 			}
 
 			Samples.Add(new SampledPrefab(prefab, scale));
+			SonicWorldToolsPlugin.ModLogger?.LogInfo(
+				"[Scatter] Added sample '" + prefab + "' at scale " + FormatScale(scale)
+				+ "; palette now has " + Samples.Count + " sample(s).");
 			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Press " + SampleLabel + " again to remove.");
 		}
 
