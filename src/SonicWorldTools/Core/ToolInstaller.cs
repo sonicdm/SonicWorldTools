@@ -20,7 +20,7 @@ namespace SonicWorldTools.Core
 			public string LineDescription = "MMB samples; click adds waypoints; Shift+click places. Q/E cycles build snap points. Wheel rotates; Alt+wheel changes gap; hold Alt for level height. F7 opens settings, including fill-down; Shift+F7 edits offsets; Esc exits.";
 			public string PathFinishKey = "LeftShift", PathSmoothKey = "LeftAlt";
 			public string PathFinishLabel = "Left Shift", PathSmoothLabel = "Left Alt";
-			public string ScatterDescription = "MMB samples/removes props; Shift+MMB clears. Click scatters the sampled mix or hovered prop.";
+			public string ScatterDescription = "MMB samples/removes props; Shift+MMB clears. Click scatters the mix; Alt+wheel changes count by 5. Radius wheel follows your Infinity Hammer bind.";
 			public float PathHalfWidth = 2f, PathSmoothness = .5f, LowerHeight = .2f, LowerSmoothness = .5f, ScatterRadius = 3f;
 		}
 		public const string ToolName = "Precision Select";
@@ -230,7 +230,7 @@ namespace SonicWorldTools.Core
 				.Replace("Click route points; hold <alt> on the last click to finish. Hold <mod1> there to smooth edges. Scroll changes half-width.", "Click route points. Hold <mod2> to finish; also hold <mod1> on the final point for softer edges. Scroll to change half-width.")
 				.Replace("  finish: <alt>", "  finish: <mod2>")
 				.Replace("smooth=<mod1>?0.5:0", "smooth=<mod1>?.5:0")
-				.Replace(new Options().ScatterDescription, "MMB samples/removes props; Shift+MMB clears. Click to scatter the sampled mix, or the hovered prop if none are sampled. Keys and batch size are configurable in SonicWorldTools.cfg.");
+				.Replace(new Options().ScatterDescription, "MMB samples/removes props; Shift+MMB clears. Click scatters the mix; Alt+wheel changes count by 5. Radius wheel follows your Infinity Hammer bind.");
 		}
 
 		private static bool PrimaryToolHasCustomIcon(string yaml)

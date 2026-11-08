@@ -13,6 +13,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 	{
 		internal const string CommandName = "sonic_scatter";
 		private const float DefaultRadius = 3f;
+		private const int ObjectsPerWheelNotch = 5;
 		private static int MaximumSamples => Mathf.Clamp(PluginConfig.ScatterMaxSamples?.Value ?? 8, 1, 32);
 		private static int TotalObjects => Mathf.Clamp(PluginConfig.ScatterObjectsPerClick?.Value ?? 20, 1, 200);
 		private static string SampleLabel => PluginConfig.FormatKeyLabel(PluginConfig.ScatterSampleKey?.Value ?? KeyCode.Mouse2);
@@ -56,8 +57,28 @@ namespace SonicWorldTools.Modules.ScatterProps
 				return;
 			}
 
-			if (ToolRuntime.TextInputBlocked
-			    || !ToolInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
+			if (ToolRuntime.TextInputBlocked)
+			{
+				return;
+			}
+
+			float wheel = ToolInput.MouseScrollY;
+			if (Mathf.Abs(wheel) > 0.01f && ToolInput.WasModifierHeld(KeyCode.LeftAlt))
+			{
+				int direction = wheel > 0f ? 1 : -1;
+				int nextCount = Mathf.Clamp(
+					PluginConfig.ScatterObjectsPerClick.Value + direction * ObjectsPerWheelNotch,
+					1,
+					200);
+				if (nextCount != PluginConfig.ScatterObjectsPerClick.Value)
+				{
+					PluginConfig.ScatterObjectsPerClick.Value = nextCount;
+					Notify("Scatter amount: " + nextCount + " per click. (Alt+wheel; radius wheel follows your Infinity Hammer bind.)");
+				}
+				return;
+			}
+
+			if (!ToolInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
 			{
 				return;
 			}
@@ -190,7 +211,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 		{
 			if (args.Length < 2)
 			{
-				Notify(args, "Scatter Props: click to scatter; " + SampleLabel + " samples; "
+				Notify(args, "Scatter Props: click to scatter (" + TotalObjects + " props); Alt+wheel changes amount; radius wheel follows Infinity Hammer's bind; " + SampleLabel + " samples; "
 				             + PluginConfig.FormatKeyLabel(PluginConfig.ScatterClearModifier.Value) + "+" + SampleLabel + " clears.");
 				return;
 			}

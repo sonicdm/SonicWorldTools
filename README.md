@@ -41,7 +41,7 @@ These bindings are configurable. The tool pane and generated Infinity Hammer des
 
 Under **Hoe**, choose a surface path and click its route points. Hold **Shift** on the last click to finish (Infinity Hammer's `<alt>` key, default Shift); also hold **Alt** (Infinity Hammer's modifier 1) there for softer edges. Scroll to change half-width. **Lower Terrain** lowers by the selected amount and can smooth with modifier 1.
 
-Under **Cultivator**, choose **Scatter Props**. Middle-click networked props to add or remove them from your sample mix; Shift+middle-click clears it. Click to scatter the mix. With no samples, the tool uses the prop under your cursor. Scroll to change the scatter radius.
+Under **Cultivator**, choose **Scatter Props**. Middle-click networked props to add or remove them from your sample mix; Shift+middle-click clears it. Click to scatter the mix. With no samples, the tool uses the prop under your cursor. Alt+scroll changes the number spawned per click in steps of five (1–200). Scatter radius continues to follow Infinity Hammer’s radius-wheel bind.
 
 With **Precision Select**, click three corners to define a volume. Alt+left-click adds an individual piece, Alt+middle-click excludes one, and Shift+middle-click hands the selection to Infinity Hammer's copy placement. Ctrl+Delete dismantles; Shift+Delete permanently removes. The selection preview and padding are configurable.
 
