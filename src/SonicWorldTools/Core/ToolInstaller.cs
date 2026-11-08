@@ -20,6 +20,7 @@ namespace SonicWorldTools.Core
 			public string LineDescription = "MMB samples; click adds waypoints; Shift+click places. Q/E cycles build snap points. Wheel rotates; Alt+wheel changes gap; hold Alt for level height. F7 opens settings, including fill-down; Shift+F7 edits offsets; Esc exits.";
 			public string PathFinishKey = "LeftShift", PathSmoothKey = "LeftAlt";
 			public string PathFinishLabel = "Left Shift", PathSmoothLabel = "Left Alt";
+			public string ShapeDescription = "MMB samples a piece. Click a center, move to size the outline, then Shift+click to place. Q cycles circle, square and rectangle.";
 			public string ScatterDescription = "MMB samples/removes props; Shift+MMB clears. Click scatters the mix; Alt+wheel changes count by 1. Current count is shown below. Radius wheel follows your Infinity Hammer bind.";
 			public float PathHalfWidth = 2f, PathSmoothness = .5f, LowerHeight = .2f, LowerSmoothness = .5f, ScatterRadius = 3f;
 		}
@@ -27,9 +28,11 @@ namespace SonicWorldTools.Core
 		public const string Marker = "sonicworldtools-tool-v1";
 		public const string ActivateCommand = "sonic_precision_pipette";
 		public const string PieceRepeaterToolName = "Line Tool";
+		public const string ShapeToolName = "Shape Tool";
 		public const string PreviousPieceRepeaterToolName = "Piece Repeater";
 		public const string LegacyPieceRepeaterToolName = "Shape Builder";
 		public const string PieceRepeaterCommand = "sonic_piece_repeater";
+		public const string ShapeToolCommand = "sonic_shape_tool";
 		// IH 1.92 resolves `tool <name>` through the YAML equipment section and
 		// equips the matching item. `hammer` is the vanilla hammer; custom IH tools
 		// must be registered under the custom item's actual key.
@@ -42,6 +45,16 @@ namespace SonicWorldTools.Core
 			return string.Equals(name, PieceRepeaterToolName, StringComparison.OrdinalIgnoreCase)
 			       || string.Equals(name, PreviousPieceRepeaterToolName, StringComparison.OrdinalIgnoreCase)
 			       || string.Equals(name, LegacyPieceRepeaterToolName, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public static bool IsShapeToolName(string name)
+		{
+			return string.Equals(name, ShapeToolName, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public static bool IsManagedPlacementToolName(string name)
+		{
+			return IsPieceRepeaterToolName(name) || IsShapeToolName(name);
 		}
 
 		public static string BuildOwnedDocument(Options options = null)
@@ -66,6 +79,12 @@ namespace SonicWorldTools.Core
 			sb.AppendLine("  icon: Hammer");
 			sb.AppendLine("  instant: false");
 			sb.AppendLine("  command: " + PieceRepeaterCommand);
+			sb.AppendLine("  tabIndex: 0");
+			sb.AppendLine("- name: " + ShapeToolName);
+			sb.AppendLine("  description: " + options.ShapeDescription);
+			sb.AppendLine("  icon: Hammer");
+			sb.AppendLine("  instant: false");
+			sb.AppendLine("  command: " + ShapeToolCommand);
 			sb.AppendLine("  tabIndex: 0");
 			sb.AppendLine("hoe:");
 				sb.AppendLine("- name: Lower Terrain");

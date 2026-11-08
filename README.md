@@ -4,13 +4,14 @@
 
 SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Hammer, Hoe, and Cultivator menus. Line a winding road with fences or lamps, paint a curved path beneath it, scatter the surrounding props, and select an area when you want to move or remove a larger build.
 
-> **The tools live where you already build:** Line Tool and Precision Select under Hammer, terrain paths and Lower Terrain under Hoe, and Scatter Props under Cultivator.
+> **The tools live where you already build:** Line Tool, Shape Tool, and Precision Select under Hammer, terrain paths and Lower Terrain under Hoe, and Scatter Props under Cultivator.
 
 ## What you can make
 
 | Tool | Try it for… |
 | --- | --- |
 | **Line Tool** | Fence lines, curved walls, rows of lamps, posts, floors, and other supported build pieces along clicked waypoints. |
+| **Shape Tool** | Closed circles, squares, or rectangles made from a sampled build piece. |
 | **Surface Paths** | Curved dirt, grass, cultivated, and paved routes with adjustable width and edge smoothing. No lava. |
 | **Scatter Props** | A mixed spread of rocks, plants, and other networked props sampled from the world. |
 | **Precision Select** | Copying, dismantling, or deleting a three-corner build area, with individual pieces added or excluded. |
@@ -36,6 +37,10 @@ The first piece uses Valheim's build snap behavior, including **Q/E** snap-point
 | Exit the tool | Esc |
 
 These bindings are configurable. The tool pane and generated Infinity Hammer description show the configured keys. Open **Line Tool settings** with F7 to switch curve interpolation. **A: Current** preserves the existing tangent-limited curve; **B: Centripetal** uses WEC-style centripetal Catmull–Rom. The switch updates the preview immediately, and the smoothing-distance control applies only to A.
+
+### Place a shape outline
+
+Select **Shape Tool** in the Infinity Hammer Hammer menu and middle-click a placed build piece to sample it. Click the outline center, move the cursor to size the preview, and press **Q** to cycle Circle, Square, and Rectangle. **Shift+click** places the outline. This version places the perimeter; interior infill can be added later.
 
 ### Shape the ground and surroundings
 

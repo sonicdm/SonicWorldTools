@@ -76,6 +76,13 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 4. Press F7 again, then reopen and press Escape. **Pass:** F7 closes the panel and resumes the tool; Escape exits the tool and opens the game menu.
 5. Re-equip the Hammer and select Line Tool again. **Pass:** settings persist and the hotkey works once, without duplicate panels or handlers.
 
+### S06s — Shape Tool closed outlines
+**Rule:** Shape Tool shares Line Tool sampling and placement safety while cycling closed outline layouts.
+1. Select Shape Tool, sample a placed building piece with MMB, and verify the target remains intact.
+2. Click a center, move the cursor, then cycle Circle → Square → Rectangle with Q. **Pass:** the preview follows each outline and Q does not change the IH ruler shape.
+3. Hold the configured place modifier and click. **Pass:** pieces are placed around the shown outline and IH undo reverses the batch.
+4. Switch to the build hammer and place a normal piece. **Pass:** Shape Tool no longer captures the build action.
+
 ### S06a — Curved Terrain Path Surface Variants (WEC / IH multi-point tool)
 **Rule:** The custom tools draw WEC curves on the selected surface, level the route, and finish reliably.
 1. In a disposable area, equip the Hoe and choose a path surface variant from the Hoe Tools tab.

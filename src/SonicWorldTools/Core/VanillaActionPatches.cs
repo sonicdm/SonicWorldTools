@@ -31,7 +31,7 @@ namespace SonicWorldTools.Core
 
 		internal static bool OwnsMiddleMouse(string selectedTool)
 		{
-			if (ToolInstaller.IsPieceRepeaterToolName(selectedTool))
+			if (ToolInstaller.IsManagedPlacementToolName(selectedTool))
 				return PluginConfig.PieceRepeaterSampleKey.Value == KeyCode.Mouse2;
 			if (string.Equals(selectedTool, "Scatter Props", System.StringComparison.OrdinalIgnoreCase))
 				return PluginConfig.ScatterSampleKey.Value == KeyCode.Mouse2;
@@ -49,7 +49,7 @@ namespace SonicWorldTools.Core
 			if (!wear || !player || !ToolRuntime.InBuildMode || !ToolRuntime.InfinityHammerEquipped
 			    || ToolRuntime.TextInputBlocked
 			    || !ToolRuntime.TryGetSelectedToolName(out selectedTool)
-			    || !ToolInstaller.IsPieceRepeaterToolName(selectedTool)
+			    || !ToolInstaller.IsManagedPlacementToolName(selectedTool)
 			    || PluginConfig.PieceRepeaterSampleKey.Value != KeyCode.Mouse2
 			    || (!ToolInput.WasMouseButtonDown(2) && !ToolInput.WasMouseButtonHeld(2)
 			        && !ToolInput.WasMouseButtonPressedRecently(2, 30)))

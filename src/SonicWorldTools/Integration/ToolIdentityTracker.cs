@@ -42,11 +42,11 @@ namespace SonicWorldTools.Integration
 		}
 
 		/// <summary>
-		/// The Line Tool is also represented by a synthetic Piece in IH's build menu.
+		/// Managed placement tools are represented by synthetic Pieces in IH's build menu.
 		/// Keep this separate from IsOurPiece: that identity belongs to Precision Select
-		/// and must not arm the pipette when the Line Tool menu row is clicked.
+		/// and must not arm the pipette when a placement tool row is clicked.
 		/// </summary>
-		internal static bool IsLineToolPiece(Piece piece)
+		internal static bool IsManagedPlacementToolPiece(Piece piece)
 		{
 			if ((Object)(object)piece == (Object)null)
 			{
@@ -55,8 +55,8 @@ namespace SonicWorldTools.Integration
 
 			string name = piece.m_name ?? string.Empty;
 			string go = piece.gameObject != null ? piece.gameObject.name ?? string.Empty : string.Empty;
-			return ToolInstaller.IsPieceRepeaterToolName(name)
-			       || ToolInstaller.IsPieceRepeaterToolName(go);
+			return ToolInstaller.IsManagedPlacementToolName(name)
+			       || ToolInstaller.IsManagedPlacementToolName(go);
 		}
 
 		internal static string DescribePiece(Piece piece)
@@ -96,7 +96,7 @@ namespace SonicWorldTools.Integration
 				Log(
 					"ToolSelection poll: "
 					+ (hasTool ? ("'" + toolName + "' pipette=" + IsOurToolLabel(toolName)
-						+ " lineTool=" + ToolInstaller.IsPieceRepeaterToolName(toolName)) : "none")
+						+ " placementTool=" + ToolInstaller.IsManagedPlacementToolName(toolName)) : "none")
 					+ " pipetteActive=" + controller.IsActive
 					+ " place=" + player.InPlaceMode());
 			}
@@ -215,13 +215,14 @@ namespace SonicWorldTools.Integration
 			}
 
 			if (text.StartsWith("tool ", System.StringComparison.OrdinalIgnoreCase)
-			    && ToolInstaller.IsPieceRepeaterToolName(text.Substring(5).Trim()))
+			    && ToolInstaller.IsManagedPlacementToolName(text.Substring(5).Trim()))
 			{
 				PieceRepeaterController.CaptureAndActivate();
 				return;
 			}
 
-			if (text.StartsWith(PieceRepeaterCommand.CommandName, System.StringComparison.OrdinalIgnoreCase))
+			if (text.StartsWith(PieceRepeaterCommand.CommandName, System.StringComparison.OrdinalIgnoreCase)
+			    || text.StartsWith(ToolInstaller.ShapeToolCommand, System.StringComparison.OrdinalIgnoreCase))
 			{
 				PieceRepeaterController.CaptureAndActivate();
 				return;
@@ -229,7 +230,7 @@ namespace SonicWorldTools.Integration
 
 			if (text.StartsWith("tool ", System.StringComparison.OrdinalIgnoreCase)
 			    && PieceRepeaterController.IsActive
-			    && !ToolInstaller.IsPieceRepeaterToolName(text.Substring(5).Trim()))
+			    && !ToolInstaller.IsManagedPlacementToolName(text.Substring(5).Trim()))
 			{
 				PieceRepeaterController.Instance?.Deactivate("other-ih-tool-command");
 			}

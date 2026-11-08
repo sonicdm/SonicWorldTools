@@ -14,6 +14,12 @@ hammer:
   instant: true
   command: sonic_piece_repeater
   tabIndex: 0
+- name: Shape Tool
+  description: MMB samples a piece. Click a center, move to size the outline, then Shift+click to place. Q cycles circle, square and rectangle.
+  icon: Hammer
+  instant: false
+  command: sonic_shape_tool
+  tabIndex: 0
 hoe:
 - name: Lower Terrain
   description: Lowers terrain by the selected amount. Hold <mod1> to smooth; hold <mod2> for free placement.
