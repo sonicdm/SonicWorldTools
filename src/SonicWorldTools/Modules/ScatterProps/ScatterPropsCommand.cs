@@ -406,11 +406,17 @@ namespace SonicWorldTools.Modules.ScatterProps
 				return;
 			}
 
-			int baseCount = TotalObjects / Samples.Count;
-			int remainder = TotalObjects % Samples.Count;
+			// Choose a sample independently for every spawned object. A quotient /
+			// remainder split gave all leftover objects to the earliest samples, so
+			// with one object per click the first sample always won.
+			int[] amounts = new int[Samples.Count];
+			for (int i = 0; i < TotalObjects; i++)
+				amounts[UnityEngine.Random.Range(0, Samples.Count)]++;
+
 			for (int i = 0; i < Samples.Count; i++)
 			{
-				int amount = baseCount + (i < remainder ? 1 : 0);
+				int amount = amounts[i];
+				if (amount <= 0) continue;
 				Spawn(args.Context, Samples[i].Prefab, Samples[i].Scale, amount, x, z, radius);
 			}
 		}
