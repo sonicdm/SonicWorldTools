@@ -6,49 +6,101 @@ SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Ha
 
 > **The tools live where you already build:** Line Tool, Shape Tool, and Precision Select under Hammer, terrain paths and Lower Terrain under Hoe, and Scatter Props under Cultivator.
 
-## What you can make
+## Tool guide
 
-| Tool | Try it for… |
+The tools appear in Infinity Hammer's **Hammer**, **Hoe**, and **Cultivator** menus. Select a tool there to activate it. Controls below are the defaults; most keys can be changed in `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg`.
+
+### Hammer: Line Tool
+
+Use Line Tool to repeat a supported build piece along a straight or curved route: fences, walls, beams, lamps, floor pieces, and profiled props.
+
+1. Select **Line Tool** from Infinity Hammer's Hammer tools.
+2. Aim at a placed piece and **middle-click** to sample it.
+3. **Click** each route waypoint. The preview shows the repeated pieces along the route.
+4. Hold **Shift** and click to place the batch. Use Infinity Hammer's undo to reverse it.
+
+| Control | Default action |
 | --- | --- |
-| **Line Tool** | Fence lines, curved walls, rows of lamps, posts, floors, and other supported build pieces along clicked waypoints. |
-| **Shape Tool** | Closed circles, squares, or rectangles made from a sampled build piece. |
-| **Surface Paths** | Curved dirt, grass, cultivated, and paved routes with adjustable width and edge smoothing. No lava. |
-| **Scatter Props** | A mixed spread of rocks, plants, and other networked props sampled from the world. |
-| **Precision Select** | Copying, dismantling, or deleting a three-corner build area, with individual pieces added or excluded. |
-| **Lower Terrain** | Lowering ground by a chosen amount, with optional smoothing. |
+| Middle-click | Sample the aimed placed piece. |
+| Click | Add a route waypoint. |
+| Right Alt+click | Snap a waypoint to the aimed piece's repeat joint. |
+| Shift+click | Place the previewed route. |
+| Mouse wheel | Rotate the repeated pieces. |
+| Alt+mouse wheel | Increase or decrease the gap between pieces. |
+| Hold Alt | Keep the route at one height. |
+| F7 / Shift+F7 | Open route settings / edit the sampled-piece offsets. |
+| Esc | Exit Line Tool. |
 
-### Line a path in four steps
+The first sampled placement uses Valheim's build snapping. **Q/E** cycles its snap point. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`; pieces without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap solid portions of adjacent pieces to close an outside gap. Very tight turns may need another waypoint or a spacing adjustment.
 
-1. Select **Line Tool** in the Infinity Hammer Hammer tools menu.
-2. Point at a placed build piece and **middle-click** to sample it.
-3. **Click** waypoints along the route. The preview updates as you go.
-4. **Shift+click** to place the previewed pieces. Use Infinity Hammer's undo to reverse the batch.
+F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include gap, height behavior, fill-down, and offsets.
 
-The first piece uses Valheim's build snap behavior, including **Q/E** snap-point cycling. Repeated pieces follow the route using editable per-piece profiles. A bend may deliberately overlap solid parts of neighboring pieces to close an outside gap; short or very tight turns may still need another waypoint or a spacing adjustment.
+### Hammer: Shape Tool
 
-| Line Tool control | Default |
+Use Shape Tool to place a sampled piece around a closed circle, square, or rectangle, or fill the enclosed area.
+
+1. Select **Shape Tool** and middle-click a placed build piece to sample it.
+2. Click the shape's center, then move the cursor to size the preview.
+3. Press **Q** to cycle **Circle → Square → Rectangle**. For a square, the cursor direction also sets its angle.
+4. Press **I** to switch between perimeter-only placement and infill.
+5. Hold **Shift** and click to place the preview.
+
+Circle infill uses concentric rings; square and rectangle infill use rows fitted to the sampled piece spacing. Square and rectangle perimeters also fit to that spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
+
+### Hammer: Precision Select
+
+Use Precision Select to select building pieces inside a three-corner volume, then refine, copy, dismantle, or delete that selection.
+
+1. Click **Corner A**.
+2. Click **Corner B** to set the width direction and span.
+3. Click **Corner C** to set the remaining depth and height. The selected count and volume dimensions appear in the HUD.
+4. Refine or act on the locked selection using the controls below.
+
+| Control | Default action |
 | --- | --- |
-| Sample a placed piece | Middle-click |
-| Add a waypoint / place the batch | Click / Shift+click |
-| Snap a waypoint to a repeat joint | Right Alt+click |
-| Rotate repeated pieces / adjust gap | Wheel / Alt+wheel |
-| Hold one height | Alt |
-| Route settings / sampled-piece offsets | F7 / Shift+F7 |
-| Exit the tool | Esc |
+| Left-click | Set A, B, C; after locking, resize from A/B. |
+| Alt+left-click | Add the aimed piece to the selection, even outside the volume. |
+| Alt+middle-click | Exclude the aimed piece. |
+| Shift+middle-click | Hand the selection to Infinity Hammer's copy-placement ghost. |
+| Ctrl+Delete | Dismantle selected pieces and return materials. |
+| Shift+Delete | Permanently delete selected pieces without drops. |
+| Backspace | Clear manual add/exclude refinements, keeping the volume. |
+| Home | Clear the corners and start a new volume. |
+| Esc | Cancel and clear the current selection. |
 
-These bindings are configurable. The tool pane and generated Infinity Hammer description show the configured keys. Open **Line Tool settings** with F7 to switch curve interpolation. **A: Current** preserves the existing tangent-limited curve; **B: Centripetal** uses WEC-style centripetal Catmull–Rom. The switch updates the preview immediately, and the smoothing-distance control applies only to A.
+Selection padding, box/corner markers, highlights, selected count, and dimensions are configurable. Padding defaults to 0.1 m on each side.
 
-### Place a shape outline
+### Hoe: Surface Paths
 
-Select **Shape Tool** in the Infinity Hammer Hammer menu and middle-click a placed build piece to sample it. Click the outline center, move the cursor to size the preview, and press **Q** to cycle Circle, Square, and Rectangle. For a square, the direction from the center toward the cursor also sets its angle. Press **I** to toggle infill; circles fill in concentric rings. Use **Shift+click** to place. Outline edges fit the sampled piece spacing to close at corners. Holstering or opening the piece menu cancels an unfinished layout.
+Choose one of the surface path tools under **Hoe**, then click the route points. Hold **Shift** on the final point to finish; also hold **Alt** on that final click to soften the path edges. The mouse wheel changes the path half-width. The default half-width is 2 m, so the full path is 4 m wide.
 
-### Shape the ground and surroundings
+| Tool | Surface painted |
+| --- | --- |
+| Grass Path | Grass |
+| Grass Patches Path | Scattered grass patches |
+| Dark Grass Path | Dark grass |
+| Dirt Path | Dirt |
+| Cultivated Path | Cultivated soil |
+| Paved Path | Paved stone |
+| Mossy Paved Path | Mossy paved stone |
+| Dark Paved Path | Dark paved stone |
 
-Under **Hoe**, choose a surface path and click its route points. Hold **Shift** on the last click to finish (Infinity Hammer's `<alt>` key, default Shift); also hold **Alt** (Infinity Hammer's modifier 1) there for softer edges. Scroll to change half-width. **Lower Terrain** lowers by the selected amount and can smooth with modifier 1.
+Finish and smoothing keys are configurable in the `TerrainPaths` section. These tools paint terrain surfaces; they do not place build pieces.
 
-Under **Cultivator**, choose **Scatter Props**. Middle-click networked props to add or remove them from your sample mix; Shift+middle-click clears it. Click to scatter the mix. With no samples, the tool uses the prop under your cursor. Alt+scroll changes the number spawned per click by one (1–200); the current count appears in the tool description. Scatter radius continues to follow Infinity Hammer’s radius-wheel bind.
+### Hoe: Lower Terrain
 
-With **Precision Select**, click three corners to define a volume. Alt+left-click adds an individual piece, Alt+middle-click excludes one, and Shift+middle-click hands the selection to Infinity Hammer's copy placement. Ctrl+Delete dismantles; Shift+Delete permanently removes. The selection preview and padding are configurable.
+Select **Lower Terrain** and use the Hoe's terrain area cursor over the ground to lower it by the selected height amount. The starting amount is 0.2 m. Hold Infinity Hammer **Modifier 1** to smooth the lowered area; hold **Modifier 2** for free placement. The initial amount and smoothing strength are configurable under `LowerTerrain`.
+
+### Cultivator: Scatter Props
+
+Use Scatter Props to place repeated instances of one or more sampled networked props across a circular area.
+
+1. Select **Scatter Props** under Cultivator.
+2. Middle-click a networked prop to add it to the sample mix. Middle-click a sampled prop again to remove that type.
+3. Click the ground to scatter the mix inside the shown radius. If the sample list is empty, the prop under the cursor is used.
+4. Hold **Shift** and middle-click to clear the sample list.
+
+Hold **Alt** and use the mouse wheel to change the number placed per click by one; the range is 1–200 and the current count appears in the tool description. The initial count is 20, the sample palette holds up to 8 types, and the initial radius is 3 m. The ordinary radius wheel remains controlled by Infinity Hammer's radius binding. Sample limit, count, and radius are configurable under `ScatterProps`.
 
 ## Install
 
