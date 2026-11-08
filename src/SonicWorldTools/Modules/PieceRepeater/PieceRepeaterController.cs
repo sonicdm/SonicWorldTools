@@ -19,6 +19,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		Rectangle
 	}
 
+	internal enum ShapeFillMode
+	{
+		Outline,
+		Grid,
+		Concentric
+	}
+
 	/// <summary>IH-opened prefab line tool with metadata-driven repeat-axis selection.</summary>
 	internal sealed class PieceRepeaterController : IToolSession
 	{
@@ -65,7 +72,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private readonly RaycastHit[] _surfaceRayHits = new RaycastHit[64];
 		private string _prefabId;
 		private PieceRepeaterMode _mode;
-		private bool _filled;
+		private ShapeFillMode _shapeFillMode;
 		private bool _bothSides;
 		private bool _hasLockedStartPlacement;
 		private Placement _lockedStartPlacement;
@@ -287,7 +294,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_shapeToolMode = ToolRuntime.TryGetSelectedToolName(out string selectedTool)
 			                 && ToolInstaller.IsShapeToolName(selectedTool);
 			_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
-			_filled = false;
+			_shapeFillMode = ShapeFillMode.Outline;
 			_bothSides = false;
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
@@ -460,7 +467,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				_shapeToolMode = shapeToolSelected;
 				_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
-				_filled = false;
+				_shapeFillMode = ShapeFillMode.Outline;
 				_bothSides = false;
 				_points.Clear();
 				_hasLockedStartPlacement = false;
@@ -525,10 +532,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (ToolRuntime.TextInputBlocked) return;
 			if (_shapeToolMode && ToolInput.WasKeyDown(KeyCode.I))
 			{
-				_filled = !_filled;
+				if (_mode == PieceRepeaterMode.Circle)
+					_shapeFillMode = _shapeFillMode == ShapeFillMode.Outline ? ShapeFillMode.Concentric : ShapeFillMode.Outline;
+				else
+					_shapeFillMode = _shapeFillMode == ShapeFillMode.Outline ? ShapeFillMode.Grid
+						: _shapeFillMode == ShapeFillMode.Grid ? ShapeFillMode.Concentric : ShapeFillMode.Outline;
 				_awaitPrimaryRelease = true;
 				UpdatePreview();
-				Notify("Shape Tool: " + (_filled ? "infill on." : "outline only."));
+				Notify("Shape Tool: " + GetShapeFillLabel() + ".");
 				return;
 			}
 			if (_shapeToolMode && ToolInput.WasKeyDown(KeyCode.Q))
@@ -539,8 +550,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_awaitPrimaryRelease = true;
 				UpdatePreview();
 				Notify(_points.Count == 0
-					? "Shape Tool: " + (_filled ? "infill" : "outline") + " " + _mode.ToString().ToLowerInvariant() + ". Click a center; square direction sets angle."
-					: "Shape Tool: " + (_filled ? "infill" : "outline") + " " + _mode.ToString().ToLowerInvariant() + " preview updated.");
+					? "Shape Tool: " + GetShapeFillLabel() + " " + _mode.ToString().ToLowerInvariant() + ". Click a center; square direction sets angle."
+					: "Shape Tool: " + GetShapeFillLabel() + " " + _mode.ToString().ToLowerInvariant() + " preview updated.");
 				return;
 			}
 			HandleSnapPointInput(player);
@@ -684,7 +695,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_points.Add(_aim);
 				UpdatePreview();
 				Notify(_shapeToolMode
-					? _mode + ": set size with the cursor; square direction also sets its angle. I toggles infill; " + PlaceChordLabel + " places."
+					? _mode + ": set size with the cursor; square direction also sets its angle. I cycles "
+					  + (_mode == PieceRepeaterMode.Circle ? "outline and concentric infill" : "outline, grid and concentric infill")
+					  + "; " + PlaceChordLabel + " places."
 					: _mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
 				return;
 			}
@@ -1031,7 +1044,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				float radius = Vector2.Distance(new Vector2(a.x, a.z), new Vector2(_aim.x, _aim.z));
 				if (radius < MinimumSpacing * 0.5f) return;
-				if (_filled) GenerateCircleFill(a, radius, spacing);
+				if (_shapeFillMode != ShapeFillMode.Outline) GenerateCircleFill(a, radius, spacing);
 				else GenerateCircleOutline(a, radius, spacing);
 				return;
 			}
@@ -1057,7 +1070,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					a + axisX * half + axisZ * half,
 					a - axisX * half + axisZ * half
 				};
-				if (_filled) GenerateFilledRectangle(a, axisX, axisZ, half, half, spacing, metadata);
+				if (_shapeFillMode == ShapeFillMode.Grid) GenerateFilledRectangle(a, axisX, axisZ, half, half, spacing, metadata);
+				else if (_shapeFillMode == ShapeFillMode.Concentric) GenerateConcentricRectangle(a, axisX, axisZ, half, half, spacing, metadata);
 				else GenerateOutlineEdges(corners, spacing, prefab, metadata);
 				_outline.AddRange(corners);
 			}
@@ -1155,9 +1169,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				new Vector3(minX, a.y, minZ), new Vector3(maxX, a.y, minZ),
 				new Vector3(maxX, a.y, maxZ), new Vector3(minX, a.y, maxZ)
 			};
-			if (_filled)
+			if (_shapeFillMode == ShapeFillMode.Grid)
 			{
 				GenerateFilledRectangle(a, Vector3.right, Vector3.forward, halfX, halfZ, spacing, metadata);
+			}
+			else if (_shapeFillMode == ShapeFillMode.Concentric)
+			{
+				GenerateConcentricRectangle(a, Vector3.right, Vector3.forward, halfX, halfZ, spacing, metadata);
 			}
 			else
 			{
@@ -1186,6 +1204,50 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					if (_placements.Count > MaximumPlacements) return;
 				}
 			}
+		}
+
+		private void GenerateConcentricRectangle(Vector3 center, Vector3 axisX, Vector3 axisZ,
+			float halfX, float halfZ, float spacing, ResolvedPrefabPlacement metadata)
+		{
+			int countX = Mathf.Max(1, Mathf.RoundToInt(halfX * 2f / spacing));
+			int countZ = Mathf.Max(1, Mathf.RoundToInt(halfZ * 2f / spacing));
+			float stepX = halfX * 2f / countX;
+			float stepZ = halfZ * 2f / countZ;
+			int minX = 0, maxX = countX - 1, minZ = 0, maxZ = countZ - 1;
+
+			while (minX <= maxX && minZ <= maxZ && _placements.Count < MaximumPlacements)
+			{
+				for (int x = minX; x <= maxX && _placements.Count < MaximumPlacements; x++)
+				{
+					AddConcentricPlacement(x, minZ, true);
+					if (maxZ != minZ) AddConcentricPlacement(x, maxZ, true);
+				}
+				for (int z = minZ + 1; z < maxZ && _placements.Count < MaximumPlacements; z++)
+				{
+					AddConcentricPlacement(minX, z, false);
+					if (maxX != minX) AddConcentricPlacement(maxX, z, false);
+				}
+				minX++; maxX--; minZ++; maxZ--;
+			}
+
+			void AddConcentricPlacement(int x, int z, bool horizontalSide)
+			{
+				if (_placements.Count >= MaximumPlacements) return;
+				Vector3 position = center + axisX * (-halfX + (x + 0.5f) * stepX)
+					+ axisZ * (-halfZ + (z + 0.5f) * stepZ);
+				Vector3 repeatAxis = metadata.Axis == PrefabRepeatAxis.X
+					? (horizontalSide ? axisX : axisZ)
+					: (horizontalSide ? axisZ : axisX);
+				Quaternion rotation = Quaternion.LookRotation(repeatAxis, Vector3.up);
+				_placements.Add(new Placement(position, rotation));
+			}
+		}
+
+		private string GetShapeFillLabel()
+		{
+			if (_shapeFillMode == ShapeFillMode.Outline) return "outline only";
+			if (_mode == PieceRepeaterMode.Circle) return "concentric infill";
+			return _shapeFillMode == ShapeFillMode.Grid ? "grid infill" : "concentric infill";
 		}
 
 		private void GenerateOutlineEdges(Vector3[] corners, float spacing, GameObject prefab,

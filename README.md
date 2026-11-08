@@ -42,10 +42,10 @@ Use Shape Tool to place a sampled piece around a closed circle, square, or recta
 1. Select **Shape Tool** and middle-click a placed build piece to sample it.
 2. Click the shape's center, then move the cursor to size the preview.
 3. Press **Q** to cycle **Circle → Square → Rectangle**. For a square, the cursor direction also sets its angle.
-4. Press **I** to switch between perimeter-only placement and infill.
+4. Press **I** to cycle the fill layout: outline only, grid infill, and concentric infill. Circles cycle between outline and concentric infill.
 5. Hold **Shift** and click to place the preview.
 
-Circle infill uses concentric rings; square and rectangle infill use rows fitted to the sampled piece spacing. Square and rectangle perimeters also fit to that spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
+Circle infill uses concentric rings. Square and rectangle infill can use either a fitted grid or nested concentric rings; use **I** to choose. Square and rectangle perimeters also fit to the sampled piece spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
 
 ### Hammer: Precision Select
 
