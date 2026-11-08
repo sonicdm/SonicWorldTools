@@ -152,6 +152,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		internal static bool IsActive => _instance != null && _instance._active;
 		private string ToolDisplayName => _shapeToolMode ? ToolInstaller.ShapeToolName : ToolInstaller.PieceRepeaterToolName;
+		private bool AnarchyModeActive => !_shapeToolMode && PluginConfig.PieceRepeaterAnarchyMode.Value;
 		private static string PlaceChordLabel => PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterPlaceModifier.Value)
 			+ "+" + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterWaypointKey.Value);
 		internal static bool OwnsPlayerInput => IsActive && Player.m_localPlayer && ToolRuntime.InBuildMode && ToolRuntime.InfinityHammerEquipped;
@@ -639,19 +640,22 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Vector3 committedWaypoint = Vector3.zero;
 				bool waypointAdded = false;
 				GameObject selectedPrefab = ZNetScene.instance ? ZNetScene.instance.GetPrefab(_prefabId) : null;
-				if (!selectedPrefab || PrefabPlacementMetadata.IsExcludedPiece(selectedPrefab)
+				if (!selectedPrefab || (!AnarchyModeActive && (PrefabPlacementMetadata.IsExcludedPiece(selectedPrefab)
 				    || !ResolvePlacementMetadata(selectedPrefab).Enabled
-				    || ResolvePlacementMetadata(selectedPrefab).Status != RepeatProfileStatus.Ready)
+				    || ResolvePlacementMetadata(selectedPrefab).Status != RepeatProfileStatus.Ready)))
 				{
-					Notify(ToolDisplayName + ": enable this piece and give it a Ready profile in VanillaPieces.yml.");
+					Notify(ToolDisplayName + ": enable this piece and give it a Ready profile in VanillaPieces.yml, or enable Anarchy Mode with sonic_line_anarchy.");
 					return;
 				}
 				if (_points.Count == 0 && ZNetScene.instance
 				    && ZNetScene.instance.GetPrefab(_prefabId) is GameObject firstPrefab)
 				{
 					ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(firstPrefab);
-					Placement startPlacement = GetInitialPlacement(firstPrefab, _aim, metadata);
-					if (TryGetInitialSnapPlacement(player, _aim, out Placement snappedStart,
+					Placement startPlacement = AnarchyModeActive
+						? GetAnarchyInitialPlacement(_aim, metadata)
+						: GetInitialPlacement(firstPrefab, _aim, metadata);
+					if (!AnarchyModeActive
+					    && TryGetInitialSnapPlacement(player, _aim, out Placement snappedStart,
 						out Vector3 snapAnchorWorld, out Vector3 snapAnchorLocal))
 					{
 						startPlacement = snappedStart;
@@ -864,6 +868,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private void SampleHoveredPiece(Player player)
 		{
+			if (AnarchyModeActive)
+			{
+				SampleHoveredNetworkObject(player);
+				return;
+			}
+
 			Piece hovering = player.GetHoveringPiece();
 			SonicWorldToolsPlugin.ModLogger?.LogInfo(
 				"[LineInput] MMB sample handler frame=" + Time.frameCount
@@ -909,6 +919,57 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Notify(ToolDisplayName + " selected " + prefab + ".");
 		}
 
+		private void SampleHoveredNetworkObject(Player player)
+		{
+			if (!ZNetScene.instance || !GameCamera.instance)
+			{
+				Notify(ToolDisplayName + ": world targeting is unavailable.");
+				return;
+			}
+
+			Ray ray = new Ray(GameCamera.instance.transform.position, GameCamera.instance.transform.forward);
+			RaycastHit[] hits = Physics.RaycastAll(ray, 50f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+			Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+			for (int i = 0; i < hits.Length; i++)
+			{
+				Collider collider = hits[i].collider;
+				if (!collider) continue;
+				Transform target = collider.transform;
+				Character creature = collider.GetComponentInParent<Character>();
+				ZNetView view = collider.GetComponentInParent<ZNetView>();
+				if (creature && creature != player)
+				{
+					target = creature.transform;
+					if (!view) view = creature.GetComponent<ZNetView>();
+				}
+				if (!view || target == player.transform || target.IsChildOf(player.transform)) continue;
+
+				ZDO zdo = view.GetZDO();
+				GameObject registered = zdo != null ? ZNetScene.instance.GetPrefab(zdo.GetPrefab()) : null;
+				if (!registered)
+				{
+					string candidateName = Utils.GetPrefabName(view.gameObject);
+					registered = ZNetScene.instance.GetPrefab(candidateName);
+				}
+				if (!registered || !registered.GetComponent<ZNetView>()) continue;
+
+				_prefabId = Utils.GetPrefabName(registered);
+				_shapeRingSpacingAdjustment = 0f;
+				_points.Clear();
+				_hasLockedStartPlacement = false;
+				_hasLockedStartAnchor = false;
+				_snapPointIndex = -1;
+				_sampledYaw = target.eulerAngles.y;
+				SonicWorldToolsPlugin.ModLogger?.LogInfo("[LineInput] Anarchy sample accepted frame=" + Time.frameCount
+					+ " prefab=" + _prefabId + " target=" + target.name + " type="
+					+ (creature && creature != player ? "Character" : "ZNetView") + " yaw=" + _sampledYaw.ToString("0.##") + ".");
+				Notify(ToolDisplayName + " anarchy selected " + _prefabId + ".");
+				return;
+			}
+
+			Notify("Anarchy sample: aim at a registered networked world object, such as a tree or creature.");
+		}
+
 		private void BuildAndPlace(Player player)
 		{
 			if (!ZNetScene.instance)
@@ -920,9 +981,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			GameObject prefab = ZNetScene.instance.GetPrefab(_prefabId);
 			Piece piece = prefab ? prefab.GetComponent<Piece>() : null;
-			if (!piece)
+			bool anarchy = AnarchyModeActive;
+			if (!prefab || (!piece && !anarchy) || (anarchy && !prefab.GetComponent<ZNetView>()))
 			{
-				Notify(ToolDisplayName + ": selected prefab is no longer available.");
+				Notify(ToolDisplayName + ": selected prefab is unavailable or is not a networked spawnable object.");
 				_prefabId = null;
 				_points.Clear();
 				return;
@@ -950,7 +1012,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			int requests = 0;
 			int matchedInstances = 0;
-			ResolvedPrefabPlacement batchMetadata = PrefabPlacementMetadata.Resolve(_prefabId, prefab);
+			ResolvedPrefabPlacement batchMetadata = ResolvePlacementMetadata(prefab);
 			PieceRepeaterDiagnostics.Log("BatchBegin", "prefab=" + _prefabId + " mode=" + _mode
 				+ " waypoints=" + _points.Count + " placements=" + _placements.Count
 				+ " profile=" + batchMetadata.ProfileType + "/" + batchMetadata.Status + " axis=" + batchMetadata.Axis
@@ -958,7 +1020,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				+ " positionOffset=" + batchMetadata.PositionOffset.ToString("F3")
 				+ " yawOffset=" + batchMetadata.YawOffset.ToString("0.###") + " bottomOffset=" + batchMetadata.BottomOffset.ToString("0.###")
 				+ " gap=" + _gapMeters.ToString("0.###") + " smoothing=" + PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##"));
-			if (!InfinityHammerBridge.TrySuspendPlacementInterception(out IDisposable restoreIhPlacement))
+			IDisposable restoreIhPlacement = null;
+			if (!anarchy && !InfinityHammerBridge.TrySuspendPlacementInterception(out restoreIhPlacement))
 			{
 				Notify(ToolDisplayName + ": could not safely bypass IH's active tool placement hook; no pieces placed.");
 				_points.Clear();
@@ -966,7 +1029,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				return;
 			}
 
-			WorldEditUndoBridge.BeginAction();
+			if (!anarchy) WorldEditUndoBridge.BeginAction();
 			using (ToolActionGate.BeginTrustedPlacement())
 			{
 				try
@@ -976,6 +1039,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 						for (int index = 0; index < _placements.Count; index++)
 						{
 							Placement placement = _placements[index];
+							if (anarchy)
+							{
+								ZNetScene.instance.SpawnObject(placement.Position, placement.Rotation, prefab);
+								requests++;
+								PieceRepeaterDiagnostics.Log("SpawnRequest", "index=" + index + " prefab=" + _prefabId
+									+ " position=" + placement.Position.ToString("F3")
+									+ " yaw=" + placement.Rotation.eulerAngles.y.ToString("0.0") + " networkSpawn=true");
+								continue;
+							}
+
 							HashSet<int> before = GetWearNTearInstanceIds();
 							player.PlacePiece(piece, placement.Position, placement.Rotation, true);
 							requests++;
@@ -1006,14 +1079,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				}
 				finally
 				{
-					WorldEditUndoBridge.EndAction();
+					if (!anarchy) WorldEditUndoBridge.EndAction();
 				}
 			}
 
 			PieceRepeaterDiagnostics.Log("BatchEnd", "prefab=" + _prefabId + " requests=" + requests
 				+ " withImmediateInstance=" + matchedInstances + " pendingDelayedVerification=" + _placementVerifications.Count);
-			Notify(ToolDisplayName + " sent " + requests + " " + _prefabId + " placement request(s); detected " + matchedInstances
-				+ " structural instances immediately. Use IH undo to reverse the batch."
+			Notify(ToolDisplayName + " sent " + requests + " " + _prefabId + (anarchy
+				? " network spawn request(s). Confirm the objects appear before placing another batch."
+				: " placement request(s); detected " + matchedInstances
+				  + " structural instances immediately. Use IH undo to reverse the batch.")
 				+ (PluginConfig.LineToolDiagnostics.Value ? " Diagnostics: BepInEx/logs/SonicWorldTools-LineTool.log." : ""));
 			_points.Clear();
 			_hasLockedStartPlacement = false;
@@ -1534,7 +1609,31 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private ResolvedPrefabPlacement ResolvePlacementMetadata(GameObject prefab)
 		{
-			return PrefabPlacementMetadata.Resolve(_prefabId, prefab);
+			ResolvedPrefabPlacement metadata = PrefabPlacementMetadata.Resolve(_prefabId, prefab);
+			if (!AnarchyModeActive || !prefab) return metadata;
+
+			// Anarchy deliberately opts out of catalog join/profile assumptions. Treat
+			// every networked prefab as a ground prop and use the configured spacing.
+			metadata.Axis = PrefabRepeatAxis.Auto;
+			metadata.Spacing = Mathf.Max(0.1f, PluginConfig.PieceRepeaterGroundPropSpacing.Value);
+			metadata.CenterOffset = Vector3.zero;
+			metadata.PositionOffset = Vector3.zero;
+			metadata.JoinStartOffset = Vector3.zero;
+			metadata.JoinEndOffset = Vector3.zero;
+			metadata.YawOffset = 0f;
+			metadata.TangentYawOffset = 0f;
+			metadata.BottomOffset = PrefabPlacementMetadata.GetLocalRendererBounds(prefab).min.y;
+			metadata.HasBottomOffsetOverride = true;
+			metadata.ProfileType = RepeatProfileType.GroundProp;
+			metadata.Status = RepeatProfileStatus.Ready;
+			metadata.Enabled = true;
+			metadata.SupportsX = true;
+			metadata.SupportsZ = true;
+			metadata.JoinStart = Vector3.zero;
+			metadata.JoinEnd = Vector3.zero;
+			metadata.MeasurementSource = "anarchy-fallback";
+			metadata.Confidence = "Low";
+			return metadata;
 		}
 
 		private void HandleSnapPointInput(Player player)
@@ -1650,6 +1749,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (metadata.ProfileType == RepeatProfileType.GroundProp)
 				rootPosition = ApplySurfaceHeightMode(rootPosition, groundOffset, rootPosition.y);
 			rootPosition += rotation * metadata.PositionOffset;
+			return new Placement(rootPosition, rotation);
+		}
+
+		private Placement GetAnarchyInitialPlacement(Vector3 aim, ResolvedPrefabPlacement metadata)
+		{
+			Quaternion rotation = Quaternion.Euler(0f, _sampledYaw, 0f);
+			Vector3 rootPosition = aim;
+			rootPosition.y = aim.y - metadata.BottomOffset;
+			rootPosition = ApplySurfaceHeightMode(rootPosition, -metadata.BottomOffset, rootPosition.y);
 			return new Placement(rootPosition, rotation);
 		}
 
@@ -2774,8 +2882,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				else
 				{
 					ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
-					Placement initial = GetInitialPlacement(prefab, _aim, metadata);
-					if (TryGetInitialSnapPlacement(Player.m_localPlayer, _aim, out Placement snappedPose))
+					Placement initial = AnarchyModeActive
+						? GetAnarchyInitialPlacement(_aim, metadata)
+						: GetInitialPlacement(prefab, _aim, metadata);
+					if (!AnarchyModeActive
+					    && TryGetInitialSnapPlacement(Player.m_localPlayer, _aim, out Placement snappedPose))
 						initial = snappedPose;
 					visiblePlacements.Add(initial);
 				}

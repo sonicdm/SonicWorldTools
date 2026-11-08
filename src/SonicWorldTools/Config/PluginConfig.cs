@@ -84,6 +84,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<KeyCode> PieceRepeaterJointModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterSettingsHotkey;
 		internal static ConfigEntry<float> PieceRepeaterGroundPropSpacing;
+		internal static ConfigEntry<bool> PieceRepeaterAnarchyMode;
 		internal static ConfigEntry<float> PieceRepeaterGap;
 		internal static ConfigEntry<bool> PieceRepeaterRoundedCorners;
 		internal static ConfigEntry<float> PieceRepeaterCornerRadius;
@@ -289,6 +290,7 @@ namespace SonicWorldTools.Config
 			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the Line Tool is active.");
 			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
 			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
+			PieceRepeaterAnarchyMode = BindLineTool(config, "AnarchyMode", false, "Allow Line Tool to sample and spawn any registered networked prefab, including trees and creatures. Uses ground-prop spacing and bypasses build-piece placement rules.");
 			PieceRepeaterGap = BindLineTool(config, "GapMeters", 0f, "Gap between repeated pieces in metres. Negative values bring pieces closer.");
 			PieceRepeaterRoundedCorners = BindLineTool(config, "RoundedCorners", true, "Use curved interpolation through route waypoints; false uses straight segments.");
 			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 4f, "Maximum tangent handle length in metres for curve sampler A (CurrentHermite); ignored by sampler B.");

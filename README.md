@@ -33,6 +33,8 @@ Use Line Tool to repeat a supported build piece along a straight or curved route
 
 The first sampled placement uses Valheim's build snapping. **Q/E** cycles its snap point. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`; pieces without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap solid portions of adjacent pieces to close an outside gap. Very tight turns may need another waypoint or a spacing adjustment.
 
+For unrestricted world objects, enter `sonic_line_anarchy on` in the console. While enabled, middle-click samples registered networked prefabs such as trees and creatures; route placement sends network spawn requests and uses the configured ground-prop spacing rather than build-piece profiles or snapping. Turn it off with `sonic_line_anarchy off`. This mode is intended for world objects with a `ZNetView`; it does not create local-only effects or guarantee Infinity Hammer undo support for the spawned batch.
+
 F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include gap, height behavior, fill-down, and offsets.
 
 ### Hammer: Shape Tool
