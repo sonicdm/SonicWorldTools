@@ -21,25 +21,25 @@ SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Ha
 1. Select **Line Tool** in the Infinity Hammer Hammer tools menu.
 2. Point at a placed build piece and **middle-click** to sample it.
 3. **Click** waypoints along the route. The preview updates as you go.
-4. **Ctrl+click** to place the previewed pieces. Use Infinity Hammer's undo to reverse the batch.
+4. **Shift+click** to place the previewed pieces. Use Infinity Hammer's undo to reverse the batch.
 
 The first piece uses Valheim's build snap behavior, including **Q/E** snap-point cycling. Repeated pieces follow the route using editable per-piece profiles. A bend may deliberately overlap solid parts of neighboring pieces to close an outside gap; short or very tight turns may still need another waypoint or a spacing adjustment.
 
 | Line Tool control | Default |
 | --- | --- |
 | Sample a placed piece | Middle-click |
-| Add a waypoint / place the batch | Click / Ctrl+click |
+| Add a waypoint / place the batch | Click / Shift+click |
 | Snap a waypoint to a repeat joint | Right Alt+click |
 | Rotate repeated pieces / adjust gap | Wheel / Alt+wheel |
-| Hold one height | Shift |
+| Hold one height | Alt |
 | Route settings / sampled-piece offsets | F7 / Shift+F7 |
 | Exit the tool | Esc |
 
-These bindings are configurable. The tool pane and generated Infinity Hammer description show the configured keys.
+These bindings are configurable. The tool pane and generated Infinity Hammer description show the configured keys. Open **Line Tool settings** with F7 to switch curve interpolation. **A: Current** preserves the existing tangent-limited curve; **B: Centripetal** uses WEC-style centripetal Catmull–Rom. The switch updates the preview immediately, and the smoothing-distance control applies only to A.
 
 ### Shape the ground and surroundings
 
-Under **Hoe**, choose a surface path and click its route points. Hold Infinity Hammer's **modifier 2** on the last click to finish; also hold **modifier 1** there for softer edges. Scroll to change half-width. **Lower Terrain** lowers by the selected amount and can smooth with modifier 1.
+Under **Hoe**, choose a surface path and click its route points. Hold **Shift** on the last click to finish (Infinity Hammer's `<alt>` key, default Shift); also hold **Alt** (Infinity Hammer's modifier 1) there for softer edges. Scroll to change half-width. **Lower Terrain** lowers by the selected amount and can smooth with modifier 1.
 
 Under **Cultivator**, choose **Scatter Props**. Middle-click networked props to add or remove them from your sample mix; Shift+middle-click clears it. Click to scatter the mix. With no samples, the tool uses the prop under your cursor. Scroll to change the scatter radius.
 
@@ -59,8 +59,8 @@ The main settings file is `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cf
 
 | Section | Controls |
 | --- | --- |
-| `LineTool` | Keys, gap, curve smoothing, height and prop facing, default prop spacing, optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
-| `TerrainPaths`, `LowerTerrain` | Initial path width and edge smoothing; initial lowering amount and smoothing. |
+| `LineTool` | Keys, gap, curve sampler A/B, A-only smoothing distance, height and prop facing, default prop spacing, optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
+| `TerrainPaths`, `LowerTerrain` | Terrain path width, edge smoothing, finish key and smooth key; initial lowering amount and smoothing. Path key changes regenerate the owned Infinity Hammer YAML. |
 | `ScatterProps` | Sample and clear keys, palette limit, objects per click, initial radius. |
 | `PrecisionAreaPipette`, `Preview` | Selection keys, padding, and visual feedback. |
 | `Integration`, `Debug` | Infinity Hammer tool installation and optional diagnostics. Detailed logging defaults to off. |

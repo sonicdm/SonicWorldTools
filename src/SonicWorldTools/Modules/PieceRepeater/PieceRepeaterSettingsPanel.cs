@@ -13,9 +13,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private GameObject _panel;
 		private bool _open;
 		private Text _curveValue;
+		private Text _curveAlgorithmValue;
 		private Text _radiusValue;
 		private Text _gapValue;
 		private Text _heightValue;
+		private Text _downFillValue;
 		private Text _facingValue;
 
 		internal bool IsOpen => _open;
@@ -69,12 +71,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			GUIManager gui = GUIManager.Instance;
 			_panel = gui.CreateWoodpanel(GUIManager.CustomGUIFront.transform,
 				new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
-				530f, 370f, true);
+				530f, 500f, true);
 			_panel.SetActive(false);
 			Label("Line Tool settings", 0f, -34f, 28, 490f, gui.ValheimOrange);
-			Label("Changes update the preview. Placement pauses while this is open.", 0f, -66f, 14, 490f, Color.white);
+			Label("Preview updates live. Fill down applies only at level height.", 0f, -66f, 14, 490f, Color.white);
 
-			Label("Path interpolation", -145f, -112f, 18, 190f, Color.white);
+			Label("Path shape", -145f, -112f, 18, 190f, Color.white);
 			_curveValue = Label("", 60f, -112f, 18, 150f, Color.white);
 			Button("Change", 190f, -112f, 88f, () =>
 			{
@@ -82,33 +84,52 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Changed();
 			});
 
-			Label("Smoothing distance", -145f, -158f, 18, 190f, Color.white);
-			Button("-", 5f, -158f, 34f, () => ChangeRadius(-0.25f));
-			_radiusValue = Label("", 85f, -158f, 18, 90f, Color.white);
-			Button("+", 162f, -158f, 34f, () => ChangeRadius(0.25f));
+			Label("Curve solver (A/B)", -145f, -158f, 18, 190f, Color.white);
+			_curveAlgorithmValue = Label("", 60f, -158f, 18, 150f, Color.white);
+			Button("Switch", 190f, -158f, 88f, () =>
+			{
+				PluginConfig.PieceRepeaterCurveAlgorithm.Value =
+					PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CurrentHermite
+						? LineToolCurveAlgorithm.CentripetalCatmullRom
+						: LineToolCurveAlgorithm.CurrentHermite;
+				Changed();
+			});
 
-			Label("Spacing offset", -145f, -204f, 18, 150f, Color.white);
-			Button("-", 5f, -204f, 34f, () => { _controller.SetGap(_controller.GapMeters - 0.1f); RefreshLabels(); });
-			_gapValue = Label("", 85f, -204f, 18, 90f, Color.white);
-			Button("+", 162f, -204f, 34f, () => { _controller.SetGap(_controller.GapMeters + 0.1f); RefreshLabels(); });
+			Label("Smoothing distance (A)", -145f, -204f, 18, 190f, Color.white);
+			Button("-", 5f, -204f, 34f, () => ChangeRadius(-0.25f));
+			_radiusValue = Label("", 85f, -204f, 18, 90f, Color.white);
+			Button("+", 162f, -204f, 34f, () => ChangeRadius(0.25f));
 
-			Label("Height", -145f, -250f, 18, 150f, Color.white);
-			_heightValue = Label("", 60f, -250f, 18, 150f, Color.white);
-			Button("Change", 190f, -250f, 88f, () =>
+			Label("Spacing offset", -145f, -250f, 18, 150f, Color.white);
+			Button("-", 5f, -250f, 34f, () => { _controller.SetGap(_controller.GapMeters - 0.1f); RefreshLabels(); });
+			_gapValue = Label("", 85f, -250f, 18, 90f, Color.white);
+			Button("+", 162f, -250f, 34f, () => { _controller.SetGap(_controller.GapMeters + 0.1f); RefreshLabels(); });
+
+			Label("Height", -145f, -296f, 18, 150f, Color.white);
+			_heightValue = Label("", 60f, -296f, 18, 150f, Color.white);
+			Button("Change", 190f, -296f, 88f, () =>
 			{
 				PluginConfig.PieceRepeaterLevelByDefault.Value = !PluginConfig.PieceRepeaterLevelByDefault.Value;
 				Changed();
 			});
 
-			Label("Prop facing", -145f, -296f, 18, 150f, Color.white);
-			_facingValue = Label("", 60f, -296f, 18, 150f, Color.white);
-			Button("Change", 190f, -296f, 88f, () =>
+			Label("Fill down to terrain", -145f, -342f, 18, 190f, Color.white);
+			_downFillValue = Label("", 60f, -342f, 18, 100f, Color.white);
+			Button("Change", 190f, -342f, 88f, () =>
+			{
+				PluginConfig.PieceRepeaterFillDownward.Value = !PluginConfig.PieceRepeaterFillDownward.Value;
+				Changed();
+			});
+
+			Label("Prop facing", -145f, -388f, 18, 150f, Color.white);
+			_facingValue = Label("", 60f, -388f, 18, 150f, Color.white);
+			Button("Change", 190f, -388f, 88f, () =>
 			{
 				PluginConfig.PieceRepeaterPropFollowCurve.Value = !PluginConfig.PieceRepeaterPropFollowCurve.Value;
 				Changed();
 			});
 
-			Button("Close", 0f, -340f, 110f, () => Close(true));
+			Button("Close", 0f, -442f, 110f, () => Close(true));
 			RefreshLabels();
 		}
 
@@ -145,10 +166,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private void RefreshLabels()
 		{
-			if (_curveValue) _curveValue.text = PluginConfig.PieceRepeaterRoundedCorners.Value ? "Catmull-Rom" : "Linear";
-			if (_radiusValue) _radiusValue.text = PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") + " m";
+			if (_curveValue) _curveValue.text = PluginConfig.PieceRepeaterRoundedCorners.Value ? "Curved" : "Linear";
+			if (_curveAlgorithmValue) _curveAlgorithmValue.text = PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CurrentHermite
+				? "A: Current" : "B: Centripetal";
+			if (_radiusValue) _radiusValue.text = PluginConfig.PieceRepeaterCurveAlgorithm.Value == LineToolCurveAlgorithm.CurrentHermite
+				? PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") + " m" : "Ignored in B";
 			if (_gapValue) _gapValue.text = _controller.GapMeters.ToString("0.##") + " m";
 			if (_heightValue) _heightValue.text = PluginConfig.PieceRepeaterLevelByDefault.Value ? "Level" : "Follow surface";
+			if (_downFillValue) _downFillValue.text = PluginConfig.PieceRepeaterFillDownward.Value ? "On (level only)" : "Off";
 			if (_facingValue) _facingValue.text = PluginConfig.PieceRepeaterPropFollowCurve.Value ? "Tangent" : "Fixed";
 		}
 	}

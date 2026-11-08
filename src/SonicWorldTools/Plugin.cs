@@ -72,20 +72,6 @@ namespace SonicWorldTools
 
 
 
-		/// <summary>§21: API incompatible — unregister pipette (no destructive fallback).</summary>
-		internal static void DisablePipetteDueToIntegrationFailure()
-		{
-			if (_instance == null)
-			{
-				return;
-			}
-
-			_instance.UnregisterPrecisionAreaPipette();
-			ModLogger?.LogWarning("Precision Area Pipette selection is disabled.");
-		}
-
-
-
 		private void Awake()
 
 		{
@@ -95,6 +81,7 @@ namespace SonicWorldTools
 			ModLogger = Logger;
 
 			PluginConfig.Bind(Config);
+			ToolInput.RegisterOwnedMouse2Button();
 
 			PrefabPlacementMetadata.Load(BepInEx.Paths.ConfigPath, ModLogger);
 
@@ -105,6 +92,8 @@ namespace SonicWorldTools
 			_harmony = new Harmony(PluginGuid);
 
 			_harmony.PatchAll();
+			ToolActionGate.RegisterClaim(ToolPlayerAction.Remove, "line-tool-sample", PieceRepeaterController.OwnsMiddleClick);
+			ToolActionGate.RegisterClaim(ToolPlayerAction.Remove, "scatter-sample", ScatterPropsCommand.ShouldSuppressMiddleClick);
 
 
 
@@ -132,6 +121,12 @@ namespace SonicWorldTools
 		private void Update()
 
 		{
+			ToolRuntime.BeginFrame();
+			// If this MonoBehaviour updates before Player.Update, snapshot input now,
+			// before vanilla's Player.Update can consume the same mouse/key edge.
+			// The Player.Update prefix is the other early entry point; the per-frame
+			// cache makes the first capture authoritative for every tool this frame.
+			ToolInput.CaptureFrame();
 			// BepInEx can awaken this plugin before Infinity Hammer has entered PluginInfos.
 			// Retry after other plugins finish loading so tool YAML and the pipette register.
 			if (!_infinityHammerInitialized && UnityEngine.Time.unscaledTime >= _nextInfinityHammerProbeTime)
@@ -178,6 +173,10 @@ namespace SonicWorldTools
 			PrefabGeometryDumpCommand.Register();
 			PrefabPlacementMetadata.RegisterRefreshCommand();
 			_pieceRepeaterController = _pieceRepeaterController ?? new PieceRepeaterController();
+			ToolSessionCoordinator.Register(_pieceRepeaterController);
+			ToolInputRouter.RegisterEarlyUpdateHandler(
+				"line-tool-settings",
+				_ => PieceRepeaterController.TryConsumeSettingsHotkey());
 			PieceRepeaterCommand.Register();
 			PieceRepeaterController.InitializeKeyHints();
 
@@ -205,13 +204,11 @@ namespace SonicWorldTools
 			if (!InfinityHammerBridge.TryDetect(out _, out _))
 
 			{
-
-				UnregisterPrecisionAreaPipette();
-
-				ModLogger.LogInfo(
-
-					"Infinity Hammer not detected. Precision Area Pipette disabled.");
-
+				// IH can temporarily disappear during plugin reloads or its own tool reset.
+				// Keep the feature controller alive; only tool selection is unavailable
+				// during that interval. Unregistering here left it permanently inert
+				// because integration initialization is one-shot.
+				ModLogger.LogDebug("Infinity Hammer temporarily unavailable; preserving Precision Select controller.");
 				return;
 
 			}
@@ -225,6 +222,8 @@ namespace SonicWorldTools
 				_pipetteController = new PrecisionAreaPipetteController();
 
 			}
+
+			ToolSessionCoordinator.Register(_pipetteController);
 
 
 
@@ -248,6 +247,7 @@ namespace SonicWorldTools
 
 
 
+			ToolSessionCoordinator.Unregister(_pipetteController);
 			PrecisionAreaPipetteController.ClearInstance();
 
 			_pipetteController = null;
@@ -318,6 +318,8 @@ namespace SonicWorldTools
 			HookGeneratedToolSetting(PluginConfig.ScatterClearModifier);
 			HookGeneratedToolSetting(PluginConfig.TerrainPathInitialHalfWidth);
 			HookGeneratedToolSetting(PluginConfig.TerrainPathEdgeSmoothness);
+			HookGeneratedToolSetting(PluginConfig.TerrainPathFinishKey);
+			HookGeneratedToolSetting(PluginConfig.TerrainPathSmoothKey);
 			HookGeneratedToolSetting(PluginConfig.LowerTerrainInitialHeight);
 			HookGeneratedToolSetting(PluginConfig.LowerTerrainSmoothness);
 			HookGeneratedToolSetting(PluginConfig.ScatterInitialRadius);
@@ -486,6 +488,10 @@ namespace SonicWorldTools
 
 
 			UnregisterPrecisionAreaPipette();
+			ToolSessionCoordinator.Reset();
+			ToolActionGate.Reset();
+			ToolInputRouter.Reset();
+			ToolRuntime.Reset();
 			PrefabPlacementMetadata.Shutdown();
 			_pieceRepeaterController?.Shutdown();
 			_pieceRepeaterController = null;

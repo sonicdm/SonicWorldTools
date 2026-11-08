@@ -89,6 +89,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<float> PieceRepeaterCornerRadius;
 		internal static ConfigEntry<LineToolCurveAlgorithm> PieceRepeaterCurveAlgorithm;
 		internal static ConfigEntry<bool> PieceRepeaterLevelByDefault;
+		internal static ConfigEntry<bool> PieceRepeaterFillDownward;
 		internal static ConfigEntry<bool> PieceRepeaterPropFollowCurve;
 		internal static ConfigEntry<bool> LineToolDiagnostics;
 		internal static ConfigEntry<KeyCode> ScatterSampleKey;
@@ -98,6 +99,8 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<float> ScatterInitialRadius;
 		internal static ConfigEntry<float> TerrainPathInitialHalfWidth;
 		internal static ConfigEntry<float> TerrainPathEdgeSmoothness;
+		internal static ConfigEntry<KeyCode> TerrainPathFinishKey;
+		internal static ConfigEntry<KeyCode> TerrainPathSmoothKey;
 		internal static ConfigEntry<float> LowerTerrainInitialHeight;
 		internal static ConfigEntry<float> LowerTerrainSmoothness;
 		private static bool _migrateLegacyLineTool;
@@ -279,11 +282,11 @@ namespace SonicWorldTools.Config
 
 			PieceRepeaterSampleKey = BindLineTool(config, "SampleKey", KeyCode.Mouse2, "Sample a placed build piece while Line Tool is active.");
 			PieceRepeaterWaypointKey = BindLineTool(config, "WaypointKey", KeyCode.Mouse0, "Add a waypoint; hold PlaceModifier with this key to place. Mouse0 works best with the hammer's placement interception.");
-			PieceRepeaterPlaceModifier = BindLineTool(config, "PlaceModifier", KeyCode.LeftControl, "Hold with WaypointKey to place the batch.");
+			PieceRepeaterPlaceModifier = BindLineTool(config, "PlaceModifier", KeyCode.LeftShift, "Hold with WaypointKey to place the batch. Shift avoids the vanilla Ctrl fly-down binding.");
 			PieceRepeaterSpacingModifier = BindLineTool(config, "SpacingModifier", KeyCode.LeftAlt, "Hold with the wheel to adjust the gap between pieces.");
-			PieceRepeaterLevelModifier = BindLineTool(config, "LevelHeightModifier", KeyCode.LeftShift, "Hold to keep the path at one height.");
+			PieceRepeaterLevelModifier = BindLineTool(config, "LevelHeightModifier", KeyCode.LeftAlt, "Hold to keep the path at one height. Alt+wheel still adjusts spacing.");
 			PieceRepeaterJointModifier = BindLineTool(config, "WaypointJointModifier", KeyCode.RightAlt, "Hold while clicking a waypoint to align it to a piece joint.");
-			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the tool is selected.");
+			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the Line Tool is active.");
 			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
 			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
 			PieceRepeaterGap = BindLineTool(config, "GapMeters", 0f, "Gap between repeated pieces in metres. Negative values bring pieces closer.");
@@ -291,7 +294,9 @@ namespace SonicWorldTools.Config
 			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 4f, "Maximum tangent handle length in metres for curve sampler A (CurrentHermite); ignored by sampler B.");
 			PieceRepeaterCurveAlgorithm = BindLineTool(config, "CurveSampler", LineToolCurveAlgorithm.CentripetalCatmullRom, "A/B test: A CurrentHermite; B CentripetalCatmullRom (default, adapts to waypoint spacing and passes through each waypoint). Changes the preview immediately.");
 			PieceRepeaterLevelByDefault = BindLineTool(config, "LevelHeightByDefault", false, "Keep all pieces at the first point's height by default.");
+			PieceRepeaterFillDownward = BindLineTool(config, "FillDownward", false, "When Maintain Elevation is active, stack each Line Tool placement down to terrain.");
 			PieceRepeaterPropFollowCurve = BindLineTool(config, "PropFollowCurve", true, "Align ground props to the route tangent; disable for fixed facing.");
+			MigrateOldLineToolModifierDefaults();
 			LineToolDiagnostics = config.Bind("LineTool", "WriteDiagnostics", false, "Write detailed Line Tool path and placement diagnostics to BepInEx/logs/SonicWorldTools-LineTool.log. Off by default.");
 
 			ScatterSampleKey = config.Bind("ScatterProps", "SampleKey", KeyCode.Mouse2, "While Scatter Props is selected, sample or remove the aimed networked prop. Mouse2's normal remove action is suppressed by this tool.");
@@ -301,8 +306,22 @@ namespace SonicWorldTools.Config
 			ScatterInitialRadius = config.Bind("ScatterProps", "InitialRadius", 3f, new ConfigDescription("Initial scatter radius in metres in the Infinity Hammer Cultivator menu. Takes effect when its generated tool YAML is refreshed on game start.", new AcceptableValueRange<float>(0.5f, 30f)));
 			TerrainPathInitialHalfWidth = config.Bind("TerrainPaths", "InitialHalfWidth", 2f, new ConfigDescription("Initial path half-width in metres; the full path is twice this wide. The wheel can change it in the Hoe menu.", new AcceptableValueRange<float>(0.25f, 20f)));
 			TerrainPathEdgeSmoothness = config.Bind("TerrainPaths", "EdgeSmoothness", 0.5f, new ConfigDescription("WEC edge smoothing strength when Infinity Hammer modifier 1 is held on the final waypoint (0–1).", new AcceptableValueRange<float>(0f, 1f)));
+			TerrainPathFinishKey = config.Bind("TerrainPaths", "FinishKey", KeyCode.LeftShift, "Key held on the final waypoint to finish a terrain path. Reflected in the generated Infinity Hammer tool YAML.");
+			TerrainPathSmoothKey = config.Bind("TerrainPaths", "SmoothKey", KeyCode.LeftAlt, "Key held on the final waypoint to smooth terrain path edges. Reflected in the generated Infinity Hammer tool YAML.");
 			LowerTerrainInitialHeight = config.Bind("LowerTerrain", "InitialHeight", 0.2f, new ConfigDescription("Initial lowering amount in metres in the Hoe menu; the tool height control can change it.", new AcceptableValueRange<float>(0.1f, 10f)));
 			LowerTerrainSmoothness = config.Bind("LowerTerrain", "Smoothness", 0.5f, new ConfigDescription("WEC smoothing strength when Infinity Hammer modifier 1 is held while lowering terrain (0–1).", new AcceptableValueRange<float>(0f, 1f)));
+		}
+
+		private static void MigrateOldLineToolModifierDefaults()
+		{
+			// Preserve custom bindings. Only translate the previous stock pair so an existing
+			// install gets the same safer defaults as a clean install.
+			if (PieceRepeaterPlaceModifier.Value == KeyCode.LeftControl
+			    && PieceRepeaterLevelModifier.Value == KeyCode.LeftShift)
+			{
+				PieceRepeaterPlaceModifier.Value = KeyCode.LeftShift;
+				PieceRepeaterLevelModifier.Value = KeyCode.LeftAlt;
+			}
 		}
 
 		private static ConfigEntry<T> BindLineTool<T>(ConfigFile config, string key, T defaultValue, string description)

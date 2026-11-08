@@ -5,7 +5,7 @@
   "description": "Valheim world tools for Infinity Hammer: precision selection, curved terrain paths, prop scatter, and a build-piece Line Tool.",
   "author": "SonicDM",
   "dependencies": [
-    "denikson-BepInExPack_Valheim-5.4.2202",
-    "ValheimModding-Jotunn-2.23.0"
+    "denikson-BepInExPack_Valheim-5.4.2360",
+    "ValheimModding-Jotunn-2.30.2"
   ]
 }

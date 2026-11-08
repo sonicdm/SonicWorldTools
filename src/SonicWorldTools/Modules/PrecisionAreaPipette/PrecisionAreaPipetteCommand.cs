@@ -22,8 +22,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			new Terminal.ConsoleCommand(
 				CommandName,
 				"SonicWorldTools: activate Precision Area Pipette",
-				_ =>
+				args =>
 				{
+					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+						"[PipetteCommand] '" + CommandName + "' invoked; enabled="
+						+ PluginConfig.IsPrecisionAreaPipetteEnabled()
+						+ " controller=" + (PrecisionAreaPipetteController.Instance != null) + ".");
 					if (!PluginConfig.IsPrecisionAreaPipetteEnabled())
 					{
 						SonicWorldToolsPlugin.ModLogger?.LogInfo(
@@ -39,7 +43,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 						return;
 					}
 
-					controller.Activate();
+					args.Context.TryRunCommand("tool " + SonicWorldTools.Core.ToolInstaller.ToolName);
 				});
 
 			new Terminal.ConsoleCommand(
@@ -47,6 +51,10 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				"SonicWorldTools: hand locked selection to Infinity Hammer (copy ghost)",
 				_ =>
 				{
+					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+						"[PipetteCommand] '" + PickUpCommandName + "' invoked; enabled="
+						+ PluginConfig.IsPrecisionAreaPipetteEnabled()
+						+ " controller=" + (PrecisionAreaPipetteController.Instance != null) + ".");
 					if (!PluginConfig.IsPrecisionAreaPipetteEnabled())
 					{
 						SonicWorldToolsPlugin.ModLogger?.LogInfo(

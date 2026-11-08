@@ -21,8 +21,23 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 	/// Orchestrates precision area pipette: idle → A → B (width) → C (depth/height OBB) → locked,
 	/// Locked-phase refinement (add/exclude), and M5 Infinity Hammer pick-up hand-off.
 	/// </summary>
-	internal sealed class PrecisionAreaPipetteController
+	internal sealed class PrecisionAreaPipetteController : IToolSession
 	{
+		private const string SessionKey = "precision-select";
+		string IToolSession.SessionId => SessionKey;
+		bool IToolSession.IsSessionActive => IsActive;
+		void IToolSession.StopSession(string reason) => Deactivate(reason);
+		bool IToolSession.ShouldSuppressPlayerAction(ToolPlayerAction action, Player player)
+		{
+			// Retain the selection through brief holster/place-mode flicker, but give
+			// vanilla actions back as soon as the player is no longer building.
+			if (!IsActive || player != Player.m_localPlayer || !ToolRuntime.InBuildMode || !ToolRuntime.InfinityHammerEquipped) return false;
+			if (action == ToolPlayerAction.PauseMenu) return ShouldSuppressPauseMenu;
+			return action == ToolPlayerAction.BuildPlacement
+			       || action == ToolPlayerAction.Attack
+			       || action == ToolPlayerAction.Remove
+			       || action == ToolPlayerAction.Interact;
+		}
 		private const float CandidateRefreshInterval = 0.05f;
 
 		private const float QueryPadding = 2f;
@@ -122,7 +137,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 					return true;
 				}
 
-				return HasCancellableSelection && PrecisionAreaPipetteInput.WasKeyDown(KeyCode.Escape);
+				return HasCancellableSelection && ToolInput.WasKeyDown(KeyCode.Escape);
 			}
 		}
 
@@ -161,6 +176,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				SonicWorldToolsPlugin.ModLogger?.LogInfo(
 					"Precision Area Pipette Activate(" + source + ") ignored — already active phase="
 					+ Phase + ".");
+				return;
+			}
+
+			if (!ToolSessionCoordinator.Acquire(this))
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("Precision Select could not acquire the world-input session.");
 				return;
 			}
 
@@ -212,6 +233,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			bool hadB = _cornerB.HasValue;
 			bool hadC = _cornerC.HasValue;
 			IsActive = false;
+			ToolSessionCoordinator.Release(this);
 			_hudNotice = string.Empty;
 			Phase = PrecisionAreaPipettePhase.Idle;
 			_awaitPrimaryRelease = false;
@@ -264,7 +286,6 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				effective,
 				out List<ZNetView> resolvedViews,
 				out List<string> droppedKeys,
-				out bool disablePipette,
 				out string userMessage);
 
 			if (droppedKeys.Count > 0)
@@ -289,11 +310,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 					_hudNoticeExpiresAt = Time.unscaledTime + 6f;
 				}
 
-				if (disablePipette)
-				{
-					SonicWorldToolsPlugin.DisablePipetteDueToIntegrationFailure();
-				}
-				else if (string.IsNullOrEmpty(userMessage))
+				if (string.IsNullOrEmpty(userMessage))
 				{
 					UpdateHudText();
 				}

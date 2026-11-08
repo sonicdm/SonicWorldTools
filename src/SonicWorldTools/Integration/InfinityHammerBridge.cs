@@ -19,7 +19,7 @@ namespace SonicWorldTools.Integration
 			"[SonicWorldTools] Infinity Hammer integration unavailable for this version.";
 
 		internal const string SoftFailNotDetectedMessage =
-			"[SonicWorldTools] Infinity Hammer not detected. Precision Area Pipette disabled.";
+			"[SonicWorldTools] Infinity Hammer is not available right now. Retry the pick-up after its tool is active.";
 
 		private static readonly string[] CandidateGuids =
 		{
@@ -492,27 +492,24 @@ namespace SonicWorldTools.Integration
 
 		/// <summary>
 		/// Path 1 hand-off: resolve effective ZDOID keys → live <see cref="ZNetView"/>s,
-		/// create IH multi-object selection ghost (copy), then caller deactivates Sonic tool.
+		/// create IH multi-object selection ghost (copy), then caller deactivates Sonic tool on success.
 		/// </summary>
 		/// <returns>
 		/// True when IH ghost was created. False on soft-fail (missing IH, API drift, empty set).
-		/// When <paramref name="disablePipette"/> is true, caller should disable pipette selection (§21).
+		/// Failures are soft: the active pipette session remains available for retry.
 		/// </returns>
 		internal static bool TryHandOffCopy(
 			IReadOnlyCollection<string> effectiveKeys,
 			out List<ZNetView> resolvedViews,
 			out List<string> droppedKeys,
-			out bool disablePipette,
 			out string userMessage)
 		{
 			resolvedViews = new List<ZNetView>();
 			droppedKeys = new List<string>();
-			disablePipette = false;
 			userMessage = null;
 
 			if (!TryDetect(out _, out _))
 			{
-				disablePipette = true;
 				userMessage = SoftFailNotDetectedMessage;
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(SoftFailNotDetectedMessage);
 				return false;
@@ -520,11 +517,8 @@ namespace SonicWorldTools.Integration
 
 			if (!TryResolveApi(retryFailure: true))
 			{
-				disablePipette = true;
 				userMessage = SoftFailUnavailableMessage;
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(SoftFailUnavailableMessage);
-				SonicWorldToolsPlugin.ModLogger?.LogWarning(
-					"Precision Area Pipette selection is disabled.");
 				return false;
 			}
 
@@ -539,13 +533,17 @@ namespace SonicWorldTools.Integration
 
 			try
 			{
-				_hammerHelperInit.Invoke(null, null);
+				// IH 1.92 changed Init() to Init(string piece). Empty string is what IH's
+				// own hammer-location/room commands pass to equip the currently selected
+				// hammer while preparing a copied selection.
+				ParameterInfo[] initParameters = _hammerHelperInit.GetParameters();
+				object[] initArgs = initParameters.Length == 0 ? null : new object[] { string.Empty };
+				_hammerHelperInit.Invoke(null, initArgs);
 
 				object[] ctorArgs = BuildMultiCtorArgs(resolvedViews);
 				object selection = _objectSelectionMultiCtor.Invoke(ctorArgs);
 				if (selection == null)
 				{
-					disablePipette = true;
 					userMessage = SoftFailUnavailableMessage;
 					SonicWorldToolsPlugin.ModLogger?.LogWarning(SoftFailUnavailableMessage);
 					return false;
@@ -575,22 +573,16 @@ namespace SonicWorldTools.Integration
 			catch (TargetInvocationException ex)
 			{
 				Exception inner = ex.InnerException ?? ex;
-				disablePipette = true;
 				userMessage = SoftFailUnavailableMessage;
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(SoftFailUnavailableMessage);
-				SonicWorldToolsPlugin.ModLogger?.LogWarning(
-					"Precision Area Pipette selection is disabled.");
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(
 					"Infinity Hammer hand-off failed: " + inner.Message);
 				return false;
 			}
 			catch (Exception ex)
 			{
-				disablePipette = true;
 				userMessage = SoftFailUnavailableMessage;
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(SoftFailUnavailableMessage);
-				SonicWorldToolsPlugin.ModLogger?.LogWarning(
-					"Precision Area Pipette selection is disabled.");
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(
 					"Infinity Hammer hand-off failed: " + ex.Message);
 				return false;
@@ -753,12 +745,7 @@ namespace SonicWorldTools.Integration
 					return false;
 				}
 
-				_hammerHelperInit = hammerHelper.GetMethod(
-					"Init",
-					BindingFlags.Public | BindingFlags.Static,
-					null,
-					Type.EmptyTypes,
-					null);
+				_hammerHelperInit = FindHammerHelperInit(hammerHelper);
 				_selectionCreateGhost = selection.GetMethod(
 					"CreateGhost",
 					BindingFlags.Public | BindingFlags.Static,
@@ -789,8 +776,14 @@ namespace SonicWorldTools.Integration
 				    || _selectionClear == null || _hammerSelectEmpty == null
 				    || _objectSelectionMultiCtor == null)
 				{
+					var missing = new List<string>();
+					if (_hammerHelperInit == null) missing.Add("HammerHelper.Init()");
+					if (_selectionCreateGhost == null) missing.Add("Selection.CreateGhost(BaseSelection)");
+					if (_selectionClear == null) missing.Add("Selection.Clear()");
+					if (_hammerSelectEmpty == null) missing.Add("Hammer.SelectEmpty()");
+					if (_objectSelectionMultiCtor == null) missing.Add("ObjectSelection multi-object constructor");
 					SonicWorldToolsPlugin.ModLogger?.LogWarning(
-						"Infinity Hammer Path 1 members missing (Init/CreateGhost/Clear/SelectEmpty/multi ctor).");
+						"Infinity Hammer API members missing: " + string.Join(", ", missing) + ".");
 					return false;
 				}
 
@@ -804,6 +797,16 @@ namespace SonicWorldTools.Integration
 					"Infinity Hammer API resolve failed: " + ex.Message);
 				return false;
 			}
+		}
+
+		private static MethodInfo FindHammerHelperInit(Type hammerHelper)
+		{
+			const BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+			// Prefer the current signature, but retain compatibility with older IH builds.
+			MethodInfo initWithPiece = hammerHelper.GetMethod("Init", flags, null,
+				new[] { typeof(string) }, null);
+			if (initWithPiece != null) return initWithPiece;
+			return hammerHelper.GetMethod("Init", flags, null, Type.EmptyTypes, null);
 		}
 
 		private static ConstructorInfo FindMultiObjectSelectionCtor(Type objectSelection)

@@ -41,6 +41,24 @@ namespace SonicWorldTools.Integration
 			return IsOurToolLabel(name) || IsOurToolLabel(go);
 		}
 
+		/// <summary>
+		/// The Line Tool is also represented by a synthetic Piece in IH's build menu.
+		/// Keep this separate from IsOurPiece: that identity belongs to Precision Select
+		/// and must not arm the pipette when the Line Tool menu row is clicked.
+		/// </summary>
+		internal static bool IsLineToolPiece(Piece piece)
+		{
+			if ((Object)(object)piece == (Object)null)
+			{
+				return false;
+			}
+
+			string name = piece.m_name ?? string.Empty;
+			string go = piece.gameObject != null ? piece.gameObject.name ?? string.Empty : string.Empty;
+			return ToolInstaller.IsPieceRepeaterToolName(name)
+			       || ToolInstaller.IsPieceRepeaterToolName(go);
+		}
+
 		internal static string DescribePiece(Piece piece)
 		{
 			if ((Object)(object)piece == (Object)null)
@@ -70,14 +88,15 @@ namespace SonicWorldTools.Integration
 				return;
 			}
 
-			bool hasTool = InfinityHammerBridge.TryGetActiveToolSelectionName(out string toolName);
+			bool hasTool = ToolRuntime.TryGetSelectedToolName(out string toolName);
 			string selKey = hasTool ? toolName : "<none>";
 			if (!string.Equals(selKey, _lastLoggedToolSelection, System.StringComparison.Ordinal))
 			{
 				_lastLoggedToolSelection = selKey;
 				Log(
 					"ToolSelection poll: "
-					+ (hasTool ? ("'" + toolName + "' our=" + IsOurToolLabel(toolName)) : "none")
+					+ (hasTool ? ("'" + toolName + "' pipette=" + IsOurToolLabel(toolName)
+						+ " lineTool=" + ToolInstaller.IsPieceRepeaterToolName(toolName)) : "none")
 					+ " pipetteActive=" + controller.IsActive
 					+ " place=" + player.InPlaceMode());
 			}
@@ -86,15 +105,17 @@ namespace SonicWorldTools.Integration
 			// (same failure as early Activate clears). Sonic's live aim marker coexists with IH.
 			if (controller.IsActive)
 			{
-				if (hasTool && !IsOurToolLabel(toolName))
+				if (!ToolRuntime.InfinityHammerEquipped || !hasTool || !IsOurToolLabel(toolName))
 				{
-					controller.Deactivate("other-ih-tool-selection");
+					string reason = !ToolRuntime.InfinityHammerEquipped ? "infinity-hammer-not-equipped"
+						: hasTool ? "other-ih-tool-selection" : "ih-tool-selection-cleared";
+					controller.Deactivate(reason);
 				}
 
 				return;
 			}
 
-			if (!hasTool || !IsOurToolLabel(toolName))
+			if (!ToolRuntime.InfinityHammerEquipped || !hasTool || !IsOurToolLabel(toolName))
 			{
 				return;
 			}
@@ -165,6 +186,8 @@ namespace SonicWorldTools.Integration
 			ToolIdentityTracker.HandleBuildUiPiece(__0, "buildui-on-select-piece");
 			PieceRepeaterController.OnOtherBuildPieceSelected(__0);
 		}
+
+		private static void Postfix() => ToolRuntime.InvalidateToolSelection();
 	}
 
 	[HarmonyPatch(typeof(BuildUiPieceButton), "OnClickButton")]
@@ -177,6 +200,8 @@ namespace SonicWorldTools.Integration
 			ToolIdentityTracker.HandleBuildUiPiece(piece, "buildui-piece-click");
 			PieceRepeaterController.OnOtherBuildPieceSelected(piece);
 		}
+
+		private static void Postfix() => ToolRuntime.InvalidateToolSelection();
 	}
 
 	[HarmonyPatch(typeof(Terminal), nameof(Terminal.TryRunCommand), typeof(string), typeof(bool), typeof(bool))]
@@ -250,5 +275,7 @@ namespace SonicWorldTools.Integration
 				}
 			}
 		}
+
+		private static void Postfix() => ToolRuntime.InvalidateToolSelection();
 	}
 }

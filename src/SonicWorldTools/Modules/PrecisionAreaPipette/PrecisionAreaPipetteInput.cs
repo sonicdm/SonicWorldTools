@@ -3,6 +3,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using HarmonyLib;
 using SonicWorldTools.Config;
+using SonicWorldTools.Core;
 using UnityEngine;
 
 namespace SonicWorldTools.Modules.PrecisionAreaPipette
@@ -60,7 +61,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 		/// <summary>Sample input + hammer-style aim point for this frame.</summary>
 		internal static FrameInput Sample()
 		{
-			if (IsTextInputBlocking())
+			if (ToolRuntime.TextInputBlocked)
 			{
 				return default;
 			}
@@ -239,7 +240,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			// consumed / ordered after PlayerAttackInput on the first click after Instant tools.
 			if (key == KeyCode.Mouse0)
 			{
-				if (WasMouseButtonDown(0))
+				if (ToolInput.WasMouseButtonDown(0))
 				{
 					return true;
 				}
@@ -248,24 +249,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				return WasAttackButtonDown();
 			}
 
-			return WasKeyDown(key);
-		}
-
-		internal static bool WasMouseButtonDown(int button)
-		{
-			try
-			{
-				if (ZInput.GetMouseButtonDown(button))
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Fall through.
-			}
-
-			return Input.GetMouseButtonDown(button);
+			return ToolInput.WasKeyDown(key);
 		}
 
 		internal static bool WasRefineModifierHeld()
@@ -279,7 +263,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				return false;
 			}
 
-			if (WasKeyHeld(key))
+			if (ToolInput.WasKeyHeld(key))
 			{
 				return true;
 			}
@@ -287,12 +271,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			// Convenience: LeftAlt config also accepts RightAlt.
 			if (key == KeyCode.LeftAlt)
 			{
-				return WasKeyHeld(KeyCode.RightAlt);
+				return ToolInput.WasKeyHeld(KeyCode.RightAlt);
 			}
 
 			if (key == KeyCode.RightAlt)
 			{
-				return WasKeyHeld(KeyCode.LeftAlt);
+				return ToolInput.WasKeyHeld(KeyCode.LeftAlt);
 			}
 
 			return false;
@@ -304,7 +288,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.AddPieceKey.Value
 				: KeyCode.Mouse0;
 
-			return WasBoundKeyOrMouseDown(key);
+			return ToolInput.WasBoundKeyOrMouseDown(key);
 		}
 
 		internal static bool WasExcludePieceDown()
@@ -313,139 +297,13 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.ExcludePieceKey.Value
 				: KeyCode.Mouse2;
 
-			return WasBoundKeyOrMouseDown(key);
-		}
-
-		internal static bool WasBoundKeyOrMouseDown(KeyCode key)
-		{
-			if (key == KeyCode.None)
-			{
-				return false;
-			}
-
-			if (key == KeyCode.Mouse0)
-			{
-				return WasMouseButtonDown(0);
-			}
-
-			if (key == KeyCode.Mouse1)
-			{
-				return WasMouseButtonDown(1);
-			}
-
-			if (key == KeyCode.Mouse2)
-			{
-				return WasMouseButtonDown(2);
-			}
-
-			if (WasKeyDown(key))
-			{
-				return true;
-			}
-
-			if (key == KeyCode.Equals)
-			{
-				return WasKeyDown(KeyCode.KeypadPlus);
-			}
-
-			if (key == KeyCode.Minus)
-			{
-				return WasKeyDown(KeyCode.KeypadMinus);
-			}
-
-			return false;
-		}
-
-		internal static bool IsTextInputBlocking()
-		{
-			try
-			{
-				if (Console.IsVisible())
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Console may be unavailable.
-			}
-
-			try
-			{
-				Chat chat = Chat.instance;
-				if ((Object)(object)chat != (Object)null && chat.HasFocus())
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Chat may be unavailable.
-			}
-
-			try
-			{
-				if (TextInput.IsVisible())
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// TextInput may be unavailable.
-			}
-
-			return false;
-		}
-
-		internal static bool WasKeyDown(KeyCode key)
-		{
-			if (key == KeyCode.None)
-			{
-				return false;
-			}
-
-			try
-			{
-				if (ZInput.GetKeyDown(key))
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Fall through to Unity input.
-			}
-
-			return Input.GetKeyDown(key);
-		}
-
-		internal static bool WasKeyHeld(KeyCode key)
-		{
-			if (key == KeyCode.None)
-			{
-				return false;
-			}
-
-			try
-			{
-				if (ZInput.GetKey(key))
-				{
-					return true;
-				}
-			}
-			catch
-			{
-				// Fall through to Unity input.
-			}
-
-			return Input.GetKey(key);
+			return ToolInput.WasBoundKeyOrMouseDown(key);
 		}
 
 		private static bool WasConfiguredKeyDown(ConfigEntry<KeyCode> entry, KeyCode fallback)
 		{
 			KeyCode key = entry != null ? entry.Value : fallback;
-			return WasKeyDown(key);
+			return ToolInput.WasKeyDown(key);
 		}
 
 		/// <summary>Ctrl+Delete (no Shift) while Locked — dismantle with refunds.</summary>
@@ -458,12 +316,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.DismantleModifierKey.Value
 				: KeyCode.LeftControl;
 
-			if (key == KeyCode.None || mod == KeyCode.None || !WasKeyDown(key))
+			if (key == KeyCode.None || mod == KeyCode.None || !ToolInput.WasKeyDown(key))
 			{
 				return false;
 			}
 
-			if (!WasEitherHeld(mod, KeyCode.LeftControl, KeyCode.RightControl))
+			if (!ToolInput.WasModifierHeld(mod))
 			{
 				return false;
 			}
@@ -473,7 +331,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.PermanentDeleteModifierKey.Value
 				: KeyCode.LeftShift;
 			if (delMod != KeyCode.None
-			    && WasEitherHeld(delMod, KeyCode.LeftShift, KeyCode.RightShift))
+			    && ToolInput.WasModifierHeld(delMod))
 			{
 				return false;
 			}
@@ -491,12 +349,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.PermanentDeleteModifierKey.Value
 				: KeyCode.LeftShift;
 
-			if (key == KeyCode.None || mod == KeyCode.None || !WasKeyDown(key))
+			if (key == KeyCode.None || mod == KeyCode.None || !ToolInput.WasKeyDown(key))
 			{
 				return false;
 			}
 
-			if (!WasEitherHeld(mod, KeyCode.LeftShift, KeyCode.RightShift))
+			if (!ToolInput.WasModifierHeld(mod))
 			{
 				return false;
 			}
@@ -505,32 +363,12 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				? PluginConfig.DismantleModifierKey.Value
 				: KeyCode.LeftControl;
 			if (dismantleMod != KeyCode.None
-			    && WasEitherHeld(dismantleMod, KeyCode.LeftControl, KeyCode.RightControl))
+			    && ToolInput.WasModifierHeld(dismantleMod))
 			{
 				return false;
 			}
 
 			return true;
-		}
-
-		private static bool WasEitherHeld(KeyCode configured, KeyCode left, KeyCode right)
-		{
-			if (WasKeyHeld(configured))
-			{
-				return true;
-			}
-
-			if (configured == left)
-			{
-				return WasKeyHeld(right);
-			}
-
-			if (configured == right)
-			{
-				return WasKeyHeld(left);
-			}
-
-			return false;
 		}
 
 		private static bool WasPickUpDown()
@@ -553,49 +391,19 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				return false;
 			}
 
-			if (key == KeyCode.Mouse2)
-			{
-				return WasMouseButtonDown(2);
-			}
-
-			if (key == KeyCode.Mouse0)
-			{
-				return WasMouseButtonDown(0);
-			}
-
-			if (key == KeyCode.Mouse1)
-			{
-				return WasMouseButtonDown(1);
-			}
-
-			return WasKeyDown(key);
+			return ToolInput.WasBoundKeyOrMouseDown(key);
 		}
 
 		private static bool WasPickUpModifierHeld(KeyCode mod)
 		{
-			if (WasKeyHeld(mod))
-			{
-				return true;
-			}
-
-			if (mod == KeyCode.LeftShift)
-			{
-				return WasKeyHeld(KeyCode.RightShift);
-			}
-
-			if (mod == KeyCode.RightShift)
-			{
-				return WasKeyHeld(KeyCode.LeftShift);
-			}
-
-			return false;
+			return ToolInput.WasModifierHeld(mod);
 		}
 
 		private static bool WasAttackButtonDown()
 		{
 			try
 			{
-				if (ZInput.GetButtonDown("Attack"))
+				if (ToolInput.WasButtonDown("Attack"))
 				{
 					return true;
 				}
@@ -605,7 +413,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 				// ZInput may be unavailable outside play mode.
 			}
 
-			return Input.GetMouseButtonDown(0);
+			return ToolInput.WasMouseButtonDown(0);
 		}
 
 		/// <summary>True while LMB / Attack is held (for post-activate release latch).</summary>
@@ -624,7 +432,7 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 			{
 				try
 				{
-					if (ZInput.GetButton("Attack"))
+					if (ToolInput.WasButtonHeld("Attack"))
 					{
 						return true;
 					}
@@ -634,10 +442,10 @@ namespace SonicWorldTools.Modules.PrecisionAreaPipette
 					// Fall through.
 				}
 
-				return Input.GetMouseButton(0);
+				return ToolInput.WasMouseButtonHeld(0);
 			}
 
-			return WasKeyHeld(key);
+			return ToolInput.WasKeyHeld(key);
 		}
 	}
 }

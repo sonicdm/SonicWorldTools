@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using SonicWorldTools.Config;
+using SonicWorldTools.Core;
 using SonicWorldTools.Integration;
-using SonicWorldTools.Modules.PrecisionAreaPipette;
 using UnityEngine;
 
 namespace SonicWorldTools.Modules.ScatterProps
@@ -48,22 +48,22 @@ namespace SonicWorldTools.Modules.ScatterProps
 		internal static void Tick()
 		{
 			Player player = Player.m_localPlayer;
-			bool active = player && player.InPlaceMode()
-			              && InfinityHammerBridge.TryGetActiveToolSelectionName(out string toolName)
+			bool active = player && ToolRuntime.InBuildMode && ToolRuntime.InfinityHammerEquipped
+			              && ToolRuntime.TryGetSelectedToolName(out string toolName)
 			              && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
 			if (!active)
 			{
 				return;
 			}
 
-			if (PrecisionAreaPipetteInput.IsTextInputBlocking()
-			    || !PrecisionAreaPipetteInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
+			if (ToolRuntime.TextInputBlocked
+			    || !ToolInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
 			{
 				return;
 			}
 
 			if (PluginConfig.ScatterClearModifier.Value != KeyCode.None
-			    && PrecisionAreaPipetteInput.WasKeyHeld(PluginConfig.ScatterClearModifier.Value))
+			    && ToolInput.WasModifierHeld(PluginConfig.ScatterClearModifier.Value))
 			{
 				Samples.Clear();
 				Notify("Scatter sample list cleared.");
@@ -82,10 +82,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 		internal static bool ShouldSuppressMiddleClick(Player player)
 		{
 			return player == Player.m_localPlayer
-			       && player.InPlaceMode()
+			       && ToolRuntime.InBuildMode
+			       && ToolRuntime.InfinityHammerEquipped
+			       && !ToolRuntime.TextInputBlocked
 			       && PluginConfig.ScatterSampleKey.Value == KeyCode.Mouse2
-			       && (Input.GetMouseButton(2) || ZInput.GetMouseButton(2))
-			       && InfinityHammerBridge.TryGetActiveToolSelectionName(out string toolName)
+			       && ToolInput.WasMouseButtonHeld(2)
+			       && ToolRuntime.TryGetSelectedToolName(out string toolName)
 			       && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
 		}
 

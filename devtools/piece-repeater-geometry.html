@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piece Repeater · Geometry Sandbox</title>
+<style>
+  :root { color-scheme: dark; --bg:#111518; --panel:#1a2024; --panel2:#20282d; --line:#303b41; --text:#e6ecee; --muted:#9eabb0; --accent:#e1b96b; --cyan:#66d4d8; --red:#e98273; --green:#8fbd9b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui,Segoe UI,sans-serif; }
+  header { padding:18px 22px 12px; border-bottom:1px solid var(--line); display:flex; align-items:end; justify-content:space-between; gap:16px; }
+  h1 { font-size:21px; margin:0 0 4px; font-weight:650; }
+  header p { color:var(--muted); margin:0; max-width:760px; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:14px; padding:14px; max-width:1500px; margin:auto; }
+  .stage { min-width:0; background:#161c20; border:1px solid var(--line); }
+  .stagebar { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line); gap:12px; }
+  .stagebar strong { font-weight:600; }
+  .stagebar span { color:var(--muted); font-size:12px; }
+  svg { display:block; width:100%; height:auto; background:#151b1f; touch-action:none; }
+  aside { display:flex; flex-direction:column; gap:12px; }
+  section { background:var(--panel); border:1px solid var(--line); padding:13px; }
+  h2 { font-size:14px; margin:0 0 11px; font-weight:650; }
+  label { display:flex; justify-content:space-between; gap:10px; align-items:center; color:var(--muted); margin:10px 0; }
+  label output { color:var(--text); font-variant-numeric:tabular-nums; min-width:60px; text-align:right; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  select,button { background:var(--panel2); color:var(--text); border:1px solid var(--line); padding:7px 9px; font:inherit; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  .presets { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .presets button { font-size:12px; }
+  .metric { display:flex; justify-content:space-between; border-top:1px solid var(--line); padding:8px 0 0; margin-top:8px; gap:8px; }
+  .metric span:first-child { color:var(--muted); }
+  .metric strong { font-variant-numeric:tabular-nums; font-weight:600; text-align:right; }
+  .note { color:var(--muted); font-size:12px; margin:8px 0 0; }
+  .legend { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+  .key { display:inline-flex; align-items:center; gap:6px; }
+  .swatch { height:3px; width:16px; background:var(--accent); }
+  .swatch.piece { height:10px; width:16px; border:1px solid var(--cyan); background:#66d4d833; }
+  .swatch.inside { background:var(--red); }
+  .swatch.center { background:#d6dfe2; }
+  .readout { color:var(--muted); font-size:12px; margin-top:10px; }
+  .readout b { color:var(--text); font-weight:600; }
+  .hint { padding:0 2px; color:var(--muted); font-size:12px; }
+  @media (max-width:900px) { main { grid-template-columns:1fr; } aside { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Piece Repeater · Geometry Sandbox</h1>
+    <p>Top-down rigid-piece model. Drag the four curve handles; compare centerline chord placement with the 2 cm inside-edge pivot rule. This models horizontal geometry only, not Valheim collisions or build validation.</p>
+  </div>
+  <div class="hint">Drag gold handles to edit the guide curve</div>
+</header>
+<main>
+  <div class="stage">
+    <div class="stagebar"><strong id="modeTitle">Center until inside-edge error &gt; 2 cm</strong><span id="pieceCount">— pieces</span></div>
+    <svg id="view" viewBox="0 0 1000 660" role="img" aria-label="Top-down piece placement geometry">
+      <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#273137" stroke-width="1"/></pattern>
+        <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0 0L7 3.5L0 7Z" fill="#e98273"/></marker>
+      </defs>
+      <rect width="1000" height="660" fill="url(#grid)"/>
+      <path id="guide" fill="none" stroke="#e1b96b" stroke-width="2" stroke-dasharray="7 7" opacity=".8"/>
+      <g id="handles"></g>
+      <g id="segments"></g>
+      <g id="pieces"></g>
+      <g id="joints"></g>
+      <g id="labels"></g>
+    </svg>
+    <div class="legend">
+      <span class="key"><i class="swatch"></i>Guide spline</span>
+      <span class="key"><i class="swatch piece"></i>Rigid piece footprint</span>
+      <span class="key"><i class="swatch center"></i>Chord / hinge axis</span>
+      <span class="key"><i class="swatch inside"></i>Inside-edge correction</span>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Guide shape</h2>
+      <div class="presets">
+        <button data-preset="gentle">Gentle</button>
+        <button data-preset="s-bend">S bend</button>
+        <button data-preset="tight">Tight turn</button>
+      </div>
+      <p class="note">The curve is a cubic Bezier. Its endpoints and tangent handles can all be dragged.</p>
+    </section>
+    <section>
+      <h2>Piece profile</h2>
+      <label for="length">Length <output id="lengthOut"></output></label>
+      <input id="length" type="range" min="0.8" max="4" value="2" step="0.1">
+      <label for="width">Width <output id="widthOut"></output></label>
+      <input id="width" type="range" min="0.15" max="1.8" value="0.5" step="0.05">
+      <label for="gap">Configured gap <output id="gapOut"></output></label>
+      <input id="gap" type="range" min="0" max="0.5" value="0" step="0.01">
+      <p class="note">Hinge spacing is length + configured gap. Units are meters; drawing scale is 80 px/m.</p>
+    </section>
+    <section>
+      <h2>Pivot policy</h2>
+      <select id="policy" style="width:100%">
+        <option value="threshold">Center until inside-edge error &gt; threshold</option>
+        <option value="center">Always center pivot</option>
+        <option value="inside">Always inside-edge pivot</option>
+      </select>
+      <label for="threshold">Break threshold <output id="thresholdOut"></output></label>
+      <input id="threshold" type="range" min="0" max="0.2" value="0.02" step="0.005">
+      <label for="turn">Hard switch at turn <output id="turnOut"></output></label>
+      <input id="turn" type="range" min="45" max="135" value="90" step="1">
+      <p class="note">Inside correction preserves the configured longitudinal gap, then shifts only the next piece across the width. Earlier placements stay fixed.</p>
+    </section>
+    <section>
+      <h2>Measured from this layout</h2>
+      <div class="metric"><span>Placements</span><strong id="metricCount">—</strong></div>
+      <div class="metric"><span>Center-pivot joints</span><strong id="centerCount">—</strong></div>
+      <div class="metric"><span>Inside-pivot joints</span><strong id="insideCount">—</strong></div>
+      <div class="metric"><span>Largest pre-correction inside error</span><strong id="insideError">—</strong></div>
+      <div class="metric"><span>Largest post-correction inside error</span><strong id="residual">—</strong></div>
+      <div class="metric"><span>Largest outer-edge mismatch</span><strong id="outerError">—</strong></div>
+      <p class="readout" id="explanation"></p>
+    </section>
+  </aside>
+</main>
+<script>
+(() => {
+  const svg = document.getElementById('view');
+  const NS = 'http://www.w3.org/2000/svg';
+  const scale = 80;
+  const presets = {
+    gentle: [[115,390],[300,145],[655,145],[865,350]],
+    's-bend': [[105,390],[360,100],[430,600],[875,250]],
+    tight: [[120,440],[520,435],[470,100],[850,160]]
+  };
+  let cp = presets['s-bend'].map(p => [...p]);
+  let dragging = -1;
+  const $ = id => document.getElementById(id);
+  const controls = ['length','width','gap','threshold','turn','policy'];
+  for (const id of controls) $(id).addEventListener('input', draw);
+  document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+    cp = presets[b.dataset.preset].map(p => [...p]); draw();
+  }));
+  svg.addEventListener('pointerdown', e => {
+    const target = e.target.closest('[data-handle]');
+    if (!target) return;
+    dragging = Number(target.dataset.handle); svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener('pointermove', e => {
+    if (dragging < 0) return;
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    cp[dragging] = [Math.max(25,Math.min(975,p.x)),Math.max(35,Math.min(625,p.y))]; draw();
+  });
+  svg.addEventListener('pointerup', () => dragging = -1);
+  const val = id => Number($(id).value);
+  const add = (parent, tag, attrs={}) => {
+    const el = document.createElementNS(NS, tag);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+    parent.appendChild(el); return el;
+  };
+  const clear = id => { const el=$(id); while(el.firstChild) el.removeChild(el.firstChild); return el; };
+  const bez = t => {
+    const u=1-t, a=u*u*u, b=3*u*u*t, c=3*u*t*t, d=t*t*t;
+    return [0,1].map(i => a*cp[0][i]+b*cp[1][i]+c*cp[2][i]+d*cp[3][i]);
+  };
+  const dist = (a,b) => Math.hypot(b[0]-a[0],b[1]-a[1]);
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1]], addv=(a,b)=>[a[0]+b[0],a[1]+b[1]], mul=(a,s)=>[a[0]*s,a[1]*s];
+  const norm=a=>{const n=Math.hypot(a[0],a[1])||1;return [a[0]/n,a[1]/n]};
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1];
+  const angle=(a,b)=>Math.atan2(a[0]*b[1]-a[1]*b[0],dot(a,b));
+  const left=a=>[-a[1],a[0]];
+  function nextChord(from, minT, radius) {
+    let previousT=minT, previous=bez(minT), previousD=dist(from,previous), enteredCircle=previousD<radius;
+    const steps=500;
+    for(let i=1;i<=steps;i++) {
+      const t=minT+(1-minT)*i/steps, p=bez(t), d=dist(from,p);
+      if(!enteredCircle && d<radius) { enteredCircle=true; previousT=t; previous=p; previousD=d; continue; }
+      if(enteredCircle && previousD<radius && d>=radius) {
+        let lo=previousT, hi=t;
+        for(let k=0;k<24;k++){const mid=(lo+hi)/2;if(dist(from,bez(mid))<radius)lo=mid;else hi=mid;}
+        const hitT=(lo+hi)/2; return {t:hitT,p:bez(hitT)};
+      }
+      previousT=t; previous=p; previousD=d;
+    }
+    return null;
+  }
+  function solve() {
+    const L=val('length')*scale, W=val('width')*scale, gap=val('gap')*scale;
+    const interval=L+gap, threshold=val('threshold')*scale, hard=val('turn')*Math.PI/180;
+    const policy=$('policy').value, poses=[];
+    let hinge=bez(0), t=0, first=nextChord(hinge,0,interval);
+    if(!first) return {poses,center:0,inside:0,maxPre:0,maxResidual:0,maxOuter:0};
+    let dir=norm(sub(first.p,hinge));
+    poses.push({a:hinge,b:first.p,center:mul(addv(hinge,first.p),.5),dir,shift:[0,0],pivot:false,pre:0,residual:0,outer:0});
+    hinge=first.p; t=first.t;
+    let guard=0, center=0, inside=0, maxPre=0, maxResidual=0, maxOuter=0;
+    while(poses.length<80 && guard++<80) {
+      const hit=nextChord(hinge,t,interval); if(!hit) break;
+      let nextDir=norm(sub(hit.p,hinge));
+      const prev=poses[poses.length-1], turn=angle(prev.dir,nextDir), sign=Math.sign(turn);
+      const sidePrev=mul(left(prev.dir),sign), sideNext=mul(left(nextDir),sign);
+      const seamGap=mul(addv(prev.dir,nextDir),gap/2);
+      const prevEnd=addv(addv(prev.center,mul(prev.dir,L/2)),mul(sidePrev,W/2));
+      let centerNext=mul(addv(hinge,hit.p),.5);
+      let nextStart=addv(addv(centerNext,mul(nextDir,-L/2)),mul(sideNext,W/2));
+      const preVec=sub(nextStart,addv(prevEnd,seamGap)), pre=Math.hypot(...preVec);
+      const doPivot=policy==='inside' || (policy==='threshold' && (pre>threshold || Math.abs(turn)>=hard));
+      let shift=[0,0], residual=pre;
+      if(doPivot) {
+        shift=sub(addv(prevEnd,seamGap),nextStart);
+        centerNext=addv(centerNext,shift);
+        nextStart=addv(nextStart,shift);
+        residual=Math.hypot(...sub(nextStart,addv(prevEnd,seamGap)));
+        inside++;
+      } else center++;
+      const prevOuter=addv(addv(prev.center,mul(prev.dir,L/2)),mul(sidePrev,-W/2));
+      const nextOuter=addv(addv(centerNext,mul(nextDir,-L/2)),mul(sideNext,-W/2));
+      const outer=Math.hypot(...sub(nextOuter,addv(prevOuter,seamGap)));
+      poses.push({a:hinge,b:hit.p,center:centerNext,dir:nextDir,shift,pivot:doPivot,pre,residual,outer});
+      maxPre=Math.max(maxPre,pre); maxResidual=Math.max(maxResidual,residual); maxOuter=Math.max(maxOuter,outer);
+      hinge=addv(hit.p,shift); t=hit.t;
+    }
+    return {poses,center,inside,maxPre,maxResidual,maxOuter};
+  }
+  function draw() {
+    const L=val('length'), W=val('width'), p=solve();
+    $('lengthOut').textContent=L.toFixed(1)+' m'; $('widthOut').textContent=W.toFixed(2)+' m';
+    $('gapOut').textContent=val('gap').toFixed(2)+' m'; $('thresholdOut').textContent=val('threshold').toFixed(3)+' m';
+    $('turnOut').textContent=val('turn')+'°';
+    $('modeTitle').textContent=$('policy').selectedOptions[0].text;
+    $('pieceCount').textContent=p.poses.length+' pieces';
+    $('metricCount').textContent=p.poses.length;
+    $('centerCount').textContent=p.center; $('insideCount').textContent=p.inside;
+    $('insideError').textContent=(p.maxPre/scale).toFixed(3)+' m'; $('residual').textContent=(p.maxResidual/scale).toFixed(3)+' m';
+    $('outerError').textContent=(p.maxOuter/scale).toFixed(3)+' m';
+    $('explanation').innerHTML=p.inside
+      ? '<b>'+p.inside+' joint(s)</b> switched to the inside edge. The outside mismatch grows because rigid rectangles cannot close both edges at a bend.'
+      : 'The tested bend stays on center pivots under the current threshold.';
+    const guide=$('guide');
+    let d='M '+cp[0][0]+' '+cp[0][1]+' C '+cp[1][0]+' '+cp[1][1]+', '+cp[2][0]+' '+cp[2][1]+', '+cp[3][0]+' '+cp[3][1];
+    guide.setAttribute('d',d);
+    const handles=clear('handles');
+    add(handles,'path',{d:`M${cp[0][0]} ${cp[0][1]}L${cp[1][0]} ${cp[1][1]} M${cp[2][0]} ${cp[2][1]}L${cp[3][0]} ${cp[3][1]}`,stroke:'#77858a','stroke-width':1,'stroke-dasharray':'4 5'});
+    cp.forEach((q,i)=>{add(handles,'circle',{cx:q[0],cy:q[1],r:i===0||i===3?8:6,fill:i===0||i===3?'#e1b96b':'#a8b4b8',stroke:'#111518','stroke-width':2,'data-handle':i,cursor:'grab'});});
+    const pieces=clear('pieces'), segments=clear('segments'), joints=clear('joints'), labels=clear('labels');
+    const pxW=val('width')*scale, pxL=val('length')*scale;
+    p.poses.forEach((pose,i)=>{
+      const c=pose.center, dir=pose.dir, side=left(dir), hl=pxL/2, hw=pxW/2;
+      const corners=[addv(addv(c,mul(dir,-hl)),mul(side,-hw)),addv(addv(c,mul(dir,hl)),mul(side,-hw)),addv(addv(c,mul(dir,hl)),mul(side,hw)),addv(addv(c,mul(dir,-hl)),mul(side,hw))];
+      add(pieces,'polygon',{points:corners.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' '),fill:pose.pivot?'#66d4d824':'#c6d1d522',stroke:pose.pivot?'#66d4d8':'#d1dadd','stroke-width':2});
+      const midA=addv(c,mul(dir,-hl)), midB=addv(c,mul(dir,hl));
+      add(segments,'line',{x1:midA[0],y1:midA[1],x2:midB[0],y2:midB[1],stroke:'#d6dfe2','stroke-width':1,'stroke-dasharray':'4 4',opacity:.75});
+      const h=pose.pivot?pose.b:pose.b;
+      add(joints,'circle',{cx:h[0],cy:h[1],r:3.5,fill:pose.pivot?'#66d4d8':'#d6dfe2'});
+      if(pose.pivot && i>0) {
+        const prior=p.poses[i-1], ang=pose.dir;
+        const from=addv(c,mul(ang,-hl));
+        add(joints,'line',{x1:from[0]-pose.shift[0],y1:from[1]-pose.shift[1],x2:from[0],y2:from[1],stroke:'#e98273','stroke-width':2,'marker-end':'url(#arrow)'});
+      }
+      if(i%2===0 || pose.pivot) add(labels,'text',{x:c[0],y:c[1]-hw-7,fill:'#dce4e6','font-size':12,'text-anchor':'middle'}).textContent=String(i+1);
+    });
+    // Mark spline hinges separately from shifted piece edges.
+    p.poses.forEach((pose,i)=>add(joints,'circle',{cx:pose.a[0],cy:pose.a[1],r:2.2,fill:'#e1b96b',opacity:.9}));
+    svg.appendChild(handles);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

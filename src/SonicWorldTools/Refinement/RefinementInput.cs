@@ -1,4 +1,5 @@
 using SonicWorldTools.Config;
+using SonicWorldTools.Core;
 using SonicWorldTools.Modules.PrecisionAreaPipette;
 using UnityEngine;
 
@@ -37,7 +38,7 @@ namespace SonicWorldTools.Refinement
 		/// </summary>
 		internal static FrameInput Sample()
 		{
-			if (PrecisionAreaPipetteInput.IsTextInputBlocking())
+			if (ToolRuntime.TextInputBlocked)
 			{
 				return default;
 			}

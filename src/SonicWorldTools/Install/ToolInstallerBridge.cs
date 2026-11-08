@@ -88,6 +88,10 @@ namespace SonicWorldTools.Install
 				ScatterDescription = Key(PluginConfig.ScatterSampleKey) + " samples or removes a prop; " + (PluginConfig.ScatterClearModifier.Value == UnityEngine.KeyCode.None ? "console command clears samples" : Chord(PluginConfig.ScatterClearModifier, PluginConfig.ScatterSampleKey) + " clears samples") + ". Click scatters the sample mix, or the hovered prop when empty.",
 				PathHalfWidth = PluginConfig.TerrainPathInitialHalfWidth.Value,
 				PathSmoothness = PluginConfig.TerrainPathEdgeSmoothness.Value,
+				PathFinishKey = PluginConfig.TerrainPathFinishKey.Value.ToString(),
+				PathSmoothKey = PluginConfig.TerrainPathSmoothKey.Value.ToString(),
+				PathFinishLabel = PluginConfig.FormatKeyLabel(PluginConfig.TerrainPathFinishKey.Value),
+				PathSmoothLabel = PluginConfig.FormatKeyLabel(PluginConfig.TerrainPathSmoothKey.Value),
 				LowerHeight = PluginConfig.LowerTerrainInitialHeight.Value,
 				LowerSmoothness = PluginConfig.LowerTerrainSmoothness.Value,
 				ScatterRadius = PluginConfig.ScatterInitialRadius.Value
