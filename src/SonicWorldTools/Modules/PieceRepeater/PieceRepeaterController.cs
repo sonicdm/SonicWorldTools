@@ -1113,15 +1113,22 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private void GenerateCircleFill(Vector3 center, float radius, float spacing)
 		{
-			float rowStep = spacing * 0.8660254f;
-			int row = 0;
-			for (float z = -radius; z <= radius; z += rowStep, row++)
+			// Build radial rows instead of a staggered Cartesian/hex grid so the
+			// infill follows the same circular form as its boundary.
+			_placements.Add(new Placement(center, Quaternion.identity));
+			float ringStep = spacing * 0.8660254f;
+			int ringCount = Mathf.CeilToInt(radius / ringStep);
+			for (int ring = 1; ring <= ringCount; ring++)
 			{
-				float offset = (row & 1) == 0 ? 0f : spacing * 0.5f;
-				for (float x = -radius + offset; x <= radius; x += spacing)
+				float ringRadius = Mathf.Min(radius, ring * ringStep);
+				int count = Mathf.Max(6, Mathf.CeilToInt(2f * Mathf.PI * ringRadius / spacing));
+				float angularOffset = (ring & 1) == 0 ? Mathf.PI / count : 0f;
+				for (int i = 0; i < count; i++)
 				{
-					if (x * x + z * z > radius * radius) continue;
-					_placements.Add(new Placement(center + new Vector3(x, 0f, z), Quaternion.identity));
+					float angle = angularOffset + 2f * Mathf.PI * i / count;
+					Vector3 position = center + new Vector3(Mathf.Sin(angle) * ringRadius, 0f, Mathf.Cos(angle) * ringRadius);
+					Quaternion tangent = Quaternion.Euler(0f, angle * Mathf.Rad2Deg + 90f, 0f);
+					_placements.Add(new Placement(position, tangent));
 					if (_placements.Count > MaximumPlacements) return;
 				}
 			}
