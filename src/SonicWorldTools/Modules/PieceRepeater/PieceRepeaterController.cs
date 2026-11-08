@@ -62,6 +62,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private const float MinimumSpacing = 0.1f;
 		private const float MaximumTerrainSampleDelta = 8f;
 		private const float MaximumDownwardFillDepth = 64f;
+		private const float ShapeRingSpacingWheelStep = 0.1f;
 		private const float RotationStepDegrees = 22.5f;
 		private static PieceRepeaterController _instance;
 
@@ -73,6 +74,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private string _prefabId;
 		private PieceRepeaterMode _mode;
 		private ShapeFillMode _shapeFillMode;
+		private float _shapeRingSpacingAdjustment;
+		private bool _shapeLayoutOverLimit;
 		private bool _bothSides;
 		private bool _hasLockedStartPlacement;
 		private Placement _lockedStartPlacement;
@@ -295,6 +298,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			                 && ToolInstaller.IsShapeToolName(selectedTool);
 			_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
 			_shapeFillMode = ShapeFillMode.Outline;
+			_shapeRingSpacingAdjustment = 0f;
 			_bothSides = false;
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
@@ -468,6 +472,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_shapeToolMode = shapeToolSelected;
 				_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
 				_shapeFillMode = ShapeFillMode.Outline;
+				_shapeRingSpacingAdjustment = 0f;
 				_bothSides = false;
 				_points.Clear();
 				_hasLockedStartPlacement = false;
@@ -559,7 +564,24 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			float wheel = ToolInput.MouseScrollY;
 			if (Mathf.Abs(wheel) > 0.01f)
 			{
-				if (ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterSpacingModifier.Value))
+				if (_shapeToolMode && _mode != PieceRepeaterMode.Circle
+				    && _shapeFillMode == ShapeFillMode.Concentric
+				    && ToolInput.WasModifierHeld(KeyCode.LeftShift))
+				{
+					if (ZNetScene.instance && !string.IsNullOrEmpty(_prefabId)
+					    && ZNetScene.instance.GetPrefab(_prefabId) is GameObject shapePrefab)
+					{
+						ResolvedPrefabPlacement shapeMetadata = ResolvePlacementMetadata(shapePrefab);
+						float baseSpacing = GetShapeRingSpacingBase(shapePrefab, shapeMetadata);
+						float current = Mathf.Max(MinimumSpacing, baseSpacing + _shapeRingSpacingAdjustment);
+						float next = Mathf.Max(MinimumSpacing,
+							current + Mathf.Sign(wheel) * ShapeRingSpacingWheelStep);
+						_shapeRingSpacingAdjustment = next - baseSpacing;
+						Notify("Concentric ring spacing: " + next.ToString("0.##") + " m.");
+					}
+					else Notify("Sample a piece before adjusting concentric ring spacing.");
+				}
+				else if (ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterSpacingModifier.Value))
 				{
 					SetGap(_gapMeters + wheel * 0.1f);
 					Notify("Spacing offset: " + _gapMeters.ToString("0.##") + " m; repeat interval: " + GetSpacing().ToString("0.##") + " m.");
@@ -697,7 +719,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Notify(_shapeToolMode
 					? _mode + ": set size with the cursor; square direction also sets its angle. I cycles "
 					  + (_mode == PieceRepeaterMode.Circle ? "outline and concentric infill" : "outline, grid and concentric infill")
-					  + "; " + PlaceChordLabel + " places."
+					  + (_mode == PieceRepeaterMode.Circle ? ". " : "; Shift+wheel changes ring spacing.")
+					  + " " + PlaceChordLabel + " places."
 					: _mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
 				return;
 			}
@@ -817,7 +840,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				{
 					new ButtonConfig { Name = "Attack", Key = PluginConfig.PieceRepeaterWaypointKey.Value, Hint = _shapeToolMode ? "Set center / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterPlaceModifier.Value) + ": Place outline" : "Waypoint / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterPlaceModifier.Value) + ": Place" },
 					new ButtonConfig { Name = "Remove", Key = PluginConfig.PieceRepeaterSampleKey.Value, Hint = "Sample" },
-					new ButtonConfig { Name = "Mouse ScrollWheel", Axis = "Mouse ScrollWheel", Hint = "Rotate pieces / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSpacingModifier.Value) + "+wheel: gap" },
+					new ButtonConfig { Name = "Mouse ScrollWheel", Axis = "Mouse ScrollWheel", Hint = _shapeToolMode ? "Rotate / square or rectangle concentric: Shift+wheel spacing / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSpacingModifier.Value) + "+wheel: gap" : "Rotate pieces / " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterSpacingModifier.Value) + "+wheel: gap" },
 					new ButtonConfig { Name = "TabLeft", Key = KeyCode.Q, Hint = _shapeToolMode ? "Cycle shape (Q)" : "Cycle snap points (Q/E)" },
 					new ButtonConfig { Name = "TabRight", Key = KeyCode.E, Hint = _shapeToolMode ? "Cycle snap points (E)" : "Cycle snap points (Q/E)" },
 					new ButtonConfig { Name = "Run", Key = PluginConfig.PieceRepeaterLevelModifier.Value, Hint = "Level height; " + PluginConfig.FormatKeyLabel(PluginConfig.PieceRepeaterJointModifier.Value) + "+click: joint" }
@@ -866,6 +889,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 
 			_prefabId = prefab;
+			_shapeRingSpacingAdjustment = 0f;
 			_points.Clear();
 			_hasLockedStartPlacement = false;
 			_snapPointIndex = -1;
@@ -896,6 +920,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 
 			GenerateLayout(prefab);
+			if (_shapeLayoutOverLimit)
+			{
+				Notify("Shape Tool: concentric infill exceeds the safe limit of "
+					+ MaximumPlacements + " placements. Increase ring spacing or reduce the shape.");
+				return;
+			}
 			if (_placements.Count == 0)
 			{
 				Notify(ToolDisplayName + ": add more points or increase the size.");
@@ -1028,6 +1058,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		{
 			_placements.Clear();
 			_outline.Clear();
+			_shapeLayoutOverLimit = false;
 			float spacing = GetSpacing(prefab);
 			if (_mode == PieceRepeaterMode.Path)
 			{
@@ -1071,7 +1102,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					a - axisX * half + axisZ * half
 				};
 				if (_shapeFillMode == ShapeFillMode.Grid) GenerateFilledRectangle(a, axisX, axisZ, half, half, spacing, metadata);
-				else if (_shapeFillMode == ShapeFillMode.Concentric) GenerateConcentricRectangle(a, axisX, axisZ, half, half, spacing, metadata);
+				else if (_shapeFillMode == ShapeFillMode.Concentric)
+					GenerateConcentricRectangle(a, axisX, axisZ, half, half, spacing,
+						GetShapeRingSpacing(prefab, metadata), prefab, metadata);
 				else GenerateOutlineEdges(corners, spacing, prefab, metadata);
 				_outline.AddRange(corners);
 			}
@@ -1175,7 +1208,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			else if (_shapeFillMode == ShapeFillMode.Concentric)
 			{
-				GenerateConcentricRectangle(a, Vector3.right, Vector3.forward, halfX, halfZ, spacing, metadata);
+				GenerateConcentricRectangle(a, Vector3.right, Vector3.forward, halfX, halfZ, spacing,
+					GetShapeRingSpacing(prefab, metadata), prefab, metadata);
 			}
 			else
 			{
@@ -1207,40 +1241,73 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		}
 
 		private void GenerateConcentricRectangle(Vector3 center, Vector3 axisX, Vector3 axisZ,
-			float halfX, float halfZ, float spacing, ResolvedPrefabPlacement metadata)
+			float halfX, float halfZ, float spacing, float ringStep,
+			GameObject prefab, ResolvedPrefabPlacement metadata)
 		{
-			int countX = Mathf.Max(1, Mathf.RoundToInt(halfX * 2f / spacing));
-			int countZ = Mathf.Max(1, Mathf.RoundToInt(halfZ * 2f / spacing));
-			float stepX = halfX * 2f / countX;
-			float stepZ = halfZ * 2f / countZ;
-			int minX = 0, maxX = countX - 1, minZ = 0, maxZ = countZ - 1;
-
-			while (minX <= maxX && minZ <= maxZ && _placements.Count < MaximumPlacements)
+			var rings = new List<Vector3[]>();
+			int requiredPlacements = 0;
+			bool addCenterPiece = false;
+			for (float inset = 0f; halfX - inset > 0f && halfZ - inset > 0f; inset += ringStep)
 			{
-				for (int x = minX; x <= maxX && _placements.Count < MaximumPlacements; x++)
+				float ringHalfX = halfX - inset;
+				float ringHalfZ = halfZ - inset;
+				if (ringHalfX * 2f < spacing * 1.5f && ringHalfZ * 2f < spacing * 1.5f)
 				{
-					AddConcentricPlacement(x, minZ, true);
-					if (maxZ != minZ) AddConcentricPlacement(x, maxZ, true);
+					addCenterPiece = true;
+					requiredPlacements++;
+					if (requiredPlacements > MaximumPlacements)
+					{
+						_shapeLayoutOverLimit = true;
+						_placements.Clear();
+						return;
+					}
+					break;
 				}
-				for (int z = minZ + 1; z < maxZ && _placements.Count < MaximumPlacements; z++)
+				if (ringHalfX * 2f < spacing * 1.5f || ringHalfZ * 2f < spacing * 1.5f)
+					break;
+				Vector3[] corners =
 				{
-					AddConcentricPlacement(minX, z, false);
-					if (maxX != minX) AddConcentricPlacement(maxX, z, false);
+					center - axisX * ringHalfX - axisZ * ringHalfZ,
+					center + axisX * ringHalfX - axisZ * ringHalfZ,
+					center + axisX * ringHalfX + axisZ * ringHalfZ,
+					center - axisX * ringHalfX + axisZ * ringHalfZ
+				};
+				int edgeX = Mathf.Max(1, Mathf.RoundToInt(ringHalfX * 2f / spacing));
+				int edgeZ = Mathf.Max(1, Mathf.RoundToInt(ringHalfZ * 2f / spacing));
+				requiredPlacements += 2 * edgeX + 2 * edgeZ;
+				if (requiredPlacements > MaximumPlacements)
+				{
+					_shapeLayoutOverLimit = true;
+					_placements.Clear();
+					return;
 				}
-				minX++; maxX--; minZ++; maxZ--;
+				rings.Add(corners);
 			}
 
-			void AddConcentricPlacement(int x, int z, bool horizontalSide)
+			foreach (Vector3[] ring in rings)
+				GenerateOutlineEdges(ring, spacing, prefab, metadata);
+			if (addCenterPiece)
 			{
-				if (_placements.Count >= MaximumPlacements) return;
-				Vector3 position = center + axisX * (-halfX + (x + 0.5f) * stepX)
-					+ axisZ * (-halfZ + (z + 0.5f) * stepZ);
-				Vector3 repeatAxis = metadata.Axis == PrefabRepeatAxis.X
-					? (horizontalSide ? axisX : axisZ)
-					: (horizontalSide ? axisZ : axisX);
-				Quaternion rotation = Quaternion.LookRotation(repeatAxis, Vector3.up);
-				_placements.Add(new Placement(position, rotation));
+				Vector3 forward = metadata.Axis == PrefabRepeatAxis.X ? axisX : axisZ;
+				_placements.Add(new Placement(center, Quaternion.LookRotation(forward, Vector3.up)));
 			}
+		}
+
+		private float GetShapeRingSpacing(GameObject prefab, ResolvedPrefabPlacement metadata)
+		{
+			return Mathf.Max(MinimumSpacing, GetShapeRingSpacingBase(prefab, metadata) + _shapeRingSpacingAdjustment);
+		}
+
+		private static float GetShapeRingSpacingBase(GameObject prefab, ResolvedPrefabPlacement metadata)
+		{
+			if (!prefab) return MinimumSpacing;
+			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
+			float across = metadata.Axis == PrefabRepeatAxis.X ? bounds.size.z
+				: metadata.Axis == PrefabRepeatAxis.Z ? bounds.size.x
+				: Mathf.Min(bounds.size.x, bounds.size.z);
+			if (float.IsNaN(across) || float.IsInfinity(across) || across < 0.001f)
+				return Mathf.Max(MinimumSpacing, metadata.Spacing * 0.5f);
+			return Mathf.Max(MinimumSpacing, Mathf.Min(metadata.Spacing, across));
 		}
 
 		private string GetShapeFillLabel()

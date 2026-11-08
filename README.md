@@ -47,6 +47,8 @@ Use Shape Tool to place a sampled piece around a closed circle, square, or recta
 
 Circle infill uses concentric rings. Square and rectangle infill can use either a fitted grid or nested concentric rings; use **I** to choose. Square and rectangle perimeters also fit to the sampled piece spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
 
+Concentric square and rectangle infill starts with rings packed to the sampled piece's crosswise width. Hold **Shift** and scroll to widen or tighten the ring spacing in 0.1 m steps. If the requested shape exceeds the 512-placement safety limit, increase the ring spacing or make the shape smaller.
+
 ### Hammer: Precision Select
 
 Use Precision Select to select building pieces inside a three-corner volume, then refine, copy, dismantle, or delete that selection.
