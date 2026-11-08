@@ -523,17 +523,24 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			RefreshPreviewForCatalogChanges();
 			if (ToolRuntime.TextInputBlocked) return;
+			if (_shapeToolMode && ToolInput.WasKeyDown(KeyCode.I))
+			{
+				_filled = !_filled;
+				_awaitPrimaryRelease = true;
+				UpdatePreview();
+				Notify("Shape Tool: " + (_filled ? "infill on." : "outline only."));
+				return;
+			}
 			if (_shapeToolMode && ToolInput.WasKeyDown(KeyCode.Q))
 			{
 				_mode = _mode == PieceRepeaterMode.Circle ? PieceRepeaterMode.Square
 					: _mode == PieceRepeaterMode.Square ? PieceRepeaterMode.Rectangle
 					: PieceRepeaterMode.Circle;
-				_filled = false;
 				_awaitPrimaryRelease = true;
 				UpdatePreview();
 				Notify(_points.Count == 0
-					? "Shape Tool: " + _mode.ToString().ToLowerInvariant() + " outline. Click a center; for a square, move toward a corner to size and rotate it."
-					: "Shape Tool: " + _mode.ToString().ToLowerInvariant() + " outline preview updated.");
+					? "Shape Tool: " + (_filled ? "infill" : "outline") + " " + _mode.ToString().ToLowerInvariant() + ". Click a center; square direction sets angle."
+					: "Shape Tool: " + (_filled ? "infill" : "outline") + " " + _mode.ToString().ToLowerInvariant() + " preview updated.");
 				return;
 			}
 			HandleSnapPointInput(player);
@@ -677,7 +684,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_points.Add(_aim);
 				UpdatePreview();
 				Notify(_shapeToolMode
-					? _mode + ": set size with the cursor; for a square, cursor direction also sets its angle. " + PlaceChordLabel + " places the outline."
+					? _mode + ": set size with the cursor; square direction also sets its angle. I toggles infill; " + PlaceChordLabel + " places."
 					: _mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
 				return;
 			}
@@ -1031,10 +1038,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			float dx = _aim.x - a.x;
 			float dz = _aim.z - a.z;
+			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
 			if (_mode == PieceRepeaterMode.Square)
 			{
 				float radius = Mathf.Sqrt(dx * dx + dz * dz);
-				float half = radius / Mathf.Sqrt(2f);
+				float requestedSide = radius * Mathf.Sqrt(2f);
+				float side = Mathf.Max(spacing, Mathf.Round(requestedSide / spacing) * spacing);
+				float half = side * 0.5f;
 				if (half < MinimumSpacing * 0.5f) return;
 				Vector3 diagonal = new Vector3(dx, 0f, dz).normalized;
 				Vector3 perpendicular = new Vector3(-diagonal.z, 0f, diagonal.x);
@@ -1047,13 +1057,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					a + axisX * half + axisZ * half,
 					a - axisX * half + axisZ * half
 				};
-				GenerateOutlineEdges(corners, spacing);
+				if (_filled) GenerateFilledRectangle(a, axisX, axisZ, half, half, spacing, metadata);
+				else GenerateOutlineEdges(corners, spacing, prefab, metadata);
 				_outline.AddRange(corners);
 			}
 			else
 			{
 				if (Mathf.Abs(dx) < MinimumSpacing * 0.5f || Mathf.Abs(dz) < MinimumSpacing * 0.5f) return;
-				GenerateRectangle(a, _aim, spacing);
+				GenerateRectangle(a, _aim, spacing, prefab, metadata);
 			}
 		}
 
@@ -1122,11 +1133,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 		}
 
-		private void GenerateRectangle(Vector3 a, Vector3 b, float spacing)
+		private void GenerateRectangle(Vector3 a, Vector3 b, float spacing, GameObject prefab, ResolvedPrefabPlacement metadata)
 		{
 			// Rectangles start at the first-click center, just like circles and squares.
-			float halfX = Mathf.Abs(b.x - a.x);
-			float halfZ = Mathf.Abs(b.z - a.z);
+			float halfX = Mathf.Max(spacing * 0.5f, Mathf.Round(Mathf.Abs(b.x - a.x) * 2f / spacing) * spacing * 0.5f);
+			float halfZ = Mathf.Max(spacing * 0.5f, Mathf.Round(Mathf.Abs(b.z - a.z) * 2f / spacing) * spacing * 0.5f);
 			float minX = a.x - halfX;
 			float maxX = a.x + halfX;
 			float minZ = a.z - halfZ;
@@ -1139,26 +1150,49 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			};
 			if (_filled)
 			{
-				int row = 0;
-				for (float z = minZ + spacing * 0.5f; z <= maxZ; z += spacing, row++)
-				{
-					for (float x = minX + spacing * 0.5f; x <= maxX; x += spacing)
-					{
-						_placements.Add(new Placement(new Vector3(x, a.y, z), Quaternion.identity));
-						if (_placements.Count > MaximumPlacements) break;
-					}
-					if (_placements.Count > MaximumPlacements) break;
-				}
+				GenerateFilledRectangle(a, Vector3.right, Vector3.forward, halfX, halfZ, spacing, metadata);
 			}
 			else
-		{
-				GenerateOutlineEdges(corners, spacing);
+			{
+				GenerateOutlineEdges(corners, spacing, prefab, metadata);
 			}
 			_outline.AddRange(corners);
 		}
 
-		private void GenerateOutlineEdges(Vector3[] corners, float spacing)
+		private void GenerateFilledRectangle(Vector3 center, Vector3 axisX, Vector3 axisZ,
+			float halfX, float halfZ, float spacing, ResolvedPrefabPlacement metadata)
 		{
+			int countX = Mathf.Max(1, Mathf.RoundToInt(halfX * 2f / spacing));
+			int countZ = Mathf.Max(1, Mathf.RoundToInt(halfZ * 2f / spacing));
+			float stepX = halfX * 2f / countX;
+			float stepZ = halfZ * 2f / countZ;
+			Vector3 forward = metadata.Axis == PrefabRepeatAxis.X ? axisX : axisZ;
+			Quaternion rotation = Quaternion.LookRotation(forward, Vector3.up);
+			for (int z = 0; z < countZ; z++)
+			{
+				float localZ = -halfZ + (z + 0.5f) * stepZ;
+				for (int x = 0; x < countX; x++)
+				{
+					float localX = -halfX + (x + 0.5f) * stepX;
+					Vector3 position = center + axisX * localX + axisZ * localZ;
+					_placements.Add(new Placement(position, rotation));
+					if (_placements.Count > MaximumPlacements) return;
+				}
+			}
+		}
+
+		private void GenerateOutlineEdges(Vector3[] corners, float spacing, GameObject prefab,
+			ResolvedPrefabPlacement metadata)
+		{
+			float inset = GetWidePanelInset(prefab, metadata, spacing, out bool squarePanel);
+			float signedArea = 0f;
+			for (int i = 0; i < corners.Length; i++)
+			{
+				Vector3 current = corners[i];
+				Vector3 next = corners[(i + 1) % corners.Length];
+				signedArea += current.x * next.z - next.x * current.z;
+			}
+			bool interiorOnLeft = signedArea >= 0f;
 			for (int side = 0; side < corners.Length; side++)
 			{
 				Vector3 start = corners[side];
@@ -1166,18 +1200,37 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Vector3 edge = end - start;
 				float length = edge.magnitude;
 				if (length < MinimumSpacing * 0.5f) continue;
-				int count = Mathf.Max(1, Mathf.CeilToInt(length / spacing));
+				int count = Mathf.Max(1, Mathf.RoundToInt(length / spacing));
 				Vector3 dir = edge / length;
 				Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
-				// Put segment centers half an interval in from each corner. Starting
-				// centers on the vertices leaves half a piece missing at both ends of
-				// every edge, which is visible as gaps along a closed outline.
+				Vector3 left = new Vector3(-dir.z, 0f, dir.x);
+				Vector3 inward = interiorOnLeft ? left : -left;
 				for (int i = 0; i < count; i++)
 				{
 					float t = (i + 0.5f) / count;
-					_placements.Add(new Placement(Vector3.Lerp(start, end, t), rot));
+					Vector3 position = Vector3.Lerp(start, end, t) + inward * inset;
+					if (squarePanel && i == 0 && side > 0 && _placements.Count > 0
+					    && (_placements[_placements.Count - 1].Position - position).sqrMagnitude < 0.0025f)
+						continue;
+					_placements.Add(new Placement(position, rot));
+					if (_placements.Count > MaximumPlacements) return;
 				}
 			}
+		}
+
+		private static float GetWidePanelInset(GameObject prefab, ResolvedPrefabPlacement metadata,
+			float spacing, out bool squarePanel)
+		{
+			squarePanel = false;
+			if (!prefab || metadata.ProfileType != RepeatProfileType.EdgeChain
+			    || !metadata.SupportsX || !metadata.SupportsZ
+			    || (metadata.Axis != PrefabRepeatAxis.X && metadata.Axis != PrefabRepeatAxis.Z)) return 0f;
+			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
+			float along = metadata.Axis == PrefabRepeatAxis.X ? bounds.size.x : bounds.size.z;
+			float across = metadata.Axis == PrefabRepeatAxis.X ? bounds.size.z : bounds.size.x;
+			if (along < spacing * 0.75f || across < spacing * 0.75f) return 0f;
+			squarePanel = Mathf.Abs(along - across) < spacing * 0.1f;
+			return across * 0.5f;
 		}
 
 		private static List<Placement> SamplePolyline(IList<Vector3> points, float spacing, bool anchorFirst = false, IList<int> rawCounts = null, IList<int> duplicateCounts = null)

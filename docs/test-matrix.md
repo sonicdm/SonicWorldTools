@@ -79,10 +79,11 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 ### S06s — Shape Tool closed outlines
 **Rule:** Shape Tool shares Line Tool sampling and placement safety while cycling closed outline layouts.
 1. Select Shape Tool, sample a placed building piece with MMB, and verify the target remains intact.
-2. Click a center, move the cursor, then cycle Circle → Square → Rectangle with Q. **Pass:** the preview follows each outline, square angle follows the cursor direction, adjacent edge pieces meet at corners, and Q does not change the IH ruler shape.
-3. Hold the configured place modifier and click. **Pass:** pieces are placed around the shown outline and IH undo reverses the batch.
-4. Begin sizing a shape, then holster or open the piece menu. **Pass:** the pending outline clears and does not resume when the tool returns.
-5. Switch to the build hammer and place a normal piece. **Pass:** Shape Tool no longer captures the build action.
+2. Click a center, move the cursor, then cycle Circle → Square → Rectangle with Q. **Pass:** each preview closes, square angle follows cursor direction, square/rectangle side lengths fit the sampled piece interval, and Q does not change the IH ruler shape.
+3. Press I to toggle infill. **Pass:** square/rectangle preview fills the interior without extending outside the boundary; circle preview fills the disk. Press I again to return to the perimeter.
+4. Hold the configured place modifier and click. **Pass:** pieces match the shown layout and IH undo reverses the batch.
+5. Begin sizing a shape, then holster or open the piece menu. **Pass:** the pending layout clears and does not resume when the tool returns.
+6. Switch to the build hammer and place a normal piece. **Pass:** Shape Tool no longer captures the build action.
 
 ### S06a — Curved Terrain Path Surface Variants (WEC / IH multi-point tool)
 **Rule:** The custom tools draw WEC curves on the selected surface, level the route, and finish reliably.
