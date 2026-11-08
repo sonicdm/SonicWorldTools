@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using SonicWorldTools.Config;
 using SonicWorldTools.Core;
 using SonicWorldTools.Integration;
@@ -13,7 +14,11 @@ namespace SonicWorldTools.Modules.ScatterProps
 	{
 		internal const string CommandName = "sonic_scatter";
 		private const float DefaultRadius = 3f;
-		private const int ObjectsPerWheelNotch = 5;
+		private const int ObjectsPerWheelNotch = 1;
+		private const string CountDescriptionMarker = "\nAmount per click: ";
+		private static Piece _countDescriptionPiece;
+		private static int _countDescriptionValue = -1;
+		private static bool _countDescriptionInitialized;
 		private static int MaximumSamples => Mathf.Clamp(PluginConfig.ScatterMaxSamples?.Value ?? 8, 1, 32);
 		private static int TotalObjects => Mathf.Clamp(PluginConfig.ScatterObjectsPerClick?.Value ?? 20, 1, 200);
 		private static string SampleLabel => PluginConfig.FormatKeyLabel(PluginConfig.ScatterSampleKey?.Value ?? KeyCode.Mouse2);
@@ -54,6 +59,9 @@ namespace SonicWorldTools.Modules.ScatterProps
 			              && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
 			if (!active)
 			{
+				_countDescriptionPiece = null;
+				_countDescriptionValue = -1;
+				_countDescriptionInitialized = false;
 				return;
 			}
 
@@ -75,7 +83,13 @@ namespace SonicWorldTools.Modules.ScatterProps
 					PluginConfig.ScatterObjectsPerClick.Value = nextCount;
 					NotifyCenter("Scatter amount: " + nextCount + " per click.");
 				}
+				RefreshCountDescription();
 				return;
+			}
+
+			if (!_countDescriptionInitialized || _countDescriptionValue != TotalObjects)
+			{
+				RefreshCountDescription();
 			}
 
 			if (!ToolInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
@@ -98,6 +112,51 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			ToggleSample(prefab, scale);
+		}
+
+		private static void RefreshCountDescription()
+		{
+			if (!InfinityHammerBridge.TryGetActiveToolSelectionPiece("Scatter Props", out Piece piece) || !piece)
+			{
+				_countDescriptionPiece = null;
+				_countDescriptionValue = -1;
+				_countDescriptionInitialized = false;
+				return;
+			}
+			if (piece == _countDescriptionPiece && _countDescriptionValue == TotalObjects)
+			{
+				return;
+			}
+
+			string description = piece.m_description ?? string.Empty;
+			int existingCount = description.IndexOf(CountDescriptionMarker, StringComparison.Ordinal);
+			if (existingCount >= 0)
+			{
+				description = description.Substring(0, existingCount);
+			}
+
+			piece.m_description = description + CountDescriptionMarker + TotalObjects;
+			_countDescriptionPiece = piece;
+			_countDescriptionValue = TotalObjects;
+			_countDescriptionInitialized = true;
+			try
+			{
+				MethodInfo refreshInfo = typeof(Hud).GetMethod(
+					"SetupPieceInfo",
+					BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+					null,
+					new[] { typeof(Piece) },
+					null);
+				if (Hud.instance && refreshInfo != null)
+				{
+					refreshInfo.Invoke(Hud.instance, new object[] { piece });
+				}
+			}
+			catch (Exception ex)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogDebug(
+					"Could not refresh Scatter Props count in the IH tool panel: " + ex.Message);
+			}
 		}
 
 		internal static bool ShouldSuppressMiddleClick(Player player)

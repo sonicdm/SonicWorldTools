@@ -317,6 +317,37 @@ namespace SonicWorldTools.Integration
 			}
 		}
 
+		/// <summary>Get the live selected-piece description target for an active IH tool.</summary>
+		internal static bool TryGetActiveToolSelectionPiece(string expectedToolName, out Piece piece)
+		{
+			piece = null;
+			if (!TryGetActiveToolSelectionName(out string activeToolName)
+			    || !string.Equals(activeToolName, expectedToolName, StringComparison.OrdinalIgnoreCase)
+			    || _selectionGet == null)
+			{
+				return false;
+			}
+
+			try
+			{
+				object selection = _selectionGet.Invoke(null, null);
+				MethodInfo getSelectedPiece = selection?.GetType().GetMethod(
+					"GetSelectedPiece",
+					BindingFlags.Public | BindingFlags.Instance,
+					null,
+					Type.EmptyTypes,
+					null);
+				piece = getSelectedPiece?.Invoke(selection, null) as Piece;
+				return piece;
+			}
+			catch (Exception ex)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogDebug(
+					"Could not get Infinity Hammer's active tool piece: " + ex.Message);
+				return false;
+			}
+		}
+
 		/// <summary>Capture IH's currently selected build object before an instant tool replaces it.</summary>
 		internal static bool TryGetSelectedBuildPrefabId(out string prefabId)
 		{

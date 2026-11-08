@@ -97,7 +97,7 @@ hoe:
   tabIndex: 0
 cultivator:
 - name: Scatter Props
-  description: Middle-click props to sample/remove up to 8 types; Shift+middle-click clears them. Click scatters the mix; Alt+wheel changes count by 5. Radius wheel follows your Infinity Hammer bind.
+  description: Middle-click props to sample/remove up to 8 types; Shift+middle-click clears them. Click scatters the mix; Alt+wheel changes count by 1. Current count appears below. Radius wheel follows your Infinity Hammer bind.
   icon: Cultivator
   commands:
   - command: sonic_scatter place <x>,<z> radius=<r>
