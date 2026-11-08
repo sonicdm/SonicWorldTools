@@ -40,7 +40,7 @@ These bindings are configurable. The tool pane and generated Infinity Hammer des
 
 ### Place a shape outline
 
-Select **Shape Tool** in the Infinity Hammer Hammer menu and middle-click a placed build piece to sample it. Click the outline center, move the cursor to size the preview, and press **Q** to cycle Circle, Square, and Rectangle. **Shift+click** places the outline. This version places the perimeter; interior infill can be added later.
+Select **Shape Tool** in the Infinity Hammer Hammer menu and middle-click a placed build piece to sample it. Click the outline center, move the cursor to size the preview, and press **Q** to cycle Circle, Square, and Rectangle. For a square, the direction from the center toward the cursor also sets its angle. **Shift+click** places the outline. Holstering or opening the piece menu cancels an unfinished outline. This version places the perimeter; interior infill can be added later.
 
 ### Shape the ground and surroundings
 

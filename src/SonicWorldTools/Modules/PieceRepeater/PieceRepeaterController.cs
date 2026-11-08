@@ -77,6 +77,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private bool _active;
 		private bool _shapeToolMode;
 		private bool _suspendedWhileHolstered;
+		private bool _suspendedForPieceMenu;
 		private int _lastSettingsHotkeyFrame = -1;
 		private KeyHintConfig _keyHints;
 		private bool _awaitPrimaryRelease;
@@ -282,6 +283,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_restoreIhShapeShortcut = restoreShapeShortcut;
 			_active = true;
 			_suspendedWhileHolstered = false;
+			_suspendedForPieceMenu = false;
 			_shapeToolMode = ToolRuntime.TryGetSelectedToolName(out string selectedTool)
 			                 && ToolInstaller.IsShapeToolName(selectedTool);
 			_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
@@ -319,6 +321,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_active = false;
 			ToolSessionCoordinator.Release(this);
 			_suspendedWhileHolstered = false;
+			_suspendedForPieceMenu = false;
 			_settingsPanel.Close(false);
 			_offsetEditor.Close(false);
 			if (_keyHints != null) KeyHintManager.Instance.RemoveKeyHint(_keyHints);
@@ -337,6 +340,22 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_awaitPrimaryRelease = false;
 			ClearPreview();
 			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Deactivated: " + reason + ".");
+		}
+
+		private void CancelPendingPlacement(string reason)
+		{
+			bool hadPendingShape = _shapeToolMode && _points.Count > 0;
+			_points.Clear();
+			_placements.Clear();
+			_outline.Clear();
+			_hasAim = false;
+			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
+			_awaitPrimaryRelease = true;
+			UpdatePreview();
+			if (hadPendingShape)
+				SonicWorldToolsPlugin.ModLogger?.LogInfo("[Shape Tool] Cancelled pending outline: " + reason + ".");
 		}
 
 		internal void Shutdown()
@@ -390,6 +409,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				if (!_suspendedWhileHolstered)
 				{
 					_suspendedWhileHolstered = true;
+					if (_shapeToolMode) CancelPendingPlacement("holstered");
 					_settingsPanel.Close(false);
 					_offsetEditor.Close(false);
 					if (_keyHints != null) KeyHintManager.Instance.RemoveKeyHint(_keyHints);
@@ -456,6 +476,34 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					: "Line Tool ready: click waypoints; " + PlaceChordLabel + " finishes and places the route.");
 			}
 
+			bool pieceMenuVisible = false;
+			try { pieceMenuVisible = Hud.IsPieceSelectionVisible(); }
+			catch { /* HUD may not be initialized during load or logout. */ }
+			if (_shapeToolMode && pieceMenuVisible)
+			{
+				if (!_suspendedForPieceMenu)
+				{
+					_suspendedForPieceMenu = true;
+					CancelPendingPlacement("piece-menu-open");
+					if (_keyHints != null) KeyHintManager.Instance.RemoveKeyHint(_keyHints);
+					_keyHints = null;
+					_restoreIhShapeShortcut?.Dispose();
+					_restoreIhShapeShortcut = null;
+					if (_previewRoot) _previewRoot.SetActive(false);
+					SonicWorldToolsPlugin.ModLogger?.LogInfo("[Shape Tool] Cancelled pending outline when the piece menu opened.");
+				}
+				return;
+			}
+			if (_suspendedForPieceMenu)
+			{
+				_suspendedForPieceMenu = false;
+				if (InfinityHammerBridge.TrySuspendShapeShortcut(out IDisposable restoreShapeShortcut))
+					_restoreIhShapeShortcut = restoreShapeShortcut;
+				if (_previewRoot) _previewRoot.SetActive(true);
+				_hasAim = false;
+				UpdatePreview();
+			}
+
 			if (ToolInput.WasKeyDown(KeyCode.Escape))
 			{
 				bool panelWasOpen = _settingsPanel.IsOpen || _offsetEditor.IsOpen;
@@ -484,7 +532,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_awaitPrimaryRelease = true;
 				UpdatePreview();
 				Notify(_points.Count == 0
-					? "Shape Tool: " + _mode.ToString().ToLowerInvariant() + " outline. Click a center and move to size it."
+					? "Shape Tool: " + _mode.ToString().ToLowerInvariant() + " outline. Click a center; for a square, move toward a corner to size and rotate it."
 					: "Shape Tool: " + _mode.ToString().ToLowerInvariant() + " outline preview updated.");
 				return;
 			}
@@ -628,7 +676,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				_points.Add(_aim);
 				UpdatePreview();
-				Notify(_mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
+				Notify(_shapeToolMode
+					? _mode + ": set size with the cursor; for a square, cursor direction also sets its angle. " + PlaceChordLabel + " places the outline."
+					: _mode + ": set size with the cursor, then " + PlaceChordLabel + " to place.");
 				return;
 			}
 
@@ -983,14 +1033,27 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			float dz = _aim.z - a.z;
 			if (_mode == PieceRepeaterMode.Square)
 			{
-				float half = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz)) * 0.5f;
+				float radius = Mathf.Sqrt(dx * dx + dz * dz);
+				float half = radius / Mathf.Sqrt(2f);
 				if (half < MinimumSpacing * 0.5f) return;
-				GenerateRectangle(a, a + new Vector3(half * 2f, 0f, half * 2f), spacing, square: true);
+				Vector3 diagonal = new Vector3(dx, 0f, dz).normalized;
+				Vector3 perpendicular = new Vector3(-diagonal.z, 0f, diagonal.x);
+				Vector3 axisX = (diagonal + perpendicular).normalized;
+				Vector3 axisZ = (diagonal - perpendicular).normalized;
+				Vector3[] corners =
+				{
+					a - axisX * half - axisZ * half,
+					a + axisX * half - axisZ * half,
+					a + axisX * half + axisZ * half,
+					a - axisX * half + axisZ * half
+				};
+				GenerateOutlineEdges(corners, spacing);
+				_outline.AddRange(corners);
 			}
 			else
 			{
 				if (Mathf.Abs(dx) < MinimumSpacing * 0.5f || Mathf.Abs(dz) < MinimumSpacing * 0.5f) return;
-				GenerateRectangle(a, _aim, spacing, square: false);
+				GenerateRectangle(a, _aim, spacing);
 			}
 		}
 
@@ -1059,21 +1122,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 		}
 
-		private void GenerateRectangle(Vector3 a, Vector3 b, float spacing, bool square)
+		private void GenerateRectangle(Vector3 a, Vector3 b, float spacing)
 		{
-			float minX = Mathf.Min(a.x, b.x);
-			float maxX = Mathf.Max(a.x, b.x);
-			float minZ = Mathf.Min(a.z, b.z);
-			float maxZ = Mathf.Max(a.z, b.z);
-			if (square)
-			{
-				float side = Mathf.Max(maxX - minX, maxZ - minZ);
-				Vector3 center = a;
-				minX = center.x - side * 0.5f;
-				maxX = center.x + side * 0.5f;
-				minZ = center.z - side * 0.5f;
-				maxZ = center.z + side * 0.5f;
-			}
+			// Rectangles start at the first-click center, just like circles and squares.
+			float halfX = Mathf.Abs(b.x - a.x);
+			float halfZ = Mathf.Abs(b.z - a.z);
+			float minX = a.x - halfX;
+			float maxX = a.x + halfX;
+			float minZ = a.z - halfZ;
+			float maxZ = a.z + halfZ;
 
 			Vector3[] corners =
 			{
@@ -1095,21 +1152,32 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			else
 		{
-				for (int side = 0; side < 4; side++)
-				{
-					Vector3 start = corners[side];
-					Vector3 end = corners[(side + 1) % 4];
-					float length = Vector3.Distance(start, end);
-					int count = Mathf.Max(1, Mathf.CeilToInt(length / spacing));
-					Vector3 dir = (end - start).normalized;
-					Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
-					for (int i = 0; i < count; i++)
-					{
-						_placements.Add(new Placement(Vector3.Lerp(start, end, (float)i / count), rot));
-					}
-				}
+				GenerateOutlineEdges(corners, spacing);
 			}
 			_outline.AddRange(corners);
+		}
+
+		private void GenerateOutlineEdges(Vector3[] corners, float spacing)
+		{
+			for (int side = 0; side < corners.Length; side++)
+			{
+				Vector3 start = corners[side];
+				Vector3 end = corners[(side + 1) % corners.Length];
+				Vector3 edge = end - start;
+				float length = edge.magnitude;
+				if (length < MinimumSpacing * 0.5f) continue;
+				int count = Mathf.Max(1, Mathf.CeilToInt(length / spacing));
+				Vector3 dir = edge / length;
+				Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
+				// Put segment centers half an interval in from each corner. Starting
+				// centers on the vertices leaves half a piece missing at both ends of
+				// every edge, which is visible as gaps along a closed outline.
+				for (int i = 0; i < count; i++)
+				{
+					float t = (i + 0.5f) / count;
+					_placements.Add(new Placement(Vector3.Lerp(start, end, t), rot));
+				}
+			}
 		}
 
 		private static List<Placement> SamplePolyline(IList<Vector3> points, float spacing, bool anchorFirst = false, IList<int> rawCounts = null, IList<int> duplicateCounts = null)

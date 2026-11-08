@@ -15,7 +15,7 @@ hammer:
   command: sonic_piece_repeater
   tabIndex: 0
 - name: Shape Tool
-  description: MMB samples a piece. Click a center, move to size the outline, then Shift+click to place. Q cycles circle, square and rectangle.
+  description: MMB samples a piece. Click a center and move to size the outline; cursor direction also sets square angle. Shift+click places. Q cycles circle, square and rectangle.
   icon: Hammer
   instant: false
   command: sonic_shape_tool
