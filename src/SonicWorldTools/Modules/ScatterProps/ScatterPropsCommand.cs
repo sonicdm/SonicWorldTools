@@ -16,6 +16,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 		private const float DefaultRadius = 3f;
 		private const int ObjectsPerWheelNotch = 1;
 		private const string CountDescriptionMarker = "\nAmount per click: ";
+		private const float MaxSampleRayDistance = 80f;
+		private static readonly FieldInfo PlaceRayMaskField =
+			typeof(Player).GetField("m_placeRayMask", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		private static RaycastHit[] HitBuffer = new RaycastHit[64];
 		private static Piece _countDescriptionPiece;
 		private static int _countDescriptionValue = -1;
 		private static bool _countDescriptionInitialized;
@@ -179,11 +183,11 @@ namespace SonicWorldTools.Modules.ScatterProps
 			// highlights, while the raw ray can hit the player root's PlayerBase
 			// collider and inherit that root's unrelated ZNetView.
 			Piece hoveredPiece = player.GetHoveringPiece();
-			if (hoveredPiece)
+			if (hoveredPiece && !IsOwnedByLocalPlayer(hoveredPiece.gameObject, player))
 			{
 				ZNetView hoveredView = hoveredPiece.GetComponent<ZNetView>();
 				if (!hoveredView) hoveredView = hoveredPiece.GetComponentInParent<ZNetView>();
-				if (hoveredView && !hoveredView.GetComponentInParent<Player>())
+				if (hoveredView && !IsOwnedByLocalPlayer(hoveredView.gameObject, player))
 				{
 					prefab = ResolvePrefabId(hoveredView);
 					if (!string.IsNullOrWhiteSpace(prefab))
@@ -204,14 +208,38 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			Ray ray = new Ray(camera.transform.position, camera.transform.forward);
-			RaycastHit[] hits = Physics.RaycastAll(ray, 1000f, Physics.AllLayers, QueryTriggerInteraction.Collide);
-			Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-			foreach (RaycastHit hit in hits)
+			// Use Valheim's placement mask so character colliders do not win the
+			// sample ray just because they are closer than the object under the aim.
+			int rayMask = Physics.DefaultRaycastLayers;
+			if (PlaceRayMaskField != null)
 			{
+				try
+				{
+					object rawMask = PlaceRayMaskField.GetValue(player);
+					if (rawMask is int placeRayMask && placeRayMask != 0) rayMask = placeRayMask;
+				}
+				catch (Exception ex)
+				{
+					SonicWorldToolsPlugin.ModLogger?.LogDebug(
+						"[Scatter] Could not read Player.m_placeRayMask; using default ray layers: " + ex.Message);
+				}
+			}
+
+			int hitCount = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, rayMask,
+				QueryTriggerInteraction.Collide);
+			while (hitCount == HitBuffer.Length)
+			{
+				HitBuffer = new RaycastHit[HitBuffer.Length * 2];
+				hitCount = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, rayMask,
+					QueryTriggerInteraction.Collide);
+			}
+			Array.Sort(HitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
+			for (int i = 0; i < hitCount; i++)
+			{
+				RaycastHit hit = HitBuffer[i];
 				if (!hit.collider
-				    || hit.collider.transform == player.transform
-				    || hit.collider.transform.IsChildOf(player.transform)
-				    || hit.collider.GetComponentInParent<Player>())
+				    || IsOwnedByLocalPlayer(hit.collider.gameObject, player)
+				    || hit.collider.attachedRigidbody)
 				{
 					continue;
 				}
@@ -221,9 +249,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				{
 					continue;
 				}
-				if (view.transform == player.transform
-				    || view.transform.IsChildOf(player.transform)
-				    || view.GetComponentInParent<Player>())
+				if (IsOwnedByLocalPlayer(view.gameObject, player))
 				{
 					SonicWorldToolsPlugin.ModLogger?.LogDebug(
 						"[Scatter] Ignored player-owned ray hit '" + hit.collider.name + "'.");
@@ -242,6 +268,26 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			return false;
+		}
+
+		private static bool IsOwnedByLocalPlayer(GameObject target, Player player)
+		{
+			if (!target || !player) return false;
+			Transform current = target.transform;
+			while (current)
+			{
+				if (current == player.transform) return true;
+				if (current.GetComponent<Player>() == player) return true;
+				if (current.GetComponent<Character>() == player) return true;
+				current = current.parent;
+			}
+			return false;
+		}
+
+		private sealed class RaycastHitDistanceComparer : IComparer<RaycastHit>
+		{
+			internal static readonly RaycastHitDistanceComparer Instance = new RaycastHitDistanceComparer();
+			public int Compare(RaycastHit left, RaycastHit right) => left.distance.CompareTo(right.distance);
 		}
 
 		private static string ResolvePrefabId(ZNetView view)
