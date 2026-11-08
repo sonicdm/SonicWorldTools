@@ -17,8 +17,6 @@ namespace SonicWorldTools.Modules.ScatterProps
 		private const int ObjectsPerWheelNotch = 1;
 		private const string CountDescriptionMarker = "\nAmount per click: ";
 		private const float MaxSampleRayDistance = 80f;
-		private static readonly FieldInfo PlaceRayMaskField =
-			typeof(Player).GetField("m_placeRayMask", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 		private static RaycastHit[] HitBuffer = new RaycastHit[64];
 		private static Piece _countDescriptionPiece;
 		private static int _countDescriptionValue = -1;
@@ -208,22 +206,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			Ray ray = new Ray(camera.transform.position, camera.transform.forward);
-			// Use Valheim's placement mask so character colliders do not win the
-			// sample ray just because they are closer than the object under the aim.
+			// Placement's ray mask is tailored to build surfaces. Sample against the
+			// general world mask so trees and other non-piece props remain targetable.
+			// The self-hierarchy check below keeps the player's own colliders out.
 			int rayMask = Physics.DefaultRaycastLayers;
-			if (PlaceRayMaskField != null)
-			{
-				try
-				{
-					object rawMask = PlaceRayMaskField.GetValue(player);
-					if (rawMask is int placeRayMask && placeRayMask != 0) rayMask = placeRayMask;
-				}
-				catch (Exception ex)
-				{
-					SonicWorldToolsPlugin.ModLogger?.LogDebug(
-						"[Scatter] Could not read Player.m_placeRayMask; using default ray layers: " + ex.Message);
-				}
-			}
 
 			int hitCount = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, rayMask,
 				QueryTriggerInteraction.Ignore);
