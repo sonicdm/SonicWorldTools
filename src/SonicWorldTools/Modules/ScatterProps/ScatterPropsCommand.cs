@@ -73,7 +73,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				if (nextCount != PluginConfig.ScatterObjectsPerClick.Value)
 				{
 					PluginConfig.ScatterObjectsPerClick.Value = nextCount;
-					Notify("Scatter amount: " + nextCount + " per click. (Alt+wheel; radius wheel follows your Infinity Hammer bind.)");
+					NotifyCenter("Scatter amount: " + nextCount + " per click.");
 				}
 				return;
 			}
@@ -362,6 +362,14 @@ namespace SonicWorldTools.Modules.ScatterProps
 			if (Player.m_localPlayer)
 			{
 				Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, message, 0, null);
+			}
+		}
+
+		private static void NotifyCenter(string message)
+		{
+			if (Player.m_localPlayer)
+			{
+				Player.m_localPlayer.Message(MessageHud.MessageType.Center, message, 0, null);
 			}
 		}
 	}
