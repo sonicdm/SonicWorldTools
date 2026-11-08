@@ -38,16 +38,29 @@ namespace SonicWorldTools.Core
 		internal static void RegisterOwnedMouse2Button()
 		{
 			if (_ownedMouse2Registered) return;
+			string pluginGuid = SonicWorldTools.SonicWorldToolsPlugin.PluginGuid;
 			_ownedMouse2Button = new ButtonConfig
 				{
 					Name = OwnedMouse2ButtonName,
 					Key = KeyCode.Mouse2,
 					BlockOtherInputs = true
 				};
-			InputManager.Instance.AddButton(SonicWorldTools.SonicWorldToolsPlugin.PluginGuid, _ownedMouse2Button);
+			InputManager.Instance.AddButton(pluginGuid, _ownedMouse2Button);
+			// Jötunn mutates Name to "<name>!<guid>" on successful registration.
+			// During ScriptEngine reload, InputManager survives the mod assembly and
+			// rejects the duplicate before doing that mutation. Querying the raw name
+			// would then miss the already-registered button and let vanilla Remove run.
+			if (string.Equals(_ownedMouse2Button.Name, OwnedMouse2ButtonName, System.StringComparison.Ordinal))
+			{
+				_ownedMouse2Button.Name = OwnedMouse2ButtonName + "!" + pluginGuid;
+				SonicWorldTools.SonicWorldToolsPlugin.ModLogger?.LogWarning(
+					"[ToolInput] Reusing Jotunn's existing MMB button after plugin reload: "
+					+ _ownedMouse2Button.Name + ".");
+			}
 			_ownedMouse2Registered = true;
 			SonicWorldTools.SonicWorldToolsPlugin.ModLogger?.LogInfo(
-				"[ToolInput] Registered Jotunn-owned MMB button with BlockOtherInputs=true.");
+				"[ToolInput] Jotunn-owned MMB button ready: " + _ownedMouse2Button.Name
+				+ " BlockOtherInputs=true.");
 		}
 
 		internal static void BeginFrame()
