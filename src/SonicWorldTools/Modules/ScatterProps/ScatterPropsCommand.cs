@@ -95,6 +95,28 @@ namespace SonicWorldTools.Modules.ScatterProps
 		{
 			prefab = null;
 			scale = Vector3.one;
+			// Prefer Valheim's build-hover target. It is the same piece the hammer
+			// highlights, while the raw ray can hit the player root's PlayerBase
+			// collider and inherit that root's unrelated ZNetView.
+			Piece hoveredPiece = player.GetHoveringPiece();
+			if (hoveredPiece)
+			{
+				ZNetView hoveredView = hoveredPiece.GetComponent<ZNetView>();
+				if (!hoveredView) hoveredView = hoveredPiece.GetComponentInParent<ZNetView>();
+				if (hoveredView && !hoveredView.GetComponentInParent<Player>())
+				{
+					prefab = ResolvePrefabId(hoveredView);
+					if (!string.IsNullOrWhiteSpace(prefab))
+					{
+						scale = hoveredPiece.transform.lossyScale;
+						SonicWorldToolsPlugin.ModLogger?.LogInfo(
+							"[Scatter] Sample target from Player.GetHoveringPiece(): '" + hoveredPiece.name
+							+ "' resolved to prefab '" + prefab + "' at scale " + FormatScale(scale) + ".");
+						return true;
+					}
+				}
+			}
+
 			GameCamera camera = GameCamera.instance;
 			if (!camera)
 			{
@@ -106,7 +128,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 			Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 			foreach (RaycastHit hit in hits)
 			{
-				if (!hit.collider || hit.collider.transform.IsChildOf(player.transform))
+				if (!hit.collider
+				    || hit.collider.transform == player.transform
+				    || hit.collider.transform.IsChildOf(player.transform)
+				    || hit.collider.GetComponentInParent<Player>())
 				{
 					continue;
 				}
@@ -114,6 +139,14 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ZNetView view = hit.collider.GetComponentInParent<ZNetView>();
 				if (!view)
 				{
+					continue;
+				}
+				if (view.transform == player.transform
+				    || view.transform.IsChildOf(player.transform)
+				    || view.GetComponentInParent<Player>())
+				{
+					SonicWorldToolsPlugin.ModLogger?.LogDebug(
+						"[Scatter] Ignored player-owned ray hit '" + hit.collider.name + "'.");
 					continue;
 				}
 
