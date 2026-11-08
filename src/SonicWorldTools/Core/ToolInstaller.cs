@@ -20,7 +20,7 @@ namespace SonicWorldTools.Core
 			public string LineDescription = "MMB samples; click adds waypoints; Shift+click places. Q/E cycles build snap points. Wheel rotates; Alt+wheel changes gap; hold Alt for level height. F7 opens settings, including fill-down; Shift+F7 edits offsets; Esc exits.";
 			public string PathFinishKey = "LeftShift", PathSmoothKey = "LeftAlt";
 			public string PathFinishLabel = "Left Shift", PathSmoothLabel = "Left Alt";
-			public string ShapeDescription = "MMB samples a piece. Click a center and move to size; cursor direction also sets square angle. I toggles infill; Shift+click places. Q cycles circle, square and rectangle.";
+			public string ShapeDescription = "MMB samples a piece. Click a center and move to size; cursor direction also sets square angle. I cycles outline, grid and concentric infill; Shift+wheel changes concentric spacing; Shift+click places. Q cycles circle, square and rectangle. Current size and spacing appear below.";
 			public string ScatterDescription = "MMB samples/removes props; Shift+MMB clears. Click scatters the mix; Alt+wheel changes count by 1. Current count is shown below. Radius wheel follows your Infinity Hammer bind.";
 			public float PathHalfWidth = 2f, PathSmoothness = .5f, LowerHeight = .2f, LowerSmoothness = .5f, ScatterRadius = 3f;
 		}

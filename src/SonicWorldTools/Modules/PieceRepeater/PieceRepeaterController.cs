@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 using SonicWorldTools.Config;
 using SonicWorldTools.Core;
 using SonicWorldTools.Integration;
@@ -63,6 +65,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private const float MaximumTerrainSampleDelta = 8f;
 		private const float MaximumDownwardFillDepth = 64f;
 		private const float ShapeRingSpacingWheelStep = 0.1f;
+		private const string ShapeDescriptionMarker = "\nCurrent shape: ";
+		private static readonly MethodInfo SetupPieceInfoMethod = typeof(Hud).GetMethod(
+			"SetupPieceInfo", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+			null, new[] { typeof(Piece) }, null);
 		private const float RotationStepDegrees = 22.5f;
 		private static PieceRepeaterController _instance;
 
@@ -76,6 +82,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private ShapeFillMode _shapeFillMode;
 		private float _shapeRingSpacingAdjustment;
 		private bool _shapeLayoutOverLimit;
+		private Piece _shapeDescriptionPiece;
+		private string _shapeDescriptionValue;
+		private int _shapeDescriptionLastRefreshFrame = -100;
 		private bool _bothSides;
 		private bool _hasLockedStartPlacement;
 		private Placement _lockedStartPlacement;
@@ -1317,6 +1326,94 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			return _shapeFillMode == ShapeFillMode.Grid ? "grid infill" : "concentric infill";
 		}
 
+		private string GetShapeSizeLabel(float pieceSpacing)
+		{
+			if (_points.Count == 0 || !_hasAim) return "unset";
+			Vector3 center = _points[0];
+			float dx = Mathf.Abs(_aim.x - center.x);
+			float dz = Mathf.Abs(_aim.z - center.z);
+			if (_mode == PieceRepeaterMode.Circle)
+			{
+				float diameter = Vector2.Distance(new Vector2(center.x, center.z), new Vector2(_aim.x, _aim.z)) * 2f;
+				return "diameter " + FormatMeters(diameter);
+			}
+
+			if (_mode == PieceRepeaterMode.Square)
+			{
+				float requestedSide = Mathf.Sqrt(dx * dx + dz * dz) * Mathf.Sqrt(2f);
+				float side = Mathf.Max(pieceSpacing, Mathf.Round(requestedSide / pieceSpacing) * pieceSpacing);
+				return "side " + FormatMeters(side);
+			}
+
+			float width = Mathf.Max(pieceSpacing, Mathf.Round(dx * 2f / pieceSpacing) * pieceSpacing);
+			float depth = Mathf.Max(pieceSpacing, Mathf.Round(dz * 2f / pieceSpacing) * pieceSpacing);
+			return FormatMeters(width) + " × " + FormatMeters(depth);
+		}
+
+		private static string FormatMeters(float value)
+		{
+			return value.ToString("0.##", CultureInfo.InvariantCulture) + " m";
+		}
+
+		private void RefreshShapeToolCard()
+		{
+			if (!_shapeToolMode) return;
+			if (!InfinityHammerBridge.TryGetActiveToolSelectionPiece(ToolInstaller.ShapeToolName, out Piece piece) || !piece)
+			{
+				_shapeDescriptionPiece = null;
+				_shapeDescriptionValue = null;
+				return;
+			}
+
+			string description = piece.m_description ?? string.Empty;
+			int markerIndex = description.IndexOf(ShapeDescriptionMarker, StringComparison.Ordinal);
+			if (markerIndex >= 0) description = description.Substring(0, markerIndex);
+
+			string liveValues;
+			if (!string.IsNullOrEmpty(_prefabId) && ZNetScene.instance
+			    && ZNetScene.instance.GetPrefab(_prefabId) is GameObject prefab)
+			{
+				ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
+				float pieceSpacing = GetSpacing(prefab);
+				liveValues = ShapeDescriptionMarker + _mode + " / " + GetShapeFillLabel()
+					+ "\nSize: " + GetShapeSizeLabel(pieceSpacing)
+					+ " · Preview: " + (_shapeLayoutOverLimit ? ">" + MaximumPlacements : _placements.Count.ToString(CultureInfo.InvariantCulture))
+					+ "\nPiece spacing: " + FormatMeters(pieceSpacing) + " · Gap: " + FormatMeters(_gapMeters)
+					+ "\nRotation: " + (_rotationSteps * RotationStepDegrees).ToString("0.#", CultureInfo.InvariantCulture) + "°";
+				if (_shapeFillMode == ShapeFillMode.Concentric)
+				{
+					float ringSpacing = _mode == PieceRepeaterMode.Circle
+						? pieceSpacing * 0.8660254f
+						: GetShapeRingSpacing(prefab, metadata);
+					liveValues += " · Ring spacing: " + FormatMeters(ringSpacing);
+				}
+			}
+			else
+			{
+				liveValues = ShapeDescriptionMarker + _mode + " / " + GetShapeFillLabel()
+					+ "\nSample a piece to show spacing and size.";
+			}
+
+			if (_shapeDescriptionPiece == piece && string.Equals(_shapeDescriptionValue, liveValues, StringComparison.Ordinal))
+				return;
+			if (_shapeDescriptionPiece == piece && Time.frameCount - _shapeDescriptionLastRefreshFrame < 6)
+				return;
+
+			piece.m_description = description + liveValues;
+			try
+			{
+				if (Hud.instance && SetupPieceInfoMethod != null)
+					SetupPieceInfoMethod.Invoke(Hud.instance, new object[] { piece });
+			}
+			catch (Exception ex)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogDebug("Could not refresh Shape Tool card values: " + ex.Message);
+			}
+			_shapeDescriptionPiece = piece;
+			_shapeDescriptionValue = liveValues;
+			_shapeDescriptionLastRefreshFrame = Time.frameCount;
+		}
+
 		private void GenerateOutlineEdges(Vector3[] corners, float spacing, GameObject prefab,
 			ResolvedPrefabPlacement metadata)
 		{
@@ -1697,6 +1794,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			SetLine(_outlineLine, _outline, _mode != PieceRepeaterMode.Path || _points.Count == 0);
 			if (!_bothSides || _mode != PieceRepeaterMode.Path || _points.Count == 0) _secondLine.enabled = false;
 			UpdatePieceGhosts();
+			RefreshShapeToolCard();
 		}
 
 		private void GenerateLayoutWithAim(GameObject prefab, Vector3 start, Vector3 aim)
