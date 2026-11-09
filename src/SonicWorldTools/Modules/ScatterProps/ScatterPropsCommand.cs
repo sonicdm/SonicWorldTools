@@ -56,9 +56,28 @@ namespace SonicWorldTools.Modules.ScatterProps
 		internal static void Tick()
 		{
 			Player player = Player.m_localPlayer;
-			bool active = player && ToolRuntime.InBuildMode && ToolRuntime.InfinityHammerEquipped
-			              && ToolRuntime.TryGetSelectedToolName(out string toolName)
+			bool inBuildMode = ToolRuntime.InBuildMode;
+			bool hammerEquipped = ToolRuntime.InfinityHammerEquipped;
+			bool hasSelectedTool = ToolRuntime.TryGetSelectedToolName(out string toolName);
+			bool active = player && inBuildMode && hammerEquipped && hasSelectedTool
 			              && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
+			bool mmbDown = ToolInput.WasMouseButtonDown(2);
+			KeyCode sampleKey = PluginConfig.ScatterSampleKey != null
+				? PluginConfig.ScatterSampleKey.Value
+				: KeyCode.None;
+			bool sampleKeyDown = sampleKey != KeyCode.None && ToolInput.WasBoundKeyOrMouseDown(sampleKey);
+			if (mmbDown)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[Scatter] MMB gate: player=" + (player ? "local" : "none")
+					+ " buildMode=" + inBuildMode
+					+ " IHEquipped=" + hammerEquipped
+					+ " selected='" + (hasSelectedTool ? toolName : "<none>") + "'"
+					+ " active=" + active
+					+ " textBlocked=" + ToolRuntime.TextInputBlocked
+					+ " sampleKey=" + sampleKey
+					+ " sampleKeyDown=" + sampleKeyDown + ".");
+			}
 			if (!active)
 			{
 				_countDescriptionPiece = null;
@@ -94,7 +113,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				RefreshCountDescription();
 			}
 
-			if (!ToolInput.WasBoundKeyOrMouseDown(PluginConfig.ScatterSampleKey.Value))
+			if (!sampleKeyDown)
 			{
 				return;
 			}
