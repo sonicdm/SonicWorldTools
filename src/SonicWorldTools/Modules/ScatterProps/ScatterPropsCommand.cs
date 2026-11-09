@@ -231,6 +231,14 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ZNetView view = hit.collider.GetComponentInParent<ZNetView>();
 				if (!view)
 				{
+					string hitLayer = LayerMask.LayerToName(hit.collider.gameObject.layer);
+					if (string.Equals(hitLayer, "terrain", StringComparison.OrdinalIgnoreCase))
+					{
+						SonicWorldToolsPlugin.ModLogger?.LogInfo(
+							"[Scatter] Ignoring terrain collider on the sample ray to check for a networked prop behind it.");
+						continue;
+					}
+
 					SonicWorldToolsPlugin.ModLogger?.LogInfo(
 						"[Scatter] Sample ray stopped at nearest non-player collider '" + hit.collider.name
 						+ "' (" + Utils.GetPrefabName(hit.collider.gameObject) + ") without a ZNetView; farther objects were not considered.");
