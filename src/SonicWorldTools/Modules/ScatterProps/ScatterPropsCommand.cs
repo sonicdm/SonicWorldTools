@@ -181,6 +181,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 			// highlights, while the raw ray can hit the player root's PlayerBase
 			// collider and inherit that root's unrelated ZNetView.
 			Piece hoveredPiece = player.GetHoveringPiece();
+			bool verbose = PluginConfig.IsVerboseLogging();
+			if (verbose)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[Scatter] Sample hover target: " + (hoveredPiece ? GetHierarchyPath(hoveredPiece.transform) : "<none>") + ".");
+			}
 			if (hoveredPiece && !IsOwnedByLocalPlayer(hoveredPiece.gameObject, player))
 			{
 				ZNetView hoveredView = hoveredPiece.GetComponent<ZNetView>();
@@ -220,6 +226,25 @@ namespace SonicWorldTools.Modules.ScatterProps
 					QueryTriggerInteraction.Ignore);
 			}
 			Array.Sort(HitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
+			if (verbose)
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[Scatter] Sample ray origin=" + FormatVector(ray.origin) + " direction=" + FormatVector(ray.direction)
+					+ " mask=" + rayMask + " hitCount=" + hitCount + ".");
+				for (int i = 0; i < hitCount; i++)
+				{
+					RaycastHit hit = HitBuffer[i];
+					if (!hit.collider) continue;
+					ZNetView hitView = hit.collider.GetComponentInParent<ZNetView>();
+					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+						"[Scatter] RayHit[" + i + "] distance=" + hit.distance.ToString("F2", CultureInfo.InvariantCulture)
+						+ " point=" + FormatVector(hit.point)
+						+ " layer='" + LayerMask.LayerToName(hit.collider.gameObject.layer)
+						+ "' collider='" + GetHierarchyPath(hit.collider.transform)
+						+ "' prefab='" + Utils.GetPrefabName(hit.collider.gameObject)
+						+ "' znetview='" + (hitView ? GetHierarchyPath(hitView.transform) : "<none>") + "'.");
+				}
+			}
 			for (int i = 0; i < hitCount; i++)
 			{
 				RaycastHit hit = HitBuffer[i];
@@ -259,6 +284,17 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			return false;
+		}
+
+		private static string GetHierarchyPath(Transform transform)
+		{
+			string path = string.Empty;
+			while (transform)
+			{
+				path = string.IsNullOrEmpty(path) ? transform.name : transform.name + "/" + path;
+				transform = transform.parent;
+			}
+			return path;
 		}
 
 		private static bool IsOwnedByLocalPlayer(GameObject target, Player player)
@@ -436,6 +472,11 @@ namespace SonicWorldTools.Modules.ScatterProps
 			return scale.x.ToString(CultureInfo.InvariantCulture) + ","
 			       + scale.z.ToString(CultureInfo.InvariantCulture) + ","
 			       + scale.y.ToString(CultureInfo.InvariantCulture);
+		}
+
+		private static string FormatVector(Vector3 value)
+		{
+			return string.Format(CultureInfo.InvariantCulture, "({0:0.##},{1:0.##},{2:0.##})", value.x, value.y, value.z);
 		}
 
 		private static float ReadRadius(Terminal.ConsoleEventArgs args)
