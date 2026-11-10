@@ -57,7 +57,6 @@ namespace SonicWorldTools.Modules.ScatterProps
 		{
 			Player player = Player.m_localPlayer;
 			bool inBuildMode = ToolRuntime.InBuildMode;
-			bool hammerEquipped = ToolRuntime.InfinityHammerEquipped;
 			bool hasSelectedTool = ToolRuntime.TryGetSelectedToolName(out string toolName);
 			// IH can report its selected tool even when our separate equipped-state probe is false.
 			// The selected Scatter Props tool is the authoritative activation signal here.
@@ -68,8 +67,9 @@ namespace SonicWorldTools.Modules.ScatterProps
 				? PluginConfig.ScatterSampleKey.Value
 				: KeyCode.None;
 			bool sampleKeyDown = sampleKey != KeyCode.None && ToolInput.WasBoundKeyOrMouseDown(sampleKey);
-			if (mmbDown)
+			if (mmbDown && PluginConfig.IsVerboseLogging())
 			{
+				bool hammerEquipped = ToolRuntime.InfinityHammerEquipped;
 				SonicWorldToolsPlugin.ModLogger?.LogInfo(
 					"[Scatter] MMB gate: player=" + (player ? "local" : "none")
 					+ " buildMode=" + inBuildMode
