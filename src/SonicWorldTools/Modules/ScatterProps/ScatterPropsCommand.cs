@@ -177,8 +177,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogDebug(
-					"Could not refresh Scatter Props count in the IH tool panel: " + ex.Message);
+				LogVerbose("Could not refresh Scatter Props count in the IH tool panel: " + ex.Message);
 			}
 		}
 
@@ -217,7 +216,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 					if (!string.IsNullOrWhiteSpace(prefab))
 					{
 						scale = hoveredPiece.transform.lossyScale;
-						SonicWorldToolsPlugin.ModLogger?.LogInfo(
+						LogVerbose(
 							"[Scatter] Sample target from Player.GetHoveringPiece(): '" + hoveredPiece.name
 							+ "' resolved to prefab '" + prefab + "' at scale " + FormatScale(scale) + ".");
 						return true;
@@ -276,7 +275,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ZNetView view = hit.collider.GetComponentInParent<ZNetView>();
 				if (!view)
 				{
-					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					LogVerbose(
 						"[Scatter] Sample ray stopped at nearest non-player collider '" + hit.collider.name
 						+ "' (" + Utils.GetPrefabName(hit.collider.gameObject) + ") without a ZNetView; farther objects were not considered.");
 					return false;
@@ -292,12 +291,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 				if (!string.IsNullOrWhiteSpace(prefab))
 				{
 					scale = view.transform.lossyScale;
-					SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					LogVerbose(
 					"[Scatter] Sample target '" + hit.collider.name + "' resolved to prefab '" + prefab
 						+ "' at scale " + FormatScale(scale) + ".");
 					return true;
 				}
-				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+				LogVerbose(
 					"[Scatter] Sample ray stopped at nearest networked collider '" + hit.collider.name
 					+ "' because its prefab could not be resolved; farther objects were not considered.");
 				return false;
@@ -353,7 +352,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 			catch (Exception ex)
 			{
-				SonicWorldToolsPlugin.ModLogger?.LogDebug("[Scatter] ZDO prefab lookup fell back to object name: " + ex.Message);
+				LogVerbose("[Scatter] ZDO prefab lookup fell back to object name: " + ex.Message);
 			}
 
 			return Utils.GetPrefabName(view.gameObject);
@@ -408,7 +407,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			if (existing >= 0)
 			{
 				Samples.RemoveAt(existing);
-				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+				LogVerbose(
 					"[Scatter] Removed sample '" + prefab + "'; palette now has " + Samples.Count + " sample(s).");
 				Notify("Removed " + prefab + " from Scatter Props (" + Samples.Count + " sampled).");
 				return;
@@ -423,7 +422,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			Samples.Add(new SampledPrefab(prefab, scale));
-			SonicWorldToolsPlugin.ModLogger?.LogInfo(
+			LogVerbose(
 				"[Scatter] Added sample '" + prefab + "' at scale " + FormatScale(scale)
 				+ "; palette now has " + Samples.Count + " sample(s).");
 			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Press " + SampleLabel + " again to remove.");
@@ -483,8 +482,16 @@ namespace SonicWorldTools.Modules.ScatterProps
 			                 + "," + z.ToString(CultureInfo.InvariantCulture)
 			                 + " radius=" + radius.ToString(CultureInfo.InvariantCulture)
 			                 + " rot=0-360 scale=" + FormatScale(scale);
-			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Scatter] Running: " + command);
+			LogVerbose("[Scatter] Running: " + command);
 			context.TryRunCommand(command);
+		}
+
+		private static void LogVerbose(string message)
+		{
+			if (PluginConfig.IsVerboseLogging())
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(message);
+			}
 		}
 
 		private static string FormatScale(Vector3 scale)

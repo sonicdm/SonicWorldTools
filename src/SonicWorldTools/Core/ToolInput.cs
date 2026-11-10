@@ -97,8 +97,11 @@ namespace SonicWorldTools.Core
 				}
 				catch (System.Exception ex)
 				{
-					SonicWorldToolsPlugin.ModLogger?.LogDebug(
-						"[ToolInput] Could not prime binding '" + field.Name + "': " + ex.Message);
+					if (PluginConfig.IsVerboseLogging())
+					{
+						SonicWorldToolsPlugin.ModLogger?.LogDebug(
+							"[ToolInput] Could not prime binding '" + field.Name + "': " + ex.Message);
+					}
 				}
 			}
 
@@ -236,6 +239,7 @@ namespace SonicWorldTools.Core
 
 		private static void TraceMiddleMouseFrame()
 		{
+			if (!PluginConfig.IsVerboseLogging()) return;
 			if (_lastMouse2TraceFrame == Time.frameCount) return;
 			_lastMouse2TraceFrame = Time.frameCount;
 			bool down = WasMouseButtonDown(2);
@@ -260,6 +264,7 @@ namespace SonicWorldTools.Core
 
 		private static void TraceCaptureHeartbeat()
 		{
+			if (!PluginConfig.IsVerboseLogging()) return;
 			int frame = Time.frameCount;
 			if (_lastCaptureHeartbeatFrame >= 0 && frame - _lastCaptureHeartbeatFrame < 300) return;
 			_lastCaptureHeartbeatFrame = frame;

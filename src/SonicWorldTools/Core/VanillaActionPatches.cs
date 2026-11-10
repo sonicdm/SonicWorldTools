@@ -23,9 +23,12 @@ namespace SonicWorldTools.Core
 				return true;
 
 			__result = false;
-			SonicWorldToolsPlugin.ModLogger?.LogInfo(
-				"[ToolInput] Consumed vanilla Remove edge for active MMB tool; frame="
-				+ Time.frameCount + " IHtool='" + selectedTool + "'.");
+			if (PluginConfig.IsVerboseLogging())
+			{
+				SonicWorldToolsPlugin.ModLogger?.LogInfo(
+					"[ToolInput] Consumed vanilla Remove edge for active MMB tool; frame="
+					+ Time.frameCount + " IHtool='" + selectedTool + "'.");
+			}
 			return false;
 		}
 
@@ -99,6 +102,7 @@ namespace SonicWorldTools.Core
 		{
 			bool suppress = ToolActionGate.ShouldSuppress(ToolPlayerAction.Remove, __instance);
 			if (__instance == Player.m_localPlayer
+			    && PluginConfig.IsVerboseLogging()
 			    && _lastTraceFrame != Time.frameCount
 			    && (ToolInput.WasMouseButtonDown(2) || ToolActionGate.ShouldSuppress(ToolPlayerAction.Remove, __instance)))
 			{
