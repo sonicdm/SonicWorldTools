@@ -94,22 +94,38 @@ if ($existingTag) {
 }
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
+$pushRemote = $null
+$upstream = git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>$null
+if ($LASTEXITCODE -eq 0 -and $upstream -match '^([^/]+)/') {
+    $pushRemote = $Matches[1]
+}
+if (-not $pushRemote) {
+    $availableRemotes = @(git remote)
+    if ($availableRemotes -contains "github") {
+        $pushRemote = "github"
+    }
+    else {
+        $pushRemote = "origin"
+    }
+}
+$availableRemotes = @(git remote)
+Assert-True ($availableRemotes -contains $pushRemote) "Push remote '$pushRemote' is not configured."
 
 Write-Host "Creating annotated tag $tag on $branch..."
 git tag -a $tag -m "Release $version"
 
 if ($SkipPush) {
     Write-Host "SkipPush: tag created locally. Push with:"
-    Write-Host "  git push origin $branch"
-    Write-Host "  git push origin $tag"
+    Write-Host "  git push -u $pushRemote $branch"
+    Write-Host "  git push $pushRemote $tag"
     Write-Host "Then watch Actions publish.yml for Hexium/Thunderstore + GitHub Release."
     exit 0
 }
 
-Write-Host "Pushing $branch and $tag..."
-git push -u origin $branch
+Write-Host "Pushing $branch and $tag to $pushRemote..."
+git push -u $pushRemote $branch
 if ($LASTEXITCODE -ne 0) { throw "git push branch failed" }
-git push origin $tag
+git push $pushRemote $tag
 if ($LASTEXITCODE -ne 0) { throw "git push tag failed" }
 
 Write-Host "Tag pushed. Actions publish.yml will verify, upload stores, and write GitHub Release notes." -ForegroundColor Green

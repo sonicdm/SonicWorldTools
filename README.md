@@ -1,18 +1,29 @@
 # SonicWorldTools
 
-**Building, selection, and terrain tools for Valheim.**
+![SonicWorldTools icon](icon.png)
 
-SonicWorldTools adds building and terrain tools to Infinity Hammer's familiar Hammer, Hoe, and Cultivator menus. Line a winding road with fences or lamps, paint a curved path beneath it, scatter the surrounding props, and select an area when you want to move or remove a larger build.
+**A collection of Infinity Hammer tools for building, terrain editing, prop placement, and selection.**
 
-> **The tools live where you already build:** Line Tool, Shape Tool, and Precision Select under Hammer, terrain paths and Lower Terrain under Hoe, and Scatter Props under Cultivator.
+SonicWorldTools adds menu tools to Infinity Hammer's Hammer, Hoe, and Cultivator. It does not add a separate hammer item. Each tool is described below with its purpose, controls, and important limits.
+
+## At a glance
+
+| Infinity Hammer menu | Tool | Use it to |
+| --- | --- | --- |
+| Hammer | Line Tool | Repeat a sampled piece along straight or curved routes. |
+| Hammer | Shape Tool | Place a sampled piece around a circle, square, or rectangle, with optional infill. |
+| Hammer | Precision Select | Select, refine, copy, dismantle, or delete building pieces in a three-corner volume. |
+| Hoe | Surface Paths | Paint grass, dirt, cultivated soil, or paved terrain along a route. |
+| Hoe | Lower Terrain | Lower and optionally smooth the ground in the Hoe's area cursor. |
+| Cultivator | Scatter Props | Scatter a mix of sampled networked props across a circular area. |
 
 ## Tool guide
 
-The tools appear in Infinity Hammer's **Hammer**, **Hoe**, and **Cultivator** menus. Select a tool there to activate it. Controls below are the defaults; most keys can be changed in `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg`.
+Select a tool from its Infinity Hammer menu to activate it. Controls below are the defaults; most keys can be changed in `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg`.
 
 ### Hammer: Line Tool
 
-Use Line Tool to repeat a supported build piece along a straight or curved route: fences, walls, beams, lamps, floor pieces, and profiled props.
+Repeat a supported build piece along a straight or curved route. Common examples include fences, walls, beams, lamps, floors, and props with a reviewed placement profile.
 
 1. Select **Line Tool** from Infinity Hammer's Hammer tools.
 2. Aim at a placed piece and **middle-click** to sample it.
@@ -31,9 +42,9 @@ Use Line Tool to repeat a supported build piece along a straight or curved route
 | F7 / Shift+F7 | Open route settings / edit the sampled-piece offsets. |
 | Esc | Exit Line Tool. |
 
-The first sampled placement uses Valheim's build snapping. **Q/E** cycles its snap point. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`; pieces without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap solid portions of adjacent pieces to close an outside gap. Very tight turns may need another waypoint or a spacing adjustment.
+The first sampled placement uses Valheim's build snapping; **Q/E** cycles its snap point. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`. A piece without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap adjacent pieces to close an outside gap; very tight turns may need another waypoint or a spacing adjustment.
 
-For unrestricted world objects, enter `sonic_line_anarchy on` in the console. While enabled, middle-click samples registered networked prefabs such as trees and creatures; route placement sends network spawn requests and uses the configured ground-prop spacing rather than build-piece profiles or snapping. Turn it off with `sonic_line_anarchy off`. This mode is intended for world objects with a `ZNetView`; it does not create local-only effects or guarantee Infinity Hammer undo support for the spawned batch.
+For unrestricted world objects, enter `sonic_line_anarchy on` in the console. While enabled, middle-click can sample networked prefabs such as trees and creatures. Placement sends network spawn requests and uses the configured ground-prop spacing instead of build-piece profiles or snapping. Turn the mode off with `sonic_line_anarchy off`. Targets need a `ZNetView`; local-only effects are not created, and Infinity Hammer undo is not guaranteed for spawned batches.
 
 F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include gap, height behavior, fill-down, and offsets.
 
@@ -97,20 +108,20 @@ Select **Lower Terrain** and use the Hoe's terrain area cursor over the ground t
 
 ### Cultivator: Scatter Props
 
-Use Scatter Props to place repeated instances of one or more sampled networked props across a circular area.
+Scatter one or more sampled networked props across a circular area.
 
 1. Select **Scatter Props** under Cultivator.
 2. Middle-click a networked prop to add it to the sample mix. Middle-click a sampled prop again to remove that type.
 3. Click the ground to scatter the mix inside the shown radius. If the sample list is empty, the prop under the cursor is used.
 4. Hold **Shift** and middle-click to clear the sample list.
 
-Hold **Alt** and use the mouse wheel to change the number placed per click by one; the range is 1–200 and the current count appears in the tool description. The initial count is 20, the sample palette holds up to 8 types, and the initial radius is 3 m. The ordinary radius wheel remains controlled by Infinity Hammer's radius binding. Sample limit, count, and radius are configurable under `ScatterProps`.
+Hold **Alt** and use the mouse wheel to change the number placed per click by one. The count ranges from 1–200 and appears in the tool description. Defaults are 20 props per click, up to 8 sample types, and a 3 m radius. Infinity Hammer's radius binding still controls the radius wheel. These values are configurable under `ScatterProps`.
 
 ## Install
 
-Install through your mod manager, or put `SonicWorldTools.dll` in `BepInEx/plugins`. Enter a world, then look in Infinity Hammer's Hammer, Hoe, and Cultivator menus.
+Install with a Valheim mod manager, or place `SonicWorldTools.dll` in `BepInEx/plugins`. Start a world and open Infinity Hammer's Hammer, Hoe, or Cultivator menu to find the tools.
 
-**Requirements:** BepInEx and Jötunn load the plugin. Infinity Hammer, Server Devcommands, and World Edit Commands provide its menus and world-editing commands; install compatible versions together. The plugin can load without Infinity Hammer, but its menu tools will be unavailable.
+**Dependencies:** BepInExPack Valheim 5.4.2360 and Jötunn 2.30.2. To use the menu tools and their world-editing features, also install compatible versions of Infinity Hammer, World Edit Commands, and Server Devcommands. Those integrations are detected at runtime; the plugin can load without Infinity Hammer, but its menu tools will not be available.
 
 SonicWorldTools creates its own `infinity_tools_sonicworldtools.yaml` under `BepInEx/config/tools/`. It does not edit Infinity Hammer's `infinity_tools.yaml`.
 
@@ -120,11 +131,11 @@ The main settings file is `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cf
 
 | Section | Controls |
 | --- | --- |
-| `LineTool` | Keys, gap, curve sampler A/B, A-only smoothing distance, height and prop facing, default prop spacing, optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
-| `TerrainPaths`, `LowerTerrain` | Terrain path width, edge smoothing, finish key and smooth key; initial lowering amount and smoothing. Path key changes regenerate the owned Infinity Hammer YAML. |
-| `ScatterProps` | Sample and clear keys, palette limit, objects per click, initial radius. |
-| `PrecisionAreaPipette`, `Preview` | Selection keys, padding, and visual feedback. |
-| `Integration`, `Debug` | Infinity Hammer tool installation and optional diagnostics. Detailed logging defaults to off. |
+| `LineTool` | Controls, gap, curve algorithm and smoothing, height, prop facing and spacing, and optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
+| `TerrainPaths`, `LowerTerrain` | Path width, edge smoothing and keys; initial lowering amount and smoothing. Path key changes regenerate the owned Infinity Hammer YAML. |
+| `ScatterProps` | Sample and clear keys, palette limit, amount per click, and initial radius. |
+| `PrecisionAreaPipette`, `Preview` | Selection controls, padding, and visual feedback. |
+| `Integration`, `Debug` | Infinity Hammer tool installation and diagnostic logging. `VerboseLogging` defaults to off. |
 
 Changes to relevant settings refresh the generated tool YAML. Infinity Hammer may need you to reselect the tool or restart the game before its menu shows the new description. If you edit that generated YAML yourself, the plugin keeps your changes and writes its newer template to `BepInEx/config/infinity_tools_sonicworldtools.yaml.new` for comparison.
 
@@ -132,10 +143,11 @@ Line Tool profiles live in `BepInEx/config/SonicWorldTools/PrefabPlacement/Vanil
 
 ## Remove or reset
 
-Removing the DLL leaves the Infinity Hammer tool definition and your profile edits on disk. For a clean reset, close Valheim and remove the plugin's files from the profile:
+Removing the plugin leaves its Infinity Hammer tool definition and profile settings on disk. For a clean reset, close Valheim and remove the plugin's files from the profile:
 
 ```text
 BepInEx/plugins/SonicWorldTools.dll
+BepInEx/plugins/SonicWorldTools/SonicWorldTools.dll
 BepInEx/scripts/SonicWorldTools.dll       (DEV ScriptEngine installs only)
 BepInEx/config/com.sonicdm.valheim.sonicworldtools.cfg
 BepInEx/config/SonicWorldTools/
@@ -148,4 +160,4 @@ Back up `VanillaPieces.yml` first if you tuned piece profiles. If enabled, Line 
 
 ## Development
 
-Build with `./build.ps1`; run tests with `dotnet test tests/SonicWorldTools.Tests/SonicWorldTools.Tests.csproj`. The DEV ScriptEngine workflow is `../tools/dev.ps1 deploy -Mod SonicWorldTools -ProfileBepInEx <DEV profile BepInEx path>`. See the [in-game test matrix](docs/test-matrix.md).
+Build with `.\build.ps1`; run tests with `dotnet test SonicWorldTools.sln`. For ScriptEngine iteration, use `..\tools\dev.ps1 deploy -Mod SonicWorldTools -ProfileBepInEx <DEV profile BepInEx path>`. Before publishing, complete the [in-game test matrix](docs/test-matrix.md).

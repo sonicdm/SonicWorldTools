@@ -5,10 +5,27 @@ Procedures stay the same across versions. Copy this section forward for a new ve
 
 ## How to run
 
-1. `.\build.ps1` then `..\tools\dev.ps1 deploy -Mod SonicWorldTools` (ScriptEngine). F9 reload after each fix.
-2. Work the checks below in order. Use ValheimMCP for log/console/render rows while you play.
-3. Logs: `C:\Users\Allan\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Default\BepInEx\LogOutput.log`.
-4. After ScriptEngine passes: `..\tools\dev.ps1 deploy -Mod SonicWorldTools -Plugins`, restart Valheim, re-check S01–S03.
+1. Set the DEV profile path and install ScriptEngine there once if it is not already installed:
+
+   ```powershell
+   $devBepInEx = Join-Path $env:APPDATA 'com.kesomannen.gale\valheim\profiles\DEV\BepInEx'
+   ..\tools\dev.ps1 install -ProfileBepInEx $devBepInEx
+   ```
+
+2. Build and deploy to ScriptEngine. Press F9 after each code change:
+
+   ```powershell
+   .\build.ps1
+   ..\tools\dev.ps1 deploy -Mod SonicWorldTools -ProfileBepInEx $devBepInEx
+   ```
+
+3. Work the checks below in order in the DEV profile. The user performs gameplay checks; use logs and console output for evidence where appropriate.
+4. DEV log: `%APPDATA%\com.kesomannen.gale\valheim\profiles\DEV\BepInEx\LogOutput.log`.
+5. After ScriptEngine checks pass, deploy to the normal plugins folder, restart Valheim, and re-check S01–S03:
+
+   ```powershell
+   ..\tools\dev.ps1 deploy -Mod SonicWorldTools -Plugins -ProfileBepInEx $devBepInEx
+   ```
 5. Mark results `pass` / `fail`. Tag only when every result under the version heading is `pass`.
 
 ### §17 regression structure (test world)
@@ -401,7 +418,7 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 
 | ID | Procedure | §18 / notes | Result |
 | --- | --- | --- | --- |
-| Offline | `dotnet test` full suite (41 + PluginAudit) | MVP-10 | pass |
+| Offline | `dotnet test SonicWorldTools.sln` (67 + PluginAudit) | MVP-10 / 2026-11-10 | pass |
 | S01 | BepInEx load line | hygiene | pass |
 | S02 | No exception in Gale logs | hygiene | pass |
 | S03 | Optional dependency detect lines | §11 | pass |
