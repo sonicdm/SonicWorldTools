@@ -414,6 +414,80 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 2. **Pass:** all tests green (see version table).
 3. **Fail:** any failing test.
 
+## 0.1.1
+
+Metadata-only dependency correction. In-game results carry forward from the 2026-11-10 DEV verification; DEV already had Infinity Hammer 1.92.0, World Edit Commands 1.82.0, and Server Devcommands 1.116.0 installed.
+
+
+| ID | Procedure | §18 / notes | Result |
+| --- | --- | --- | --- |
+| Offline | `dotnet test SonicWorldTools.sln` (67 + PluginAudit) | MVP-10 / 2026-11-10 | pass |
+| S01 | BepInEx load line | hygiene | pass |
+| S02 | No exception in Gale logs | hygiene | pass |
+| S03 | Optional dependency detect lines | §11 | pass |
+| S04 | Config file created | §13 | pass |
+| S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pass |
+| S06 | Hammer menu hot-reload (M1) | A04 | pass |
+| S06a | Curved Terrain Path Surface Variants | WEC / IH multi-point tool | pass |
+| S06b | Lower Terrain | WEC / IH Hoe tool | pass |
+| S07 | Precision Area Pipette activate (M1) | A05–A06 | pass |
+| S08 | SettingChanged hot-reload (M1) | config | pass |
+| S09 | Plugins-folder restart | release install | pass |
+| S10 | Corner A marker (M3) | A06–A08 | pass |
+| S11 | Live box preview (M3) | A09–A10 | pass |
+| S12 | Corner B then C lock (M3) | A11–A12 | pass |
+| S13 | Second-floor-only selection (M3) | A13–A16 | pass |
+| S14 | HUD count and dimensions (M3) | A16 | pass |
+| S15 | Escape cancels selection (M3) | UX | pass |
+| S16 | Exclude selected piece (M4) | A17–A18 | pass |
+| S17 | Add adjacent piece outside box (M4) | A19–A20 | pass |
+| S18 | Persist refinements on resize (M4) | A21–A22 | pass |
+| S19 | Pick-up / copy hand-off (M5) | A23–A24 | pass |
+| S20 | Ghost matches highlights (M5) | A24 | pass |
+| S21 | Excluded absent from ghost (M5) | A25 | pass |
+| S22 | Manually added present in ghost (M5) | A26 | pass |
+| S23 | Place elsewhere (M5) | A27 | pass |
+| S24 | Normal Infinity Hammer controls (M5) | A28 | pass |
+| S25 | Console-free workflow (M6) | workflow | pass |
+| S26 | Reset corners (M6) | UX | pass |
+| S27 | Reset refinement (M6) | UX | pass |
+| S28 | Preview/HUD SettingChanged (M6) | UX | pass |
+| S29 | DragNBuild / IH input friction note | → A30 | pass |
+| A01 | Install with Infinity Hammer | §18.1 | pass |
+| A02 | Launch game | §18.2 | pass |
+| A03 | No new physical Hammer | §18.3 | pass |
+| A04 | Precision Area Pipette in menu | §18.4 | pass |
+| A05 | Stock IH pipettes still work | §18.5 | pass |
+| A06 | Select Precision Area Pipette | §18.6 → S07 | pass |
+| A07 | Set Corner A | §18.7 → S10 | pass |
+| A08 | Corner A marker visible | §18.8 → S10 | pass |
+| A09 | Move cursor | §18.9 → S11 | pass |
+| A10 | Live box updates | §18.10 → S11 | pass |
+| A11 | Set Corner B | §18.11 → S12 | pass |
+| A12 | Box locks | §18.12 → S12 | pass |
+| A13 | Box second floor only | §18.13 → S13 | pass |
+| A14 | First floor not selected | §18.14 → S13 | pass |
+| A15 | Third floor not selected | §18.15 → S13 | pass |
+| A16 | Count matches highlights | §18.16 → S13 | pass |
+| A17 | Exclude one wall | §18.17 → S16 | pass |
+| A18 | Excluded leaves selection | §18.18 → S16 | pass |
+| A19 | Add adjacent wall outside box | §18.19 → S17 | pass |
+| A20 | Added joins selection | §18.20 → S17 | pass |
+| A21 | Resize box | §18.21 → S18 | pass |
+| A22 | Refinement persistence | §18.22 → S18 | pass |
+| A23 | Trigger pick/copy | §18.23 → S19 | pass |
+| A24 | Ghost equals highlights | §18.24 → S19–S20 | pass |
+| A25 | Excluded absent from ghost | §18.25 → S21 | pass |
+| A26 | Added present in ghost | §18.26 → S22 | pass |
+| A27 | Place copied selection | §18.27 → S23 | pass |
+| A28 | Normal IH placement controls | §18.28 → S24 | pass |
+| A29 | Switch to Pipette deactivates Sonic | §18.29 | pass |
+| A30 | DragNBuild when Sonic inactive | §18.30 | pass |
+| A31 | Build Camera preview usable | §18.31 | pass |
+| A32 | Precision rotation on ghost | §18.32 | pass |
+| A33 | Dismantleheim no shared state | §18.33 | pass |
+| MP01 | Dedicated server pick + place | §20 | pass |
+
 ## 0.1.0
 
 | ID | Procedure | §18 / notes | Result |
@@ -489,15 +563,15 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 
 | # | MVP bullet | Status |
 | --- | --- | --- |
-| 1 | Precision Area Pipette in IH Hammer menu | **Code-complete** — in-game verify pending (S06/A04) |
+| 1 | Precision Area Pipette in IH Hammer menu | **pass** (S06/A04, 2026-11-10) |
 | 2 | Oriented rectangular prism via three points | **pass** (S10–S12, 2026-10-05) |
 | 3 | Only pieces inside prism selected | **pass** (S13, 2026-10-05) |
-| 4 | Selection visibly accurate | **pass** (S13; S14 HUD dims still pending) |
+| 4 | Selection visibly accurate | **pass** (S13–S14, 2026-11-10) |
 | 5 | Add / exclude individual pieces | **pass** (S16–S17, 2026-10-05) |
-| 6 | Refined set → IH placement ghost | **Code-complete** — pending (S19–S22) |
-| 7 | Normal IH placement controls after hand-off | **Code-complete** — pending (S23–S24) |
-| 8 | No other mod behavior change when Sonic inactive | **Isolation coded** (tool-switch deactivate) — pending (A29–A33) |
-| 9 | Middle floor only on three-story test build | **pass** selection (S13); copy flow still S19+ |
-| 10 | Automated tests for non-Unity selection/refinement | **pass** (`dotnet test`, 2026-10-05) |
+| 6 | Refined set → IH placement ghost | **pass** (S19–S22, 2026-11-10) |
+| 7 | Normal IH placement controls after hand-off | **pass** (S23–S24, 2026-11-10) |
+| 8 | No other mod behavior change when Sonic inactive | **pass** (A29–A33, 2026-11-10) |
+| 9 | Middle floor only on three-story test build | **pass** selection and copy flow (S13, S19–S24, 2026-11-10) |
+| 10 | Automated tests for non-Unity selection/refinement | **pass** (`dotnet test`, 67 tests, 2026-11-10) |
 
-**Verdict:** Offline / code path for MVP 0.1.0 is in place. **Not release-ready** until in-game rows (and MP01 if shipping multiplayer claims) are marked `pass`. Do not run `release.ps1` / tag until the version table is all-pass.
+**Verdict:** The 0.1.0 MVP checks passed in the DEV profile on 2026-11-10. Release readiness is tracked in each version table above.

@@ -121,7 +121,7 @@ Hold **Alt** and use the mouse wheel to change the number placed per click by on
 
 Install with a Valheim mod manager, or place `SonicWorldTools.dll` in `BepInEx/plugins`. Start a world and open Infinity Hammer's Hammer, Hoe, or Cultivator menu to find the tools.
 
-**Dependencies:** BepInExPack Valheim 5.4.2360 and Jötunn 2.30.2. To use the menu tools and their world-editing features, also install compatible versions of Infinity Hammer, World Edit Commands, and Server Devcommands. Those integrations are detected at runtime; the plugin can load without Infinity Hammer, but its menu tools will not be available.
+**Required dependencies:** BepInExPack Valheim 5.4.2360, Jötunn 2.30.2, Infinity Hammer 1.92.0, World Edit Commands 1.82.0, and Server Devcommands 1.116.0. The Infinity Hammer, World Edit Commands, and Server Devcommands versions match the DEV profile used for compatibility testing.
 
 SonicWorldTools creates its own `infinity_tools_sonicworldtools.yaml` under `BepInEx/config/tools/`. It does not edit Infinity Hammer's `infinity_tools.yaml`.
 

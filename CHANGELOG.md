@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Declare Infinity Hammer, World Edit Commands, and Server Devcommands as package dependencies, using the versions installed in the DEV test profile.
+
 ## 0.1.0
 
 - Add Line Tool for previewing and placing build-piece paths, with editable piece profiles and in-game settings.
