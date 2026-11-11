@@ -64,6 +64,7 @@ jobs:
           dotnet test SonicWorldTools.sln \
             --configuration Release \
             --nologo \
+            -p:ValheimLibDir="$VALHEIM_REFS" \
             --logger "trx;LogFileName=tests.trx" \
             --results-directory "$RUNNER_TEMP/test-results"
 

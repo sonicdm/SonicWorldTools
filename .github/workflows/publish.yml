@@ -77,7 +77,8 @@ jobs:
           set -euo pipefail
           dotnet test SonicWorldTools.sln \
             --configuration Release \
-            --nologo
+            --nologo \
+            -p:ValheimLibDir="$VALHEIM_REFS"
 
       - name: Upload plugin
         uses: actions/upload-artifact@v4

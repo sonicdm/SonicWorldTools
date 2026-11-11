@@ -4,6 +4,7 @@
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
+    <ValheimLibDir Condition="'$(ValheimLibDir)' == ''">..\..\..\Reqs</ValheimLibDir>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -19,7 +20,7 @@
     <Compile Include="..\..\src\SonicWorldTools\Core\ToolInstaller.cs" Link="ToolInstaller.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\PieceRepeaterPathMath.cs" Link="PieceRepeaterPathMath.cs" />
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\Reqs\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(ValheimLibDir)\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
