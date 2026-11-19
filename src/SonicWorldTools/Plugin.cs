@@ -20,6 +20,7 @@ using SonicWorldTools.Integration;
 using SonicWorldTools.Modules.PrecisionAreaPipette;
 using SonicWorldTools.Modules.ScatterProps;
 using SonicWorldTools.Modules.PieceRepeater;
+using SonicWorldTools.Modules.ForceGrow;
 
 
 
@@ -50,7 +51,7 @@ namespace SonicWorldTools
 
 
 
-		public const string PluginVersion = "0.1.1";
+		public const string PluginVersion = "0.1.2";
 
 
 
@@ -182,6 +183,7 @@ namespace SonicWorldTools
 			DependencyDetector.Run();
 			TerrainToolIconOverrides.TryInstall(_harmony);
 			ScatterPropsCommand.Register();
+			ForceGrowPlantsCommand.Register();
 			PrefabGeometryDumpCommand.Register();
 			PrefabPlacementMetadata.RegisterRefreshCommand();
 			_pieceRepeaterController = _pieceRepeaterController ?? new PieceRepeaterController();
@@ -339,6 +341,7 @@ namespace SonicWorldTools
 			HookGeneratedToolSetting(PluginConfig.LowerTerrainInitialHeight);
 			HookGeneratedToolSetting(PluginConfig.LowerTerrainSmoothness);
 			HookGeneratedToolSetting(PluginConfig.ScatterInitialRadius);
+			HookGeneratedToolSetting(PluginConfig.ForceGrowInitialRadius);
 
 			// HUD count/dimensions re-read in UpdateHudText each frame — no clear needed.
 

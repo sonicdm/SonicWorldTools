@@ -83,8 +83,9 @@ namespace SonicWorldTools.Install
 			string Chord(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> modifier, BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> key) => modifier.Value == UnityEngine.KeyCode.None ? Key(key) : Key(modifier) + "+" + Key(key);
 			return new ToolInstaller.Options
 			{
+				ModVersion = SonicWorldToolsPlugin.PluginVersion,
 				PrecisionDescription = "Click three corners to select. " + Chord(PluginConfig.RefineModifierKey, PluginConfig.AddPieceKey) + " adds; " + Chord(PluginConfig.RefineModifierKey, PluginConfig.ExcludePieceKey) + " excludes. " + PluginConfig.FormatPickUpChordLabel() + " copies; " + Chord(PluginConfig.DismantleModifierKey, PluginConfig.SelectionRemovalKey) + " dismantles; " + Chord(PluginConfig.PermanentDeleteModifierKey, PluginConfig.SelectionRemovalKey) + " deletes.",
-				LineDescription = "Sample " + Key(PluginConfig.PieceRepeaterSampleKey) + "; waypoint " + Key(PluginConfig.PieceRepeaterWaypointKey) + "; place " + Chord(PluginConfig.PieceRepeaterPlaceModifier, PluginConfig.PieceRepeaterWaypointKey) + ". Q/E cycles first-piece snaps; " + Chord(PluginConfig.PieceRepeaterJointModifier, PluginConfig.PieceRepeaterWaypointKey) + " snaps a joint; " + Chord(PluginConfig.PieceRepeaterTraceModifier, PluginConfig.PieceRepeaterTraceKey) + " traces a wall. Wheel rotates; " + Key(PluginConfig.PieceRepeaterSpacingModifier) + "+wheel changes gap; " + Key(PluginConfig.PieceRepeaterLevelModifier) + " holds height. " + Key(PluginConfig.PieceRepeaterSettingsHotkey) + " settings; " + Chord(PluginConfig.PieceRepeaterOffsetEditorModifier, PluginConfig.PieceRepeaterSettingsHotkey) + " offsets; Esc exits.",
+				LineDescription = "Sample " + Key(PluginConfig.PieceRepeaterSampleKey) + "; waypoint " + Key(PluginConfig.PieceRepeaterWaypointKey) + "; place " + Chord(PluginConfig.PieceRepeaterPlaceModifier, PluginConfig.PieceRepeaterWaypointKey) + ". Q/E cycles first-piece snaps; " + Chord(PluginConfig.PieceRepeaterJointModifier, PluginConfig.PieceRepeaterWaypointKey) + " snaps a joint; " + Chord(PluginConfig.PieceRepeaterTraceModifier, PluginConfig.PieceRepeaterTraceKey) + " traces a wall. Wheel rotates; " + Key(PluginConfig.PieceRepeaterSpacingModifier) + "+wheel changes gap; " + Key(PluginConfig.PieceRepeaterLevelModifier) + " holds height. " + Key(PluginConfig.PieceRepeaterSettingsHotkey) + " settings and world direction snap; " + Chord(PluginConfig.PieceRepeaterOffsetEditorModifier, PluginConfig.PieceRepeaterSettingsHotkey) + " offsets; Esc exits.",
 				ShapeDescription = "Sample " + Key(PluginConfig.PieceRepeaterSampleKey) + "; click a center and move to size. For squares, cursor direction also sets angle. I cycles outline, grid and concentric infill; Shift+wheel changes concentric spacing; " + Chord(PluginConfig.PieceRepeaterPlaceModifier, PluginConfig.PieceRepeaterWaypointKey) + " places. Q cycles circle, square and rectangle. Current size and spacing appear below.",
 				ScatterDescription = Key(PluginConfig.ScatterSampleKey) + " samples or removes a prop; " + (PluginConfig.ScatterClearModifier.Value == UnityEngine.KeyCode.None ? "console command clears samples" : Chord(PluginConfig.ScatterClearModifier, PluginConfig.ScatterSampleKey) + " clears samples") + ". Click scatters the sample mix, or the hovered prop when empty.",
 				PathHalfWidth = PluginConfig.TerrainPathInitialHalfWidth.Value,
@@ -95,7 +96,8 @@ namespace SonicWorldTools.Install
 				PathSmoothLabel = PluginConfig.FormatKeyLabel(PluginConfig.TerrainPathSmoothKey.Value),
 				LowerHeight = PluginConfig.LowerTerrainInitialHeight.Value,
 				LowerSmoothness = PluginConfig.LowerTerrainSmoothness.Value,
-				ScatterRadius = PluginConfig.ScatterInitialRadius.Value
+				ScatterRadius = PluginConfig.ScatterInitialRadius.Value,
+				ForceGrowRadius = PluginConfig.ForceGrowInitialRadius.Value
 			};
 		}
 

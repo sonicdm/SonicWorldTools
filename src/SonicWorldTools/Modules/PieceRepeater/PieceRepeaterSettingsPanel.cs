@@ -17,11 +17,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Text _radiusValue;
 		private Text _gapValue;
 		private Text _heightValue;
+		private Text _worldSnapValue;
 		private Text _downFillValue;
 		private Text _facingValue;
 		private Text _traceOffsetValue;
 		private Text _traceTargetValue;
-		private Text _worldSnapValue;
 
 		internal bool IsOpen => _open;
 
@@ -194,8 +194,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				? PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") + " m" : "Ignored in B";
 			if (_gapValue) _gapValue.text = _controller.GapMeters.ToString("0.##") + " m";
 			if (_heightValue) _heightValue.text = PluginConfig.PieceRepeaterLevelByDefault.Value ? "Level" : "Follow surface";
-			if (_downFillValue) _downFillValue.text = PluginConfig.PieceRepeaterFillDownward.Value ? "On (level only)" : "Off";
 			if (_worldSnapValue) _worldSnapValue.text = PluginConfig.PieceRepeaterWorldDirectionSnap.Value ? "On (22.5°)" : "Off";
+			if (_downFillValue) _downFillValue.text = PluginConfig.PieceRepeaterFillDownward.Value ? "On (level only)" : "Off";
 			if (_facingValue) _facingValue.text = PluginConfig.PieceRepeaterPropFollowCurve.Value ? "Tangent" : "Fixed";
 			if (_traceOffsetValue) _traceOffsetValue.text = _controller.HasTraceBase ? _controller.TraceOffset.ToString("0.##") + " m" : "-";
 			if (_traceTargetValue)

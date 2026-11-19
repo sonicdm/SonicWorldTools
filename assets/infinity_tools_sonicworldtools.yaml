@@ -101,7 +101,24 @@ hoe:
   terrainGrid: true
   snapGround: true
   tabIndex: 0
+- name: Force Grow
+  description: Click to mature healthy plants or hatch a single egg in the circle. Scroll to change the radius.
+  icon: carrot
+  command: sonic_force_grow <x>,<z> radius=<r> <area>
+  initialSize: 3
+  initialShape: circle
+  snapGround: true
+  tabIndex: 0
 cultivator:
+- name: Force Grow
+  description: Click to mature healthy plants or hatch a single egg in the circle. Scroll to change the radius.
+  icon: carrot
+  commands:
+  - command: sonic_force_grow <x>,<z> radius=<r> <area>
+  initialSize: 3
+  initialShape: circle
+  snapGround: true
+  tabIndex: 0
 - name: Scatter Props
   description: Middle-click props to sample/remove up to 8 types; Shift+middle-click clears them. Click scatters the mix; Alt+wheel changes count by 1. Current count appears below. Radius wheel follows your Infinity Hammer bind.
   icon: Cultivator
