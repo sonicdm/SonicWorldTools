@@ -218,7 +218,15 @@ namespace SonicWorldTools.Core
 			       || !string.Equals(version.Groups[1].Value, SafeHeaderValue(options.ModVersion), StringComparison.Ordinal);
 		}
 
+		/// <summary>
+		/// The owned YAML is generated, not hand-edited, so it is always regenerated. Edits are overwritten.
+		/// </summary>
 		public static bool ShouldPreserveOwnedDocument(string yaml, Options options = null)
+		{
+			return false;
+		}
+
+		private static bool LegacyPreserveCheck(string yaml, Options options)
 		{
 			if (string.IsNullOrWhiteSpace(yaml))
 			{

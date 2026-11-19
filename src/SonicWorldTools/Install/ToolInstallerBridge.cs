@@ -79,7 +79,8 @@ namespace SonicWorldTools.Install
 
 		private static ToolInstaller.Options BuildOptions()
 		{
-			string Key(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> entry) => PluginConfig.FormatKeyLabel(entry.Value);
+			// Either Alt key satisfies an Alt modifier (ToolInput.WasModifierHeld), so label both as "Alt".
+			string Key(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> entry) => entry.Value == UnityEngine.KeyCode.LeftAlt || entry.Value == UnityEngine.KeyCode.RightAlt ? "Alt" : PluginConfig.FormatKeyLabel(entry.Value);
 			string Chord(BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> modifier, BepInEx.Configuration.ConfigEntry<UnityEngine.KeyCode> key) => modifier.Value == UnityEngine.KeyCode.None ? Key(key) : Key(modifier) + "+" + Key(key);
 			return new ToolInstaller.Options
 			{

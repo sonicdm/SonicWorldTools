@@ -9,7 +9,7 @@ hammer:
   command: sonic_precision_pipette
   tabIndex: 0
 - name: Line Tool
-  description: MMB samples; LMB adds waypoints; Shift+LMB places. Q/E cycles first-piece snap. Right Alt+LMB snaps to a joint; Right Alt+MMB traces a wall; Shift+MMB adds the next row. Wheel rotates; Left Alt+wheel changes gap; hold Left Alt for level. F7 settings, including world direction snap; Shift+F7 offsets; Esc exits.
+  description: MMB samples; LMB adds waypoints; Shift+LMB places. Q/E cycles first-piece snap. Alt+LMB snaps to a joint; Alt+MMB traces a wall; Shift+MMB adds the next row. Wheel rotates; Alt+wheel changes gap; hold Alt for level. F7 settings, including world direction snap; Shift+F7 offsets; Esc exits.
   icon: Hammer
   instant: true
   command: sonic_piece_repeater

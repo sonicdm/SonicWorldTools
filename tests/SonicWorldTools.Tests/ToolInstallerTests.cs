@@ -60,18 +60,18 @@ namespace SonicWorldTools.Tests
 		}
 
 		[Fact]
-		public void WriteOwnedDocument_PreservesUserEditedIcon_AndWritesConflictFlag()
+		public void WriteOwnedDocument_OverwritesEditedIcon()
 		{
 			string edited = ToolInstaller.BuildOwnedDocument().Replace("icon: Hammer", "icon: Pickaxe");
-			Assert.True(ToolInstaller.ShouldPreserveOwnedDocument(edited));
 			bool changed = ToolInstaller.WriteOwnedDocument(edited, out string next, out bool conflictNew);
-			Assert.False(changed);
-			Assert.True(conflictNew);
-			Assert.Contains("icon: Pickaxe", next);
+			Assert.True(changed);
+			Assert.False(conflictNew);
+			Assert.Contains("icon: Hammer", next);
+			Assert.DoesNotContain("icon: Pickaxe", next);
 		}
 
 		[Fact]
-		public void GeneratedSettingsRefreshButManualEditsArePreserved()
+		public void GeneratedSettingsRefreshAndEditsAreOverwritten()
 		{
 			string original = ToolInstaller.BuildOwnedDocument();
 			var options = new ToolInstaller.Options { PathHalfWidth = 4f, ScatterRadius = 7f };
@@ -80,9 +80,10 @@ namespace SonicWorldTools.Tests
 			Assert.Contains("initialSize: 4", refreshed);
 			Assert.Contains("initialSize: 7", refreshed);
 			string edited = original.Replace("initialSize: 2", "initialSize: 5");
-			Assert.False(ToolInstaller.WriteOwnedDocument(edited, out string preserved, out bool editedConflict, options));
-			Assert.True(editedConflict);
-			Assert.Contains("initialSize: 5", preserved);
+			Assert.True(ToolInstaller.WriteOwnedDocument(edited, out string overwritten, out bool editedConflict, options));
+			Assert.False(editedConflict);
+			Assert.DoesNotContain("initialSize: 5", overwritten);
+			Assert.Contains("initialSize: 4", overwritten);
 		}
 
 		[Fact]
@@ -131,7 +132,7 @@ namespace SonicWorldTools.Tests
 		}
 
 		[Fact]
-		public void WriteOwnedFile_UserModified_PreservesAndWritesDotNew()
+		public void WriteOwnedFile_UserModified_IsOverwrittenWithoutDotNew()
 		{
 			string dir = Path.Combine(Path.GetTempPath(), "swt-ih-user-" + Path.GetRandomFileName());
 			Directory.CreateDirectory(dir);
@@ -145,11 +146,10 @@ namespace SonicWorldTools.Tests
 
 				bool touched = ToolInstaller.WriteOwnedFile(dir, preferToolsSubfolder: true);
 				Assert.True(touched);
-				Assert.Contains("icon: Pickaxe", File.ReadAllText(toolsOwned));
+				Assert.Contains("icon: Hammer", File.ReadAllText(toolsOwned));
+				Assert.DoesNotContain("icon: Pickaxe", File.ReadAllText(toolsOwned));
 				string newPath = Path.Combine(dir, ToolInstaller.OwnedFileName + ToolInstaller.ConflictNewSuffix);
-				Assert.True(File.Exists(newPath));
-				Assert.Contains("icon: Hammer", File.ReadAllText(newPath));
-				Assert.Contains(ToolInstaller.Marker, File.ReadAllText(newPath));
+				Assert.False(File.Exists(newPath));
 			}
 			finally
 			{
