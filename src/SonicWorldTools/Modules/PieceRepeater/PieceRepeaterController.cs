@@ -788,24 +788,42 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Vector3 GetPathWaypoint(Vector3 aim, IList<Vector3> pathPoints = null)
 		{
 			pathPoints = pathPoints ?? _points;
-			if (pathPoints.Count == 0 || !ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterJointModifier.Value)) return aim;
+			if (pathPoints.Count == 0) return aim;
 			Vector3 last = pathPoints[pathPoints.Count - 1];
-			Vector3 horizontal = aim - last;
-			horizontal.y = 0f;
-			float length = horizontal.magnitude;
-			if (length < 0.001f) return last;
-			float prior = 0f;
-			for (int i = 1; i < pathPoints.Count; i++)
+			Vector3 point = aim;
+			bool jointSnap = ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterJointModifier.Value);
+			if (jointSnap)
 			{
-				Vector3 delta = pathPoints[i] - pathPoints[i - 1];
-				delta.y = 0f;
-				prior += delta.magnitude;
+				Vector3 horizontal = aim - last;
+				horizontal.y = 0f;
+				float length = horizontal.magnitude;
+				if (length < 0.001f) return last;
+				float prior = 0f;
+				for (int i = 1; i < pathPoints.Count; i++)
+				{
+					Vector3 delta = pathPoints[i] - pathPoints[i - 1];
+					delta.y = 0f;
+					prior += delta.magnitude;
+				}
+				float pitch = GetSpacing();
+				float nearest = Mathf.Round((prior + length) / pitch) * pitch;
+				float along = Mathf.Max(0f, nearest - prior);
+				point = last + horizontal / length * along;
+				point.y = aim.y;
 			}
-			float pitch = GetSpacing();
-			float nearest = Mathf.Round((prior + length) / pitch) * pitch;
-			float along = Mathf.Max(0f, nearest - prior);
-			Vector3 point = last + horizontal / length * along;
-			point.y = aim.y;
+			else if (PluginConfig.PieceRepeaterWorldDirectionSnap.Value)
+			{
+				Vector3 horizontal = point - last;
+				horizontal.y = 0f;
+				float length = horizontal.magnitude;
+				if (length < 0.001f) return last;
+				float angle = Mathf.Atan2(horizontal.x, horizontal.z) * Mathf.Rad2Deg;
+				float snappedAngle = Mathf.Round(angle / RotationStepDegrees) * RotationStepDegrees;
+				float radians = snappedAngle * Mathf.Deg2Rad;
+				point.x = last.x + Mathf.Sin(radians) * length;
+				point.z = last.z + Mathf.Cos(radians) * length;
+			}
+
 			return point;
 		}
 

@@ -90,6 +90,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<float> PieceRepeaterCornerRadius;
 		internal static ConfigEntry<LineToolCurveAlgorithm> PieceRepeaterCurveAlgorithm;
 		internal static ConfigEntry<bool> PieceRepeaterLevelByDefault;
+		internal static ConfigEntry<bool> PieceRepeaterWorldDirectionSnap;
 		internal static ConfigEntry<bool> PieceRepeaterFillDownward;
 		internal static ConfigEntry<bool> PieceRepeaterPropFollowCurve;
 		internal static ConfigEntry<bool> LineToolDiagnostics;
@@ -98,6 +99,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<int> ScatterMaxSamples;
 		internal static ConfigEntry<int> ScatterObjectsPerClick;
 		internal static ConfigEntry<float> ScatterInitialRadius;
+		internal static ConfigEntry<float> ForceGrowInitialRadius;
 		internal static ConfigEntry<float> TerrainPathInitialHalfWidth;
 		internal static ConfigEntry<float> TerrainPathEdgeSmoothness;
 		internal static ConfigEntry<KeyCode> TerrainPathFinishKey;
@@ -296,6 +298,7 @@ namespace SonicWorldTools.Config
 			PieceRepeaterCornerRadius = BindLineTool(config, "CornerRadius", 4f, "Maximum tangent handle length in metres for curve sampler A (CurrentHermite); ignored by sampler B.");
 			PieceRepeaterCurveAlgorithm = BindLineTool(config, "CurveSampler", LineToolCurveAlgorithm.CentripetalCatmullRom, "A/B test: A CurrentHermite; B CentripetalCatmullRom (default, adapts to waypoint spacing and passes through each waypoint). Changes the preview immediately.");
 			PieceRepeaterLevelByDefault = BindLineTool(config, "LevelHeightByDefault", false, "Keep all pieces at the first point's height by default.");
+			PieceRepeaterWorldDirectionSnap = BindLineTool(config, "WorldDirectionSnap", false, "Snap Line Tool route headings to the world's 22.5-degree build rotation grid.");
 			PieceRepeaterFillDownward = BindLineTool(config, "FillDownward", false, "When Maintain Elevation is active, stack each Line Tool placement down to terrain.");
 			PieceRepeaterPropFollowCurve = BindLineTool(config, "PropFollowCurve", true, "Align ground props to the route tangent; disable for fixed facing.");
 			MigrateOldLineToolModifierDefaults();
@@ -306,6 +309,7 @@ namespace SonicWorldTools.Config
 			ScatterMaxSamples = config.Bind("ScatterProps", "MaximumSampleTypes", 8, new ConfigDescription("Maximum distinct prop types in the scatter palette (1–32).", new AcceptableValueRange<int>(1, 32)));
 			ScatterObjectsPerClick = config.Bind("ScatterProps", "ObjectsPerClick", 20, new ConfigDescription("Total objects spawned per click, shared across sampled types (1–200).", new AcceptableValueRange<int>(1, 200)));
 			ScatterInitialRadius = config.Bind("ScatterProps", "InitialRadius", 3f, new ConfigDescription("Initial scatter radius in metres in the Infinity Hammer Cultivator menu. Takes effect when its generated tool YAML is refreshed on game start.", new AcceptableValueRange<float>(0.5f, 30f)));
+			ForceGrowInitialRadius = config.Bind("ForceGrow", "InitialRadius", 3f, new ConfigDescription("Initial radius in metres for Force Grow in the Infinity Hammer Hoe menu; the tool's size control can change it. Takes effect when its generated tool YAML is refreshed.", new AcceptableValueRange<float>(0.5f, 30f)));
 			TerrainPathInitialHalfWidth = config.Bind("TerrainPaths", "InitialHalfWidth", 2f, new ConfigDescription("Initial path half-width in metres; the full path is twice this wide. The wheel can change it in the Hoe menu.", new AcceptableValueRange<float>(0.25f, 20f)));
 			TerrainPathEdgeSmoothness = config.Bind("TerrainPaths", "EdgeSmoothness", 0.5f, new ConfigDescription("WEC edge smoothing strength when Infinity Hammer modifier 1 is held on the final waypoint (0–1).", new AcceptableValueRange<float>(0f, 1f)));
 			TerrainPathFinishKey = config.Bind("TerrainPaths", "FinishKey", KeyCode.LeftShift, "Key held on the final waypoint to finish a terrain path. Reflected in the generated Infinity Hammer tool YAML.");

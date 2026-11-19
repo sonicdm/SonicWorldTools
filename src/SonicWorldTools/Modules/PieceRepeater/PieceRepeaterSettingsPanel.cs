@@ -17,6 +17,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Text _radiusValue;
 		private Text _gapValue;
 		private Text _heightValue;
+		private Text _worldSnapValue;
 		private Text _downFillValue;
 		private Text _facingValue;
 
@@ -71,7 +72,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			GUIManager gui = GUIManager.Instance;
 			_panel = gui.CreateWoodpanel(GUIManager.CustomGUIFront.transform,
 				new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
-				530f, 500f, true);
+				530f, 550f, true);
 			_panel.SetActive(false);
 			Label("Line Tool settings", 0f, -34f, 28, 490f, gui.ValheimOrange);
 			Label("Preview updates live. Fill down applies only at level height.", 0f, -66f, 14, 490f, Color.white);
@@ -129,7 +130,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Changed();
 			});
 
-			Button("Close", 0f, -442f, 110f, () => Close(true));
+			Label("World direction snap", -145f, -434f, 18, 190f, Color.white);
+			_worldSnapValue = Label("", 60f, -434f, 18, 150f, Color.white);
+			Button("Change", 190f, -434f, 88f, () =>
+			{
+				PluginConfig.PieceRepeaterWorldDirectionSnap.Value = !PluginConfig.PieceRepeaterWorldDirectionSnap.Value;
+				Changed();
+			});
+
+			Button("Close", 0f, -488f, 110f, () => Close(true));
 			RefreshLabels();
 		}
 
@@ -173,6 +182,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				? PluginConfig.PieceRepeaterCornerRadius.Value.ToString("0.##") + " m" : "Ignored in B";
 			if (_gapValue) _gapValue.text = _controller.GapMeters.ToString("0.##") + " m";
 			if (_heightValue) _heightValue.text = PluginConfig.PieceRepeaterLevelByDefault.Value ? "Level" : "Follow surface";
+			if (_worldSnapValue) _worldSnapValue.text = PluginConfig.PieceRepeaterWorldDirectionSnap.Value ? "On (22.5°)" : "Off";
 			if (_downFillValue) _downFillValue.text = PluginConfig.PieceRepeaterFillDownward.Value ? "On (level only)" : "Off";
 			if (_facingValue) _facingValue.text = PluginConfig.PieceRepeaterPropFollowCurve.Value ? "Tangent" : "Fixed";
 		}

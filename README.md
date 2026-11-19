@@ -4,6 +4,8 @@
 
 **A collection of Infinity Hammer tools for building, terrain editing, prop placement, and selection.**
 
+Release candidate: **0.1.2**.
+
 SonicWorldTools adds menu tools to Infinity Hammer's Hammer, Hoe, and Cultivator. It does not add a separate hammer item. Each tool is described below with its purpose, controls, and important limits.
 
 ## At a glance
@@ -15,6 +17,7 @@ SonicWorldTools adds menu tools to Infinity Hammer's Hammer, Hoe, and Cultivator
 | Hammer | Precision Select | Select, refine, copy, dismantle, or delete building pieces in a three-corner volume. |
 | Hoe | Surface Paths | Paint grass, dirt, cultivated soil, or paved terrain along a route. |
 | Hoe | Lower Terrain | Lower and optionally smooth the ground in the Hoe's area cursor. |
+| Hoe / Cultivator | Force Grow | Instantly mature healthy planted crops, tree saplings, and plantable pickables, or hatch a single chicken egg in a circular area. |
 | Cultivator | Scatter Props | Scatter a mix of sampled networked props across a circular area. |
 
 ## Tool guide
@@ -42,11 +45,11 @@ Repeat a supported build piece along a straight or curved route. Common examples
 | F7 / Shift+F7 | Open route settings / edit the sampled-piece offsets. |
 | Esc | Exit Line Tool. |
 
-The first sampled placement uses Valheim's build snapping; **Q/E** cycles its snap point. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`. A piece without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap adjacent pieces to close an outside gap; very tight turns may need another waypoint or a spacing adjustment.
+The first sampled placement uses Valheim's build snapping; **Q/E** cycles its snap point. In **F7 settings**, turn on **World direction snap** to quantize route headings to the same 22.5° world rotation steps used by build pieces; this constrains each segment from its previous waypoint. Right Alt joint snapping takes precedence while held. Repeated pieces use editable profiles in `BepInEx/config/SonicWorldTools/PrefabPlacement/VanillaPieces.yml`. A piece without a reviewed, enabled profile cannot be placed. At bends, the route solver may overlap adjacent pieces to close an outside gap; very tight turns may need another waypoint or a spacing adjustment.
 
 For unrestricted world objects, enter `sonic_line_anarchy on` in the console. While enabled, middle-click can sample networked prefabs such as trees and creatures. Placement sends network spawn requests and uses the configured ground-prop spacing instead of build-piece profiles or snapping. Turn the mode off with `sonic_line_anarchy off`. Targets need a `ZNetView`; local-only effects are not created, and Infinity Hammer undo is not guaranteed for spawned batches.
 
-F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include gap, height behavior, fill-down, and offsets.
+F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include world direction snapping, gap, height behavior, fill-down, and offsets.
 
 ### Hammer: Shape Tool
 
@@ -106,6 +109,10 @@ Finish and smoothing keys are configurable in the `TerrainPaths` section. These 
 
 Select **Lower Terrain** and use the Hoe's terrain area cursor over the ground to lower it by the selected height amount. The starting amount is 0.2 m. Hold Infinity Hammer **Modifier 1** to smooth the lowered area; hold **Modifier 2** for free placement. The initial amount and smoothing strength are configurable under `LowerTerrain`.
 
+### Hoe / Cultivator: Force Grow
+
+Select **Force Grow** from the Hoe or Cultivator menu and click an area to instantly mature healthy planted crops, tree saplings, and plantable pickables, or hatch a single incubating chicken egg within the circular radius. Scroll to change the radius. Plants that currently fail their growth conditions are left alone; stacked eggs are skipped. The initial radius is configurable under `ForceGrow`.
+
 ### Cultivator: Scatter Props
 
 Scatter one or more sampled networked props across a circular area.
@@ -131,7 +138,7 @@ The main settings file is `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cf
 
 | Section | Controls |
 | --- | --- |
-| `LineTool` | Controls, gap, curve algorithm and smoothing, height, prop facing and spacing, and optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
+| `LineTool` | Controls, gap, curve algorithm and smoothing, world direction snap, height, prop facing and spacing, and optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
 | `TerrainPaths`, `LowerTerrain` | Path width, edge smoothing and keys; initial lowering amount and smoothing. Path key changes regenerate the owned Infinity Hammer YAML. |
 | `ScatterProps` | Sample and clear keys, palette limit, amount per click, and initial radius. |
 | `PrecisionAreaPipette`, `Preview` | Selection controls, padding, and visual feedback. |

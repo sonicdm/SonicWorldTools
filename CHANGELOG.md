@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Add optional F7 Line Tool snapping to the world rotation grid (22.5° increments).
+- Add Force Grow to the Infinity Hammer Hoe and Cultivator menus. Clicking a circular area matures healthy plants and hatches single incubating chicken eggs.
+
 ## 0.1.1
 
 - Declare Infinity Hammer, World Edit Commands, and Server Devcommands as package dependencies, using the versions installed in the DEV test profile.
