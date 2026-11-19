@@ -95,6 +95,7 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<LineToolCurveAlgorithm> PieceRepeaterCurveAlgorithm;
 		internal static ConfigEntry<bool> PieceRepeaterLevelByDefault;
 		internal static ConfigEntry<bool> PieceRepeaterFillDownward;
+		internal static ConfigEntry<bool> PieceRepeaterWorldDirectionSnap;
 		internal static ConfigEntry<bool> PieceRepeaterPropFollowCurve;
 		internal static ConfigEntry<bool> LineToolDiagnostics;
 		internal static ConfigEntry<KeyCode> ScatterSampleKey;
@@ -312,6 +313,7 @@ namespace SonicWorldTools.Config
 			PieceRepeaterLevelByDefault = BindLineTool(config, "LevelHeightByDefault", false, "Keep all pieces at the first point's height by default.");
 			PieceRepeaterFillDownward = BindLineTool(config, "FillDownward", false, "When Maintain Elevation is active, stack each Line Tool placement down to terrain.");
 			PieceRepeaterPropFollowCurve = BindLineTool(config, "PropFollowCurve", true, "Align ground props to the route tangent; disable for fixed facing.");
+			PieceRepeaterWorldDirectionSnap = BindLineTool(config, "WorldDirectionSnap", false, "Snap Line Tool route headings to the world's 22.5-degree build rotation grid.");
 			MigrateOldLineToolModifierDefaults();
 			LineToolDiagnostics = config.Bind("LineTool", "WriteDiagnostics", false, "Write detailed Line Tool path and placement diagnostics to BepInEx/logs/SonicWorldTools-LineTool.log. Off by default.");
 

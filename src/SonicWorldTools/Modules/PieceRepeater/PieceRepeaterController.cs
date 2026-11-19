@@ -76,6 +76,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private readonly List<Placement> _placements = new List<Placement>();
 		private readonly List<PlacementVerification> _placementVerifications = new List<PlacementVerification>();
 		private readonly List<Vector3> _outline = new List<Vector3>();
+		/// <summary>Per-placement lift (metres) added after ground snapping; filled only by the circle ring cover.</summary>
+		private readonly List<float> _placementLayerBias = new List<float>();
+		private readonly List<RingPiece> _ringCoverPieces = new List<RingPiece>();
+		/// <summary>Ring count of the last circle ring cover, or -1 when the layout is not one.</summary>
+		private int _circleRingCount = -1;
+		private string _lastRingCoverLog;
 		private readonly RaycastHit[] _surfaceRayHits = new RaycastHit[64];
 		private string _prefabId;
 		private PieceRepeaterMode _mode;
@@ -967,6 +973,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				float groundOffset = -metadata.BottomOffset;
 				_placements[i] = AdjustPlacement(_placements[i], metadata, groundOffset,
 					_points.Count > 0 ? _points[0].y : _placements[i].Position.y);
+				// AdjustPlacement re-derives height from the ground, so the anti-flicker lift goes on afterwards.
+				if (_placementLayerBias.Count == _placements.Count)
+				{
+					Placement adjusted = _placements[i];
+					adjusted.Position.y += _placementLayerBias[i];
+					_placements[i] = adjusted;
+				}
 			}
 			if (_mode == PieceRepeaterMode.Path && _hasLockedStartPlacement && _placements.Count > 0)
 				_placements[0] = _lockedStartPlacement;
@@ -1005,6 +1018,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		{
 			_placements.Clear();
 			_outline.Clear();
+			_placementLayerBias.Clear();
+			_circleRingCount = -1;
 			_shapeLayoutOverLimit = false;
 			float spacing = GetSpacing(prefab);
 			if (_mode == PieceRepeaterMode.Path)
@@ -1022,7 +1037,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				float radius = Vector2.Distance(new Vector2(a.x, a.z), new Vector2(_aim.x, _aim.z));
 				if (radius < MinimumSpacing * 0.5f) return;
-				if (_shapeFillMode != ShapeFillMode.Outline) GenerateCircleFill(a, radius, spacing);
+				// Rigid edge-chain tiles (floors) get the gap-free ring cover; other pieces keep the radial rows.
+				if (_shapeFillMode != ShapeFillMode.Outline && prefab
+				    && ResolvePlacementMetadata(prefab).ProfileType == RepeatProfileType.EdgeChain)
+					GenerateCircleRingCover(a, radius, spacing, prefab);
+				else if (_shapeFillMode != ShapeFillMode.Outline) GenerateCircleFill(a, radius, spacing);
 				else GenerateCircleOutline(a, radius, spacing);
 				return;
 			}

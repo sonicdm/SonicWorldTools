@@ -39,7 +39,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Vector3 GetPathWaypoint(Vector3 aim, IList<Vector3> pathPoints = null)
 		{
 			pathPoints = pathPoints ?? _points;
-			if (pathPoints.Count == 0 || !ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterJointModifier.Value)) return aim;
+			if (pathPoints.Count == 0) return aim;
+			if (!ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterJointModifier.Value))
+				return PluginConfig.PieceRepeaterWorldDirectionSnap.Value ? SnapToWorldHeading(pathPoints[pathPoints.Count - 1], aim) : aim;
 			Vector3 last = pathPoints[pathPoints.Count - 1];
 			Vector3 horizontal = aim - last;
 			horizontal.y = 0f;
@@ -57,6 +59,24 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			float along = Mathf.Max(0f, nearest - prior);
 			Vector3 point = last + horizontal / length * along;
 			point.y = aim.y;
+			return point;
+		}
+
+		/// <summary>
+		/// Keeps the segment length but rounds its heading to the vanilla 22.5° build rotation grid,
+		/// so the route only runs along angles a hand-placed piece could face.
+		/// </summary>
+		private static Vector3 SnapToWorldHeading(Vector3 last, Vector3 aim)
+		{
+			Vector3 horizontal = aim - last;
+			horizontal.y = 0f;
+			float length = horizontal.magnitude;
+			if (length < 0.001f) return last;
+			float heading = Mathf.Atan2(horizontal.x, horizontal.z) * Mathf.Rad2Deg;
+			float snapped = Mathf.Round(heading / RotationStepDegrees) * RotationStepDegrees * Mathf.Deg2Rad;
+			Vector3 point = aim;
+			point.x = last.x + Mathf.Sin(snapped) * length;
+			point.z = last.z + Mathf.Cos(snapped) * length;
 			return point;
 		}
 

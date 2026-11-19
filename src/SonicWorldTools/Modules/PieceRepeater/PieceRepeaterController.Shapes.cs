@@ -94,6 +94,56 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 		}
 
+		/// <summary>
+		/// Gap-free circle fill for rigid edge-chain tiles: closed-form rings outside, an axis-aligned grid
+		/// core once rings would clip badly. Overlap is accepted to avoid gaps; each piece carries a small
+		/// lift so overlapping tiles do not flicker.
+		/// </summary>
+		private void GenerateCircleRingCover(Vector3 center, float radius, float spacing, GameObject prefab)
+		{
+			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
+			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
+			float across = metadata.Axis == PrefabRepeatAxis.X ? bounds.size.z : bounds.size.x;
+			if (float.IsNaN(across) || float.IsInfinity(across) || across < 0.05f) across = spacing - _gapMeters;
+			float width = Mathf.Max(MinimumSpacing, across + _gapMeters);
+
+			if (!CircleRingCover.Build(radius, spacing, width, MaximumPlacements, _ringCoverPieces, out RingCoverStats stats))
+			{
+				_shapeLayoutOverLimit = true;
+				_placements.Clear();
+				_placementLayerBias.Clear();
+			}
+			else
+			{
+				// Positions never depend on the wheel; AdjustPlacement turns each piece in place.
+				foreach (RingPiece piece in _ringCoverPieces)
+				{
+					Vector3 position = center + new Vector3(piece.Offset.x, 0f, piece.Offset.y);
+					_placements.Add(new Placement(position, Quaternion.Euler(0f, piece.YawDeg, 0f)));
+					_placementLayerBias.Add(piece.LayerBias);
+				}
+				_circleRingCount = stats.RingCount;
+				string log = "[ShapeTool] Circle ring cover R=" + radius.ToString("0.00", CultureInfo.InvariantCulture)
+					+ " L=" + spacing.ToString("0.00", CultureInfo.InvariantCulture)
+					+ " W=" + width.ToString("0.00", CultureInfo.InvariantCulture)
+					+ " rings=[" + string.Join(",", stats.PiecesPerRing) + "]"
+					+ " core=" + stats.CorePieces + " coreR=" + stats.CoreRadius.ToString("0.00", CultureInfo.InvariantCulture)
+					+ " cover=" + stats.CoverRatio.ToString("0.000", CultureInfo.InvariantCulture);
+				if (!string.Equals(log, _lastRingCoverLog, StringComparison.Ordinal))
+				{
+					_lastRingCoverLog = log;
+					SonicWorldToolsPlugin.ModLogger?.LogDebug(log);
+				}
+			}
+
+			int segments = Mathf.Clamp(Mathf.CeilToInt(2f * Mathf.PI * radius / spacing), 12, 96);
+			for (int i = 0; i < segments; i++)
+			{
+				float angle = 2f * Mathf.PI * i / segments;
+				_outline.Add(center + new Vector3(Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius));
+			}
+		}
+
 		private void GenerateRectangle(Vector3 a, Vector3 b, float spacing, GameObject prefab, ResolvedPrefabPlacement metadata)
 		{
 			// Rectangles start at the first-click center, just like circles and squares.
@@ -278,7 +328,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					+ " · Preview: " + (_shapeLayoutOverLimit ? ">" + MaximumPlacements : _placements.Count.ToString(CultureInfo.InvariantCulture))
 					+ "\nPiece spacing: " + FormatMeters(pieceSpacing) + " · Gap: " + FormatMeters(_gapMeters)
 					+ "\nRotation: " + (_rotationSteps * RotationStepDegrees).ToString("0.#", CultureInfo.InvariantCulture) + "°";
-				if (_shapeFillMode == ShapeFillMode.Concentric)
+				if (_shapeFillMode == ShapeFillMode.Concentric && _mode == PieceRepeaterMode.Circle && _circleRingCount >= 0)
+				{
+					liveValues += " · Rings: " + _circleRingCount.ToString(CultureInfo.InvariantCulture) + " + grid core";
+				}
+				else if (_shapeFillMode == ShapeFillMode.Concentric)
 				{
 					float ringSpacing = _mode == PieceRepeaterMode.Circle
 						? pieceSpacing * 0.8660254f
