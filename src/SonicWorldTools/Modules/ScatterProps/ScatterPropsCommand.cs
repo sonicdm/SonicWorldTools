@@ -151,7 +151,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			{
 				Samples.Clear();
 				ScatterPreview.PruneTo(Samples);
-				Notify("Scatter sample list cleared.");
+				NotifyCenter("Scatter sample list cleared.");
 				return;
 			}
 
@@ -466,6 +466,33 @@ namespace SonicWorldTools.Modules.ScatterProps
 			ScatterSample sample = Samples[index];
 			Samples[index] = new ScatterSample(sample.Prefab, sample.Scale, weight);
 			Notify(args, "Scatter weight for " + sample.Prefab + " set to " + weight.ToString("0.##", CultureInfo.InvariantCulture) + ".");
+			LogVerbose("[Scatter] Weight " + sample.Prefab + "=" + weight.ToString("0.##", CultureInfo.InvariantCulture) + ".");
+		}
+
+		/// <summary>"prefab=count(weight)" per palette entry, for checking weights against what spawned.</summary>
+		private static string DescribeMix(IReadOnlyList<PlannedScatterObject> plan, IReadOnlyList<ScatterSample> palette)
+		{
+			var counts = new int[palette.Count];
+			for (int i = 0; i < plan.Count; i++)
+				if (plan[i].SampleIndex >= 0 && plan[i].SampleIndex < counts.Length) counts[plan[i].SampleIndex]++;
+			var parts = new List<string>();
+			for (int i = 0; i < palette.Count; i++)
+				parts.Add(palette[i].Prefab + "=" + counts[i] + "(w" + palette[i].Weight.ToString("0.##", CultureInfo.InvariantCulture) + ")");
+			return string.Join(",", parts);
+		}
+
+		/// <summary>Smallest horizontal distance between any two planned props (0 when fewer than two).</summary>
+		private static float MinimumGap(IReadOnlyList<PlannedScatterObject> plan)
+		{
+			float best = float.MaxValue;
+			for (int i = 0; i < plan.Count; i++)
+				for (int j = i + 1; j < plan.Count; j++)
+				{
+					float dx = plan[i].Position.x - plan[j].Position.x;
+					float dz = plan[i].Position.z - plan[j].Position.z;
+					best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dz * dz));
+				}
+			return best == float.MaxValue ? 0f : best;
 		}
 
 		private static void ToggleSample(string prefab, Vector3 scale)
@@ -477,7 +504,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ScatterPreview.PruneTo(Samples);
 				LogVerbose(
 					"[Scatter] Removed sample '" + prefab + "'; palette now has " + Samples.Count + " sample(s).");
-				Notify("Removed " + prefab + " from Scatter Props (" + Samples.Count + " sampled).");
+				NotifyCenter("Removed " + prefab + " (" + Samples.Count + "/" + MaximumSamples + ")");
 				return;
 			}
 
@@ -485,7 +512,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			{
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(
 					"[Scatter] Could not add sample '" + prefab + "'; palette is at its " + MaximumSamples + " type limit.");
-				Notify("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
+				NotifyCenter("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
 				return;
 			}
 
@@ -493,7 +520,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			LogVerbose(
 				"[Scatter] Added sample '" + prefab + "' at scale " + FormatScale(scale)
 				+ "; palette now has " + Samples.Count + " sample(s).");
-			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Press " + SampleLabel + " again to remove.");
+			NotifyCenter("Sampled " + prefab + " (" + Samples.Count + "/" + MaximumSamples + ")");
 		}
 
 		private static void Place(Terminal.ConsoleEventArgs args)
@@ -529,11 +556,15 @@ namespace SonicWorldTools.Modules.ScatterProps
 
 			IReadOnlyList<PlannedScatterObject> plan = ScatterPreview.GetPlan(player, x, z, radius, palette, TotalObjects);
 			int spawned = SpawnPlan(plan, palette, out bool undoable);
+			if (PluginConfig.IsVerboseLogging())
+			{
+				LogVerbose("[Scatter] Spawned " + spawned + "/" + plan.Count + " (requested " + TotalObjects + ") at " + x.ToString("0.##", CultureInfo.InvariantCulture)
+					+ "," + z.ToString("0.##", CultureInfo.InvariantCulture) + " radius=" + radius.ToString("0.##", CultureInfo.InvariantCulture)
+					+ " undo=" + undoable + " mix=" + DescribeMix(plan, palette)
+					+ " minGap=" + MinimumGap(plan).ToString("0.##", CultureInfo.InvariantCulture) + "m.");
+			}
 			ScatterPreview.Reroll();
-			LogVerbose("[Scatter] Spawned " + spawned + "/" + plan.Count + " at " + x.ToString("0.##", CultureInfo.InvariantCulture)
-				+ "," + z.ToString("0.##", CultureInfo.InvariantCulture) + " radius=" + radius.ToString("0.##", CultureInfo.InvariantCulture)
-				+ " undo=" + undoable + ".");
-			Notify(args, "Scattered " + spawned + " prop(s)" + (undoable ? "; one undo reverts this click." : "; World Edit Commands undo is unavailable."));
+			args.Context.AddString("Scattered " + spawned + " prop(s)" + (undoable ? "; one undo reverts this click." : "; World Edit Commands undo is unavailable."));
 		}
 
 		/// <summary>
