@@ -4,6 +4,7 @@
 
 - Scatter Props previews the next scatter at the Infinity Hammer cursor: translucent ghosts of the sampled props plus a marker post at each spot. A click spawns exactly the previewed layout, then rolls a new one. `ScatterProps.ShowPreview` hides the ghosts.
 - Each Scatter Props click is now a single World Edit Commands undo step, even with several sampled prop types.
+- Scatter variation: random size (`ScaleMin`/`ScaleMax`, default 0.9–1.1), optional tilt to the ground slope (`AlignToSlope`, `MaxSlopeTilt`), minimum spacing between props (`MinSpacing`), and per-sample pick weights (`sonic_scatter weight <prefab> <n>`). The preview shows all of it.
 - Scatter Props sets props on terrain, or on a rock or build floor within 2 m of it, instead of the first solid surface (which could be a tree canopy).
 - Infinity Hammer is now a hard BepInEx dependency; World Edit Commands and Server Devcommands stay runtime-detected.
 - Split the Line/Shape Tool controller into partial files by concern (no behaviour change).

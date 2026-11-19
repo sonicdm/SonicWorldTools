@@ -14,11 +14,14 @@ namespace SonicWorldTools.Modules.ScatterProps
 	{
 		internal readonly string Prefab;
 		internal readonly Vector3 Scale;
+		/// <summary>Relative pick weight; 1 by default, set with <c>sonic_scatter weight</c>.</summary>
+		internal readonly float Weight;
 
-		internal ScatterSample(string prefab, Vector3 scale)
+		internal ScatterSample(string prefab, Vector3 scale, float weight = 1f)
 		{
 			Prefab = prefab;
 			Scale = scale;
+			Weight = weight;
 		}
 	}
 
@@ -412,6 +415,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 				return;
 			}
 
+			if (action == "weight")
+			{
+				SetWeight(args);
+				return;
+			}
+
 			Notify(args, "Scatter Props: unknown action '" + args[1] + "'.");
 		}
 
@@ -424,6 +433,39 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			ToggleSample(args[2], Vector3.one);
+		}
+
+		/// <summary><c>sonic_scatter weight</c> lists weights; <c>sonic_scatter weight &lt;prefab&gt; &lt;n&gt;</c> sets one (0-100).</summary>
+		private static void SetWeight(Terminal.ConsoleEventArgs args)
+		{
+			if (args.Length < 4)
+			{
+				if (Samples.Count == 0)
+				{
+					Notify(args, "Scatter Props has no samples. Sample props first, then: sonic_scatter weight <prefab> <weight>.");
+					return;
+				}
+				var parts = new List<string>();
+				foreach (ScatterSample s in Samples) parts.Add(s.Prefab + "=" + s.Weight.ToString("0.##", CultureInfo.InvariantCulture));
+				Notify(args, "Scatter weights: " + string.Join(", ", parts) + ". Set with: sonic_scatter weight <prefab> <weight>.");
+				return;
+			}
+
+			int index = Samples.FindIndex(s => string.Equals(s.Prefab, args[2], StringComparison.OrdinalIgnoreCase));
+			if (index < 0)
+			{
+				Notify(args, "'" + args[2] + "' is not in the Scatter Props samples.");
+				return;
+			}
+			if (!TryCoordinate(args[3], out float weight) || weight < 0f || weight > 100f)
+			{
+				Notify(args, "Weight must be a number from 0 to 100 (0 keeps the sample but never picks it).");
+				return;
+			}
+
+			ScatterSample sample = Samples[index];
+			Samples[index] = new ScatterSample(sample.Prefab, sample.Scale, weight);
+			Notify(args, "Scatter weight for " + sample.Prefab + " set to " + weight.ToString("0.##", CultureInfo.InvariantCulture) + ".");
 		}
 
 		private static void ToggleSample(string prefab, Vector3 scale)
@@ -485,7 +527,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				palette = new[] { new ScatterSample(hoveredPrefab, hoveredScale) };
 			}
 
-			IReadOnlyList<PlannedScatterObject> plan = ScatterPreview.GetPlan(player, x, z, radius, palette.Count, TotalObjects);
+			IReadOnlyList<PlannedScatterObject> plan = ScatterPreview.GetPlan(player, x, z, radius, palette, TotalObjects);
 			int spawned = SpawnPlan(plan, palette, out bool undoable);
 			ScatterPreview.Reroll();
 			LogVerbose("[Scatter] Spawned " + spawned + "/" + plan.Count + " at " + x.ToString("0.##", CultureInfo.InvariantCulture)
@@ -521,8 +563,9 @@ namespace SonicWorldTools.Modules.ScatterProps
 						ZDO zdo = view ? view.GetZDO() : null;
 						if (view && view.m_syncInitialScale)
 						{
-							instance.transform.localScale = sample.Scale;
-							zdo?.Set(ZDOVars.s_scaleHash, sample.Scale);
+							Vector3 scale = sample.Scale * planned.ScaleFactor;
+							instance.transform.localScale = scale;
+							zdo?.Set(ZDOVars.s_scaleHash, scale);
 						}
 						if (zdo != null && ZNet.instance && !ZNet.instance.IsServer())
 							ZDOMan.instance.ClientChanged(zdo.m_uid);
@@ -546,12 +589,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 		/// The scale a spawned copy will actually have. Only prefabs with ZNetView.m_syncInitialScale
 		/// persist a custom scale (same rule WEC's spawn_object follows without World Edit Tweaks).
 		/// </summary>
-		internal static Vector3 GetAppliedScale(ScatterSample sample)
+		internal static Vector3 GetAppliedScale(ScatterSample sample, float scaleFactor)
 		{
 			GameObject prefab = ZNetScene.instance ? ZNetScene.instance.GetPrefab(sample.Prefab) : null;
-			if (!prefab) return sample.Scale;
+			if (!prefab) return sample.Scale * scaleFactor;
 			ZNetView view = prefab.GetComponent<ZNetView>();
-			return view && view.m_syncInitialScale ? sample.Scale : prefab.transform.localScale;
+			return view && view.m_syncInitialScale ? sample.Scale * scaleFactor : prefab.transform.localScale;
 		}
 
 		private static void LogVerbose(string message)

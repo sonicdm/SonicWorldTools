@@ -14,12 +14,15 @@ namespace SonicWorldTools.Modules.ScatterProps
 		internal readonly int SampleIndex;
 		internal readonly Vector3 Position;
 		internal readonly Quaternion Rotation;
+		/// <summary>Multiplier on the sample's scale for this object.</summary>
+		internal readonly float ScaleFactor;
 
-		internal PlannedScatterObject(int sampleIndex, Vector3 position, Quaternion rotation)
+		internal PlannedScatterObject(int sampleIndex, Vector3 position, Quaternion rotation, float scaleFactor)
 		{
 			SampleIndex = sampleIndex;
 			Position = position;
 			Rotation = rotation;
+			ScaleFactor = scaleFactor;
 		}
 	}
 
@@ -42,8 +45,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 		private static Material _material;
 		private static ScatterSlot[] _slots = Array.Empty<ScatterSlot>();
 		private static int _seed = SeedSource.Next();
-		private static int _layoutCount = -1;
-		private static int _layoutSampleCount = -1;
+		private static string _layoutKey;
+		private static string _orientationKey;
+		/// <summary>Half the distance between height samples used to estimate the ground slope.</summary>
+		private const float SlopeSampleOffset = 0.5f;
 		private static bool _planValid;
 		private static Vector3 _planCenter;
 		private static float _planRadius;
@@ -58,7 +63,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 		internal static void Reroll()
 		{
 			_seed = SeedSource.Next();
-			_layoutCount = -1;
+			_layoutKey = null;
 			_planValid = false;
 		}
 
@@ -80,7 +85,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 
 			_lastHideReason = null;
 			bool wasVisible = _visible;
-			EnsurePlan(center, radius, palette.Count, count);
+			EnsurePlan(center, radius, palette, count);
 			Render(palette);
 			if (!wasVisible) LogVerbose("[Scatter] Preview shown: " + Plan.Count + " object(s), centre=" + center.ToString("F1") + " radius=" + radius.ToString("0.##") + ".");
 		}
@@ -89,7 +94,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 		/// The plan for a click at (x, z). Reuses the previewed positions when the click matches
 		/// the cursor the preview was built for; otherwise resolves the same layout fresh.
 		/// </summary>
-		internal static IReadOnlyList<PlannedScatterObject> GetPlan(Player player, float x, float z, float radius, int sampleCount, int count)
+		internal static IReadOnlyList<PlannedScatterObject> GetPlan(Player player, float x, float z, float radius, IReadOnlyList<ScatterSample> palette, int count)
 		{
 			float referenceY = player ? player.transform.position.y : 0f;
 			// IH substitutes <x>,<z> from the same ghost the preview follows, so a matching
@@ -104,7 +109,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				referenceY = cursor.y;
 			}
 
-			EnsurePlan(new Vector3(x, referenceY, z), radius, sampleCount, count);
+			EnsurePlan(new Vector3(x, referenceY, z), radius, palette, count);
 			return Plan;
 		}
 
@@ -151,13 +156,35 @@ namespace SonicWorldTools.Modules.ScatterProps
 			return true;
 		}
 
-		private static void EnsurePlan(Vector3 center, float radius, int sampleCount, int count)
+		private static void EnsurePlan(Vector3 center, float radius, IReadOnlyList<ScatterSample> palette, int count)
 		{
-			if (_layoutCount != count || _layoutSampleCount != sampleCount)
+			var weights = new float[palette.Count];
+			for (int i = 0; i < weights.Length; i++) weights[i] = palette[i].Weight;
+			var options = new ScatterLayoutOptions
 			{
-				_slots = ScatterLayout.Generate(count, sampleCount, _seed);
-				_layoutCount = count;
-				_layoutSampleCount = sampleCount;
+				Count = count,
+				Seed = _seed,
+				Weights = weights,
+				MinSpacing = PluginConfig.ScatterMinSpacing?.Value ?? 0f,
+				Radius = radius,
+				ScaleMin = PluginConfig.ScatterScaleMin?.Value ?? 1f,
+				ScaleMax = PluginConfig.ScatterScaleMax?.Value ?? 1f,
+			};
+			string key = options.Key();
+			if (key != _layoutKey)
+			{
+				_slots = ScatterLayout.Generate(options);
+				_layoutKey = key;
+				_planValid = false;
+			}
+
+			float maxTilt = PluginConfig.ScatterAlignToSlope != null && PluginConfig.ScatterAlignToSlope.Value
+				? PluginConfig.ScatterMaxSlopeTilt.Value
+				: 0f;
+			string orientationKey = maxTilt.ToString("R");
+			if (orientationKey != _orientationKey)
+			{
+				_orientationKey = orientationKey;
 				_planValid = false;
 			}
 
@@ -175,7 +202,9 @@ namespace SonicWorldTools.Modules.ScatterProps
 				ScatterSlot slot = _slots[i];
 				Vector3 position = ScatterLayout.ToWorld(slot, center, radius);
 				position.y = ResolveFloor(position, center.y);
-				Plan.Add(new PlannedScatterObject(slot.SampleIndex, position, Quaternion.Euler(0f, slot.YawDegrees, 0f)));
+				Vector3 normal = maxTilt > 0f ? EstimateGroundNormal(position, center.y) : Vector3.up;
+				Quaternion rotation = ScatterLayout.Orientation(slot.YawDegrees, normal, maxTilt);
+				Plan.Add(new PlannedScatterObject(slot.SampleIndex, position, rotation, slot.ScaleFactor));
 			}
 
 			_planCenter = center;
@@ -185,7 +214,9 @@ namespace SonicWorldTools.Modules.ScatterProps
 			{
 				_nextPlanLogTime = Time.unscaledTime + 1f;
 				LogVerbose("[Scatter] Plan: centre=" + center.ToString("F1") + " radius=" + radius.ToString("0.##")
-					+ " count=" + Plan.Count + " first=" + Plan[0].Position.ToString("F1") + ".");
+					+ " count=" + Plan.Count + "/" + count + " first=" + Plan[0].Position.ToString("F1")
+					+ " spacing=" + options.MinSpacing.ToString("0.##") + " scale=" + options.ScaleMin.ToString("0.##") + "-" + options.ScaleMax.ToString("0.##")
+					+ " tilt=" + maxTilt.ToString("0.#") + ".");
 			}
 		}
 
@@ -209,6 +240,18 @@ namespace SonicWorldTools.Modules.ScatterProps
 			return terrain;
 		}
 
+		/// <summary>Ground normal from floor heights a short step either side, so it follows terrain and floors alike.</summary>
+		private static Vector3 EstimateGroundNormal(Vector3 position, float referenceY)
+		{
+			float d = SlopeSampleOffset;
+			float east = ResolveFloor(position + new Vector3(d, 0f, 0f), referenceY);
+			float west = ResolveFloor(position - new Vector3(d, 0f, 0f), referenceY);
+			float north = ResolveFloor(position + new Vector3(0f, 0f, d), referenceY);
+			float south = ResolveFloor(position - new Vector3(0f, 0f, d), referenceY);
+			var normal = new Vector3(-(east - west) / (2f * d), 1f, -(north - south) / (2f * d));
+			return normal.sqrMagnitude > 1e-6f ? normal.normalized : Vector3.up;
+		}
+
 		private static void Render(IReadOnlyList<ScatterSample> palette)
 		{
 			if (!ZNetScene.instance) { Hide(); return; }
@@ -222,7 +265,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 				GameObject ghost = TakeGhost(sample.Prefab);
 				if (!ghost) continue;
 				ghost.transform.SetPositionAndRotation(planned.Position, planned.Rotation);
-				ghost.transform.localScale = ScatterPropsCommand.GetAppliedScale(sample);
+				ghost.transform.localScale = ScatterPropsCommand.GetAppliedScale(sample, planned.ScaleFactor);
 				if (!ghost.activeSelf) ghost.SetActive(true);
 			}
 

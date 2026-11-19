@@ -98,6 +98,11 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<int> ScatterMaxSamples;
 		internal static ConfigEntry<int> ScatterObjectsPerClick;
 		internal static ConfigEntry<bool> ScatterShowPreview;
+		internal static ConfigEntry<float> ScatterScaleMin;
+		internal static ConfigEntry<float> ScatterScaleMax;
+		internal static ConfigEntry<bool> ScatterAlignToSlope;
+		internal static ConfigEntry<float> ScatterMaxSlopeTilt;
+		internal static ConfigEntry<float> ScatterMinSpacing;
 		internal static ConfigEntry<float> ScatterInitialRadius;
 		internal static ConfigEntry<float> TerrainPathInitialHalfWidth;
 		internal static ConfigEntry<float> TerrainPathEdgeSmoothness;
@@ -307,6 +312,11 @@ namespace SonicWorldTools.Config
 			ScatterMaxSamples = config.Bind("ScatterProps", "MaximumSampleTypes", 8, new ConfigDescription("Maximum distinct prop types in the scatter palette (1–32).", new AcceptableValueRange<int>(1, 32)));
 			ScatterObjectsPerClick = config.Bind("ScatterProps", "ObjectsPerClick", 20, new ConfigDescription("Total objects spawned per click, shared across sampled types (1–200).", new AcceptableValueRange<int>(1, 200)));
 			ScatterShowPreview = config.Bind("ScatterProps", "ShowPreview", true, "Show translucent ghosts of the next scatter at the Infinity Hammer cursor. A click always spawns the previewed layout; turning this off only hides the ghosts.");
+			ScatterScaleMin = config.Bind("ScatterProps", "ScaleMin", 0.9f, new ConfigDescription("Smallest random size multiplier applied to each scattered prop's sampled scale. Only props that save a custom scale (most trees and rocks) change size.", new AcceptableValueRange<float>(0.1f, 5f)));
+			ScatterScaleMax = config.Bind("ScatterProps", "ScaleMax", 1.1f, new ConfigDescription("Largest random size multiplier. Set ScaleMin and ScaleMax to 1 to keep the sampled size.", new AcceptableValueRange<float>(0.1f, 5f)));
+			ScatterAlignToSlope = config.Bind("ScatterProps", "AlignToSlope", false, "Tilt scattered props to follow the ground's slope instead of standing straight up.");
+			ScatterMaxSlopeTilt = config.Bind("ScatterProps", "MaxSlopeTilt", 25f, new ConfigDescription("Maximum tilt in degrees when AlignToSlope is on.", new AcceptableValueRange<float>(0f, 90f)));
+			ScatterMinSpacing = config.Bind("ScatterProps", "MinSpacing", 0f, new ConfigDescription("Minimum distance in metres between scattered props in one click. 0 turns it off. When the radius cannot fit the count, fewer props are placed rather than overlapping.", new AcceptableValueRange<float>(0f, 20f)));
 			ScatterInitialRadius = config.Bind("ScatterProps", "InitialRadius", 3f, new ConfigDescription("Initial scatter radius in metres in the Infinity Hammer Cultivator menu. Takes effect when its generated tool YAML is refreshed on game start.", new AcceptableValueRange<float>(0.5f, 30f)));
 			TerrainPathInitialHalfWidth = config.Bind("TerrainPaths", "InitialHalfWidth", 2f, new ConfigDescription("Initial path half-width in metres; the full path is twice this wide. The wheel can change it in the Hoe menu.", new AcceptableValueRange<float>(0.25f, 20f)));
 			TerrainPathEdgeSmoothness = config.Bind("TerrainPaths", "EdgeSmoothness", 0.5f, new ConfigDescription("WEC edge smoothing strength when Infinity Hammer modifier 1 is held on the final waypoint (0–1).", new AcceptableValueRange<float>(0f, 1f)));
