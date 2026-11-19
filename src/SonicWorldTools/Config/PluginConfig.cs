@@ -83,6 +83,10 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<KeyCode> PieceRepeaterLevelModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterJointModifier;
 		internal static ConfigEntry<KeyCode> PieceRepeaterSettingsHotkey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterTraceKey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterTraceModifier;
+		internal static ConfigEntry<KeyCode> PieceRepeaterNextRowKey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterNextRowModifier;
 		internal static ConfigEntry<float> PieceRepeaterGroundPropSpacing;
 		internal static ConfigEntry<bool> PieceRepeaterAnarchyMode;
 		internal static ConfigEntry<float> PieceRepeaterGap;
@@ -98,6 +102,12 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<KeyCode> ScatterClearModifier;
 		internal static ConfigEntry<int> ScatterMaxSamples;
 		internal static ConfigEntry<int> ScatterObjectsPerClick;
+		internal static ConfigEntry<bool> ScatterShowPreview;
+		internal static ConfigEntry<float> ScatterScaleMin;
+		internal static ConfigEntry<float> ScatterScaleMax;
+		internal static ConfigEntry<bool> ScatterAlignToSlope;
+		internal static ConfigEntry<float> ScatterMaxSlopeTilt;
+		internal static ConfigEntry<float> ScatterMinSpacing;
 		internal static ConfigEntry<float> ScatterInitialRadius;
 		internal static ConfigEntry<float> ForceGrowInitialRadius;
 		internal static ConfigEntry<float> TerrainPathInitialHalfWidth;
@@ -290,6 +300,10 @@ namespace SonicWorldTools.Config
 			PieceRepeaterLevelModifier = BindLineTool(config, "LevelHeightModifier", KeyCode.LeftAlt, "Hold to keep the path at one height. Alt+wheel still adjusts spacing.");
 			PieceRepeaterJointModifier = BindLineTool(config, "WaypointJointModifier", KeyCode.RightAlt, "Hold while clicking a waypoint to align it to a piece joint.");
 			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the Line Tool is active.");
+			PieceRepeaterTraceKey = BindLineTool(config, "TraceChordKey", KeyCode.Mouse2, "Trace the wall under the crosshair and lay the sampled piece along your side of it. Used together with TraceChordModifier. The settings panel (SettingsHotkey) also has Trace wall, Next row and Flip side buttons.");
+			PieceRepeaterTraceModifier = BindLineTool(config, "TraceChordModifier", KeyCode.RightAlt, "Hold with TraceChordKey to trace a wall. None means the key alone, which would replace sampling when both use the same key.");
+			PieceRepeaterNextRowKey = BindLineTool(config, "NextRowKey", KeyCode.Mouse2, "Steps the traced row out by one piece depth (same as the Next row button). Used together with NextRowModifier.");
+			PieceRepeaterNextRowModifier = BindLineTool(config, "NextRowModifier", KeyCode.LeftShift, "Hold with NextRowKey to step the traced row. None means the key alone.");
 			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
 			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
 			PieceRepeaterAnarchyMode = BindLineTool(config, "AnarchyMode", false, "Allow Line Tool to sample and spawn any registered networked prefab, including trees and creatures. Uses ground-prop spacing and bypasses build-piece placement rules.");
@@ -308,6 +322,12 @@ namespace SonicWorldTools.Config
 			ScatterClearModifier = config.Bind("ScatterProps", "ClearModifier", KeyCode.LeftShift, "Hold with SampleKey to clear the sample list. Set None to disable this chord; the sonic_scatter clear console command still works.");
 			ScatterMaxSamples = config.Bind("ScatterProps", "MaximumSampleTypes", 8, new ConfigDescription("Maximum distinct prop types in the scatter palette (1–32).", new AcceptableValueRange<int>(1, 32)));
 			ScatterObjectsPerClick = config.Bind("ScatterProps", "ObjectsPerClick", 20, new ConfigDescription("Total objects spawned per click, shared across sampled types (1–200).", new AcceptableValueRange<int>(1, 200)));
+			ScatterShowPreview = config.Bind("ScatterProps", "ShowPreview", true, "Show translucent ghosts of the next scatter at the Infinity Hammer cursor. A click always spawns the previewed layout; turning this off only hides the ghosts.");
+			ScatterScaleMin = config.Bind("ScatterProps", "ScaleMin", 0.9f, new ConfigDescription("Smallest random size multiplier applied to each scattered prop's sampled scale. Only props that save a custom scale (most trees and rocks) change size.", new AcceptableValueRange<float>(0.1f, 5f)));
+			ScatterScaleMax = config.Bind("ScatterProps", "ScaleMax", 1.1f, new ConfigDescription("Largest random size multiplier. Set ScaleMin and ScaleMax to 1 to keep the sampled size.", new AcceptableValueRange<float>(0.1f, 5f)));
+			ScatterAlignToSlope = config.Bind("ScatterProps", "AlignToSlope", false, "Tilt scattered props to follow the ground's slope instead of standing straight up.");
+			ScatterMaxSlopeTilt = config.Bind("ScatterProps", "MaxSlopeTilt", 25f, new ConfigDescription("Maximum tilt in degrees when AlignToSlope is on.", new AcceptableValueRange<float>(0f, 90f)));
+			ScatterMinSpacing = config.Bind("ScatterProps", "MinSpacing", 0f, new ConfigDescription("Minimum distance in metres between scattered props in one click. 0 turns it off. When the radius cannot fit the count, fewer props are placed rather than overlapping.", new AcceptableValueRange<float>(0f, 20f)));
 			ScatterInitialRadius = config.Bind("ScatterProps", "InitialRadius", 3f, new ConfigDescription("Initial scatter radius in metres in the Infinity Hammer Cultivator menu. Takes effect when its generated tool YAML is refreshed on game start.", new AcceptableValueRange<float>(0.5f, 30f)));
 			ForceGrowInitialRadius = config.Bind("ForceGrow", "InitialRadius", 3f, new ConfigDescription("Initial radius in metres for Force Grow in the Infinity Hammer Hoe menu; the tool's size control can change it. Takes effect when its generated tool YAML is refreshed.", new AcceptableValueRange<float>(0.5f, 30f)));
 			TerrainPathInitialHalfWidth = config.Bind("TerrainPaths", "InitialHalfWidth", 2f, new ConfigDescription("Initial path half-width in metres; the full path is twice this wide. The wheel can change it in the Hoe menu.", new AcceptableValueRange<float>(0.25f, 20f)));

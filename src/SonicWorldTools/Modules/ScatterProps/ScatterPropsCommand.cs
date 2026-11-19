@@ -9,7 +9,26 @@ using UnityEngine;
 
 namespace SonicWorldTools.Modules.ScatterProps
 {
-	/// <summary>Stores a small prefab palette and asks WEC to scatter a mixed batch.</summary>
+	/// <summary>A sampled prop type in the Scatter Props palette.</summary>
+	internal readonly struct ScatterSample
+	{
+		internal readonly string Prefab;
+		internal readonly Vector3 Scale;
+		/// <summary>Relative pick weight; 1 by default, set with <c>sonic_scatter weight</c>.</summary>
+		internal readonly float Weight;
+
+		internal ScatterSample(string prefab, Vector3 scale, float weight = 1f)
+		{
+			Prefab = prefab;
+			Scale = scale;
+			Weight = weight;
+		}
+	}
+
+	/// <summary>
+	/// Stores a small prefab palette, previews the next scatter at Infinity Hammer's cursor, and
+	/// spawns exactly that layout as one World Edit Commands undo step.
+	/// </summary>
 	internal static class ScatterPropsCommand
 	{
 		internal const string CommandName = "sonic_scatter";
@@ -24,19 +43,24 @@ namespace SonicWorldTools.Modules.ScatterProps
 		private static int MaximumSamples => Mathf.Clamp(PluginConfig.ScatterMaxSamples?.Value ?? 8, 1, 32);
 		private static int TotalObjects => Mathf.Clamp(PluginConfig.ScatterObjectsPerClick?.Value ?? 20, 1, 200);
 		private static string SampleLabel => PluginConfig.FormatKeyLabel(PluginConfig.ScatterSampleKey?.Value ?? KeyCode.Mouse2);
-		private static readonly List<SampledPrefab> Samples = new List<SampledPrefab>();
+		private static readonly List<ScatterSample> Samples = new List<ScatterSample>();
 		private static bool _registered;
+		private static bool _previewActive;
 
-		private readonly struct SampledPrefab
+		/// <summary>
+		/// Called from a Player.LateUpdate postfix, after the placement ghost is positioned for this
+		/// frame (the same hook IH uses for its ruler). From the plugin's Update the ghost can still
+		/// read as inactive, which hid the preview except while a menu froze placement.
+		/// </summary>
+		internal static void UpdatePreview(Player player)
 		{
-			internal readonly string Prefab;
-			internal readonly Vector3 Scale;
-
-			internal SampledPrefab(string prefab, Vector3 scale)
+			if (!_previewActive)
 			{
-				Prefab = prefab;
-				Scale = scale;
+				ScatterPreview.Hide();
+				return;
 			}
+
+			ScatterPreview.Update(player, Samples, TotalObjects);
 		}
 
 		internal static void Register()
@@ -80,8 +104,10 @@ namespace SonicWorldTools.Modules.ScatterProps
 					+ " sampleKey=" + sampleKey
 					+ " sampleKeyDown=" + sampleKeyDown + ".");
 			}
+			_previewActive = active;
 			if (!active)
 			{
+				ScatterPreview.Hide();
 				_countDescriptionPiece = null;
 				_countDescriptionValue = -1;
 				_countDescriptionInitialized = false;
@@ -124,7 +150,8 @@ namespace SonicWorldTools.Modules.ScatterProps
 			    && ToolInput.WasModifierHeld(PluginConfig.ScatterClearModifier.Value))
 			{
 				Samples.Clear();
-				Notify("Scatter sample list cleared.");
+				ScatterPreview.PruneTo(Samples);
+				NotifyCenter("Scatter sample list cleared.");
 				return;
 			}
 
@@ -377,6 +404,7 @@ namespace SonicWorldTools.Modules.ScatterProps
 			if (action == "clear")
 			{
 				Samples.Clear();
+				ScatterPreview.PruneTo(Samples);
 				Notify(args, "Scatter samples cleared.");
 				return;
 			}
@@ -384,6 +412,12 @@ namespace SonicWorldTools.Modules.ScatterProps
 			if (action == "place")
 			{
 				Place(args);
+				return;
+			}
+
+			if (action == "weight")
+			{
+				SetWeight(args);
 				return;
 			}
 
@@ -401,15 +435,76 @@ namespace SonicWorldTools.Modules.ScatterProps
 			ToggleSample(args[2], Vector3.one);
 		}
 
+		/// <summary><c>sonic_scatter weight</c> lists weights; <c>sonic_scatter weight &lt;prefab&gt; &lt;n&gt;</c> sets one (0-100).</summary>
+		private static void SetWeight(Terminal.ConsoleEventArgs args)
+		{
+			if (args.Length < 4)
+			{
+				if (Samples.Count == 0)
+				{
+					Notify(args, "Scatter Props has no samples. Sample props first, then: sonic_scatter weight <prefab> <weight>.");
+					return;
+				}
+				var parts = new List<string>();
+				foreach (ScatterSample s in Samples) parts.Add(s.Prefab + "=" + s.Weight.ToString("0.##", CultureInfo.InvariantCulture));
+				Notify(args, "Scatter weights: " + string.Join(", ", parts) + ". Set with: sonic_scatter weight <prefab> <weight>.");
+				return;
+			}
+
+			int index = Samples.FindIndex(s => string.Equals(s.Prefab, args[2], StringComparison.OrdinalIgnoreCase));
+			if (index < 0)
+			{
+				Notify(args, "'" + args[2] + "' is not in the Scatter Props samples.");
+				return;
+			}
+			if (!TryCoordinate(args[3], out float weight) || weight < 0f || weight > 100f)
+			{
+				Notify(args, "Weight must be a number from 0 to 100 (0 keeps the sample but never picks it).");
+				return;
+			}
+
+			ScatterSample sample = Samples[index];
+			Samples[index] = new ScatterSample(sample.Prefab, sample.Scale, weight);
+			Notify(args, "Scatter weight for " + sample.Prefab + " set to " + weight.ToString("0.##", CultureInfo.InvariantCulture) + ".");
+			LogVerbose("[Scatter] Weight " + sample.Prefab + "=" + weight.ToString("0.##", CultureInfo.InvariantCulture) + ".");
+		}
+
+		/// <summary>"prefab=count(weight)" per palette entry, for checking weights against what spawned.</summary>
+		private static string DescribeMix(IReadOnlyList<PlannedScatterObject> plan, IReadOnlyList<ScatterSample> palette)
+		{
+			var counts = new int[palette.Count];
+			for (int i = 0; i < plan.Count; i++)
+				if (plan[i].SampleIndex >= 0 && plan[i].SampleIndex < counts.Length) counts[plan[i].SampleIndex]++;
+			var parts = new List<string>();
+			for (int i = 0; i < palette.Count; i++)
+				parts.Add(palette[i].Prefab + "=" + counts[i] + "(w" + palette[i].Weight.ToString("0.##", CultureInfo.InvariantCulture) + ")");
+			return string.Join(",", parts);
+		}
+
+		/// <summary>Smallest horizontal distance between any two planned props (0 when fewer than two).</summary>
+		private static float MinimumGap(IReadOnlyList<PlannedScatterObject> plan)
+		{
+			float best = float.MaxValue;
+			for (int i = 0; i < plan.Count; i++)
+				for (int j = i + 1; j < plan.Count; j++)
+				{
+					float dx = plan[i].Position.x - plan[j].Position.x;
+					float dz = plan[i].Position.z - plan[j].Position.z;
+					best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dz * dz));
+				}
+			return best == float.MaxValue ? 0f : best;
+		}
+
 		private static void ToggleSample(string prefab, Vector3 scale)
 		{
 			int existing = Samples.FindIndex(s => string.Equals(s.Prefab, prefab, StringComparison.OrdinalIgnoreCase));
 			if (existing >= 0)
 			{
 				Samples.RemoveAt(existing);
+				ScatterPreview.PruneTo(Samples);
 				LogVerbose(
 					"[Scatter] Removed sample '" + prefab + "'; palette now has " + Samples.Count + " sample(s).");
-				Notify("Removed " + prefab + " from Scatter Props (" + Samples.Count + " sampled).");
+				NotifyCenter("Removed " + prefab + " (" + Samples.Count + "/" + MaximumSamples + ")");
 				return;
 			}
 
@@ -417,15 +512,15 @@ namespace SonicWorldTools.Modules.ScatterProps
 			{
 				SonicWorldToolsPlugin.ModLogger?.LogWarning(
 					"[Scatter] Could not add sample '" + prefab + "'; palette is at its " + MaximumSamples + " type limit.");
-				Notify("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
+				NotifyCenter("Scatter Props holds up to " + MaximumSamples + " prop types. Press " + SampleLabel + " on a sampled prop to remove it.");
 				return;
 			}
 
-			Samples.Add(new SampledPrefab(prefab, scale));
+			Samples.Add(new ScatterSample(prefab, scale));
 			LogVerbose(
 				"[Scatter] Added sample '" + prefab + "' at scale " + FormatScale(scale)
 				+ "; palette now has " + Samples.Count + " sample(s).");
-			Notify("Sampled " + prefab + " at scale " + FormatScale(scale) + " (" + Samples.Count + "/" + MaximumSamples + "). Press " + SampleLabel + " again to remove.");
+			NotifyCenter("Sampled " + prefab + " (" + Samples.Count + "/" + MaximumSamples + ")");
 		}
 
 		private static void Place(Terminal.ConsoleEventArgs args)
@@ -446,44 +541,91 @@ namespace SonicWorldTools.Modules.ScatterProps
 			}
 
 			float radius = ReadRadius(args);
+			Player player = Player.m_localPlayer;
+			IReadOnlyList<ScatterSample> palette = Samples;
 			if (Samples.Count == 0)
 			{
-				Player player = Player.m_localPlayer;
 				if (!player || !TryGetAimedPrefab(player, out string hoveredPrefab, out Vector3 hoveredScale))
 				{
 					Notify(args, "Sample props with " + SampleLabel + ", or aim at a prop before clicking to scatter it.");
 					return;
 				}
 
-				Spawn(args.Context, hoveredPrefab, hoveredScale, TotalObjects, x, z, radius);
-				return;
+				palette = new[] { new ScatterSample(hoveredPrefab, hoveredScale) };
 			}
 
-			// Choose a sample independently for every spawned object. A quotient /
-			// remainder split gave all leftover objects to the earliest samples, so
-			// with one object per click the first sample always won.
-			int[] amounts = new int[Samples.Count];
-			for (int i = 0; i < TotalObjects; i++)
-				amounts[UnityEngine.Random.Range(0, Samples.Count)]++;
-
-			for (int i = 0; i < Samples.Count; i++)
+			IReadOnlyList<PlannedScatterObject> plan = ScatterPreview.GetPlan(player, x, z, radius, palette, TotalObjects);
+			int spawned = SpawnPlan(plan, palette, out bool undoable);
+			if (PluginConfig.IsVerboseLogging())
 			{
-				int amount = amounts[i];
-				if (amount <= 0) continue;
-				Spawn(args.Context, Samples[i].Prefab, Samples[i].Scale, amount, x, z, radius);
+				LogVerbose("[Scatter] Spawned " + spawned + "/" + plan.Count + " (requested " + TotalObjects + ") at " + x.ToString("0.##", CultureInfo.InvariantCulture)
+					+ "," + z.ToString("0.##", CultureInfo.InvariantCulture) + " radius=" + radius.ToString("0.##", CultureInfo.InvariantCulture)
+					+ " undo=" + undoable + " mix=" + DescribeMix(plan, palette)
+					+ " minGap=" + MinimumGap(plan).ToString("0.##", CultureInfo.InvariantCulture) + "m.");
 			}
+			ScatterPreview.Reroll();
+			args.Context.AddString("Scattered " + spawned + " prop(s)" + (undoable ? "; one undo reverts this click." : "; World Edit Commands undo is unavailable."));
 		}
 
-		private static void Spawn(Terminal context, string prefab, Vector3 scale, int amount, float x, float z, float radius)
+		/// <summary>
+		/// Spawns every planned object inside one WEC UndoHelper action. WEC's ZNetView.Awake
+		/// patch records each spawned ZDO while the action is open, so one undo removes the click.
+		/// Spawning mirrors WEC's spawn_object: Instantiate, then ClientChanged on clients.
+		/// </summary>
+		private static int SpawnPlan(IReadOnlyList<PlannedScatterObject> plan, IReadOnlyList<ScatterSample> palette, out bool undoable)
 		{
-			string command = "spawn_object " + prefab
-			                 + " amount=" + amount.ToString(CultureInfo.InvariantCulture)
-			                 + " from=" + x.ToString(CultureInfo.InvariantCulture)
-			                 + "," + z.ToString(CultureInfo.InvariantCulture)
-			                 + " radius=" + radius.ToString(CultureInfo.InvariantCulture)
-			                 + " rot=0-360 scale=" + FormatScale(scale);
-			LogVerbose("[Scatter] Running: " + command);
-			context.TryRunCommand(command);
+			undoable = WorldEditUndoBridge.IsAvailable;
+			if (!ZNetScene.instance || plan.Count == 0) return 0;
+			int spawned = 0;
+			if (undoable) WorldEditUndoBridge.BeginAction();
+			try
+			{
+				for (int i = 0; i < plan.Count; i++)
+				{
+					PlannedScatterObject planned = plan[i];
+					if (planned.SampleIndex < 0 || planned.SampleIndex >= palette.Count) continue;
+					ScatterSample sample = palette[planned.SampleIndex];
+					GameObject prefab = ZNetScene.instance.GetPrefab(sample.Prefab);
+					if (!prefab) continue;
+					try
+					{
+						GameObject instance = UnityEngine.Object.Instantiate(prefab, planned.Position, planned.Rotation);
+						ZNetView view = instance.GetComponent<ZNetView>();
+						ZDO zdo = view ? view.GetZDO() : null;
+						if (view && view.m_syncInitialScale)
+						{
+							Vector3 scale = sample.Scale * planned.ScaleFactor;
+							instance.transform.localScale = scale;
+							zdo?.Set(ZDOVars.s_scaleHash, scale);
+						}
+						if (zdo != null && ZNet.instance && !ZNet.instance.IsServer())
+							ZDOMan.instance.ClientChanged(zdo.m_uid);
+						spawned++;
+					}
+					catch (Exception ex)
+					{
+						SonicWorldToolsPlugin.ModLogger?.LogWarning("[Scatter] Could not spawn '" + sample.Prefab + "': " + ex.Message);
+					}
+				}
+			}
+			finally
+			{
+				if (undoable) WorldEditUndoBridge.EndAction();
+			}
+
+			return spawned;
+		}
+
+		/// <summary>
+		/// The scale a spawned copy will actually have. Only prefabs with ZNetView.m_syncInitialScale
+		/// persist a custom scale (same rule WEC's spawn_object follows without World Edit Tweaks).
+		/// </summary>
+		internal static Vector3 GetAppliedScale(ScatterSample sample, float scaleFactor)
+		{
+			GameObject prefab = ZNetScene.instance ? ZNetScene.instance.GetPrefab(sample.Prefab) : null;
+			if (!prefab) return sample.Scale * scaleFactor;
+			ZNetView view = prefab.GetComponent<ZNetView>();
+			return view && view.m_syncInitialScale ? sample.Scale * scaleFactor : prefab.transform.localScale;
 		}
 
 		private static void LogVerbose(string message)

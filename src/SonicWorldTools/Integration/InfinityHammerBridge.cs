@@ -9,9 +9,10 @@ using UnityEngine;
 namespace SonicWorldTools.Integration
 {
 	/// <summary>
-	/// Soft-dep Infinity Hammer detect + M5 hand-off (Path 1 public API).
-	/// IH is not referenced at compile time (absent from Reqs/CI); Path 1 members are
-	/// invoked through an isolated reflection binder. Not a custom placement engine.
+	/// Infinity Hammer detect + M5 hand-off (Path 1 public API).
+	/// IH is a hard BepInEx dependency but is not referenced at compile time (absent from
+	/// Reqs/CI), so Path 1 members are invoked through an isolated reflection binder that
+	/// tolerates API drift across IH versions. Not a custom placement engine.
 	/// </summary>
 	internal static class InfinityHammerBridge
 	{
@@ -21,12 +22,6 @@ namespace SonicWorldTools.Integration
 		internal const string SoftFailNotDetectedMessage =
 			"[SonicWorldTools] Infinity Hammer is not available right now. Retry the pick-up after its tool is active.";
 
-		private static readonly string[] CandidateGuids =
-		{
-			"com.github.jerekuusela.InfinityHammer",
-			"JereKuusela.InfinityHammer",
-			"infinity_hammer",
-		};
 
 		private static bool _apiResolved;
 
@@ -454,6 +449,52 @@ namespace SonicWorldTools.Integration
 			catch
 			{
 				ghost = null;
+				return false;
+			}
+		}
+
+		private static bool _toolRadiusResolved;
+		private static MethodInfo _scalingGetTool;
+		private static PropertyInfo _scalingDataX;
+
+		/// <summary>
+		/// Reads IH's tool ruler size (<c>Scaling.Get(tool: true).X</c>), which is the value IH
+		/// substitutes for <c>&lt;r&gt;</c> in tool commands. Verified against IH 1.92.
+		/// </summary>
+		internal static bool TryGetToolRadius(out float radius)
+		{
+			radius = 0f;
+			try
+			{
+				if (!_toolRadiusResolved)
+				{
+					_toolRadiusResolved = true;
+					if (!TryDetect(out string guid, out _)
+					    || !Chainloader.PluginInfos.TryGetValue(guid, out BepInEx.PluginInfo info)
+					    || info?.Instance == null)
+					{
+						_toolRadiusResolved = false;
+						return false;
+					}
+
+					Type scaling = info.Instance.GetType().Assembly.GetType("InfinityHammer.Scaling", false);
+					_scalingGetTool = scaling?.GetMethod("Get", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(bool) }, null);
+					_scalingDataX = _scalingGetTool?.ReturnType.GetProperty("X", BindingFlags.Public | BindingFlags.Instance);
+					if (_scalingDataX == null)
+						SonicWorldToolsPlugin.ModLogger?.LogWarning("Infinity Hammer Scaling API not found; Scatter Props preview is unavailable.");
+				}
+
+				if (_scalingGetTool == null || _scalingDataX == null) return false;
+				object data = _scalingGetTool.Invoke(null, new object[] { true });
+				if (data == null) return false;
+				radius = (float)_scalingDataX.GetValue(data, null);
+				return radius > 0f && !float.IsNaN(radius) && !float.IsInfinity(radius);
+			}
+			catch (Exception ex)
+			{
+				_scalingGetTool = null;
+				_scalingDataX = null;
+				SonicWorldToolsPlugin.ModLogger?.LogWarning("Could not read Infinity Hammer tool radius: " + ex.Message);
 				return false;
 			}
 		}
@@ -901,20 +942,9 @@ namespace SonicWorldTools.Integration
 
 		private static bool IsInfinityHammer(string pluginGuid, string name)
 		{
-			if (string.IsNullOrEmpty(pluginGuid) && string.IsNullOrEmpty(name))
-			{
-				return false;
-			}
-
-			foreach (string c in CandidateGuids)
-			{
-				if (string.Equals(pluginGuid, c, StringComparison.OrdinalIgnoreCase))
-				{
-					return true;
-				}
-			}
-
-			return string.Equals(name, "Infinity Hammer", StringComparison.OrdinalIgnoreCase);
+			// GUID confirmed against the installed IH 1.91 BepInEx log; name kept as a fallback.
+			return string.Equals(pluginGuid, SonicWorldToolsPlugin.InfinityHammerGuid, StringComparison.OrdinalIgnoreCase)
+			       || string.Equals(name, "Infinity Hammer", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

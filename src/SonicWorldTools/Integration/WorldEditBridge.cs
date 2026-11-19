@@ -6,12 +6,8 @@ namespace SonicWorldTools.Integration
 {
 	internal static class WorldEditBridge
 	{
-		private static readonly string[] CandidateGuids =
-		{
-			"com.github.jerekuusela.WorldEditCommands",
-			"JereKuusela.WorldEditCommands",
-			"world_edit_commands",
-		};
+		/// <summary>Confirmed against the installed WEC 1.82 BepInEx log.</summary>
+		internal const string WorldEditCommandsGuid = "world_edit_commands";
 
 		internal static bool TryDetect(out string guid, out string version)
 		{
@@ -72,21 +68,8 @@ namespace SonicWorldTools.Integration
 
 		private static bool IsWorldEditCommands(string pluginGuid, string name)
 		{
-			if (string.IsNullOrEmpty(pluginGuid) && string.IsNullOrEmpty(name))
-			{
-				return false;
-			}
-
-			foreach (string c in CandidateGuids)
-			{
-				if (string.Equals(pluginGuid, c, StringComparison.OrdinalIgnoreCase))
-				{
-					return true;
-				}
-			}
-
-			return string.Equals(name, "World Edit Commands", StringComparison.OrdinalIgnoreCase)
-				|| name.IndexOf("World Edit", StringComparison.OrdinalIgnoreCase) >= 0;
+			return string.Equals(pluginGuid, WorldEditCommandsGuid, StringComparison.OrdinalIgnoreCase)
+			       || string.Equals(name, "World Edit Commands", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

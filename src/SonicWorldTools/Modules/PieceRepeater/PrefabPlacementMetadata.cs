@@ -43,6 +43,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		internal bool Enabled;
 		internal Vector3 JoinStart;
 		internal Vector3 JoinEnd;
+		/// <summary>True when the profile gives two distinct joint points, so the piece has measured ends.</summary>
+		internal bool HasJoins => (JoinEnd - JoinStart).sqrMagnitude > 0.0001f;
 		internal string MeasurementSource;
 		internal string Confidence;
 

@@ -19,6 +19,9 @@
     <Compile Include="..\..\src\SonicWorldTools\Refinement\SelectionRefinement.cs" Link="SelectionRefinement.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Core\ToolInstaller.cs" Link="ToolInstaller.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\PieceRepeaterPathMath.cs" Link="PieceRepeaterPathMath.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Modules\ScatterProps\ScatterLayout.cs" Link="ScatterLayout.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\LineTrace.cs" Link="LineTrace.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\CircleRingCover.cs" Link="CircleRingCover.cs" />
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(ValheimLibDir)\UnityEngine.CoreModule.dll</HintPath>
     </Reference>

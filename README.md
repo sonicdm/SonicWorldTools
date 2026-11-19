@@ -28,6 +28,10 @@ Select a tool from its Infinity Hammer menu to activate it. Controls below are t
 
 Repeat a supported build piece along a straight or curved route. Common examples include fences, walls, beams, lamps, floors, and props with a reviewed placement profile.
 
+![Line Tool previewing a curved floor route](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/line-tool-curved-route.webp)
+
+*A curved route preview: each piece is fitted to the curve before anything is placed.*
+
 1. Select **Line Tool** from Infinity Hammer's Hammer tools.
 2. Aim at a placed piece and **middle-click** to sample it.
 3. **Click** each route waypoint. The preview shows the repeated pieces along the route.
@@ -42,6 +46,8 @@ Repeat a supported build piece along a straight or curved route. Common examples
 | Mouse wheel | Rotate the repeated pieces. |
 | Alt+mouse wheel | Increase or decrease the gap between pieces. |
 | Hold Alt | Keep the route at one height. |
+| Right Alt+middle-click | Trace a wall: mark the start piece, then the end piece. |
+| Shift+middle-click | Lay one more traced row, or clear a pending trace start. |
 | F7 / Shift+F7 | Open route settings / edit the sampled-piece offsets. |
 | Esc | Exit Line Tool. |
 
@@ -49,11 +55,48 @@ The first sampled placement uses Valheim's build snapping; **Q/E** cycles its sn
 
 For unrestricted world objects, enter `sonic_line_anarchy on` in the console. While enabled, middle-click can sample networked prefabs such as trees and creatures. Placement sends network spawn requests and uses the configured ground-prop spacing instead of build-piece profiles or snapping. Turn the mode off with `sonic_line_anarchy off`. Targets need a `ZNetView`; local-only effects are not created, and Infinity Hammer undo is not guaranteed for spawned batches.
 
-F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include world direction snapping, gap, height behavior, fill-down, and offsets.
+![Line Tool F7 settings panel](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/line-tool-settings.png)
+
+*The F7 settings panel. Changes update the preview live.*
+
+F7 settings choose the curve interpolation. **Current** uses tangent-limited Hermite curves; **Centripetal** passes through the waypoints with centripetal Catmull–Rom. The smoothing-distance setting applies only to Current. Other settings include gap, height behavior, fill-down, prop facing, and offsets.
+
+**World direction snap** (F7, off by default) rounds each new segment's heading to Valheim's 22.5° build rotation steps while keeping its length. Use it when a route should line up with hand-placed pieces or the rest of a base. Right Alt+click joint snapping takes priority while held.
+
+#### Trace wall
+
+Trace wall lays the sampled piece alongside an existing run of wall, fence, or similar pieces, following its curves and corners. It is useful for adding a parallel fence, a walkway along a wall, or a cap row on top of one.
+
+1. Sample the piece to lay with middle-click.
+2. Aim at the first wall piece and press **Right Alt+middle-click**, then do the same on the last piece. Both must be the same kind of piece and joined to each other. You can also look at a wall and use **Trace wall** in the F7 panel.
+3. The preview runs along your side of the wall. Aim at a wall's top face to trace a row on top of it instead.
+4. Hold **Shift** and click to place, as with a normal route.
+
+| Control | Traced row action |
+| --- | --- |
+| Shift+mouse wheel | Move the row closer to or further from the wall; with several rows, change the spacing between them. |
+| Shift+Alt+mouse wheel | Add or remove rows, each traced from the one before it. |
+| Shift+middle-click | Lay one more row (same as **Next row** in F7). |
+| F7 **Flip side** | Move the row to the other side of the wall. |
+| Left Alt | Switch between following the terrain and staying level. |
+
+Closed loops trace the shorter way round. Traced props use the Line Tool's fixed prop spacing, so gaps stay even on curves.
 
 ### Hammer: Shape Tool
 
 Use Shape Tool to place a sampled piece around a closed circle, square, or rectangle, or fill the enclosed area.
+
+![Shape Tool circle outline preview](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/shape-tool-circle-outline.webp)
+
+*Outline mode: a 25 m circle of floors joined edge to edge. The tool card shows the live size, piece count and spacing.*
+
+![Shape Tool square outline preview](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/shape-tool-square-outline.webp)
+
+*Outline mode on a square: the sides fit the piece spacing so the corners meet.*
+
+![Shape Tool concentric circle infill of stone floors](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/shape-tool-circle-fill.webp)
+
+*Concentric infill mode: 173 stone floors placed in one click, with rings outside, a grid in the middle and no gaps.*
 
 1. Select **Shape Tool** and middle-click a placed build piece to sample it.
 2. Click the shape's center, then move the cursor to size the preview.
@@ -61,9 +104,13 @@ Use Shape Tool to place a sampled piece around a closed circle, square, or recta
 4. Press **I** to cycle the fill layout: outline only, grid infill, and concentric infill. Circles cycle between outline and concentric infill.
 5. Hold **Shift** and click to place the preview.
 
-Circle infill uses concentric rings. Square and rectangle infill can use either a fitted grid or nested concentric rings; use **I** to choose. Square and rectangle perimeters also fit to the sampled piece spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
+Square and rectangle infill can use either a fitted grid or nested concentric rings; use **I** to choose. Square and rectangle perimeters also fit to the sampled piece spacing so the sides meet at the corners. Holstering the hammer or opening the piece-selection menu cancels an unfinished shape.
 
-Concentric square and rectangle infill starts with rings packed to the sampled piece's crosswise width. Hold **Shift** and scroll to widen or tighten the ring spacing in 0.1 m steps. If the requested shape exceeds the 512-placement safety limit, increase the ring spacing or make the shape smaller.
+**Circle infill** with floor-type pieces leaves no gaps. Rings run inward from the rim, each with enough pieces that their outer corners meet. When a ring would get too small to cover new ground, a square grid fills the middle, tucked under the innermost ring. Square pieces cannot tile a circle exactly, so neighbouring pieces overlap slightly at their inner corners. Each piece sits a few millimetres higher or lower than its neighbours so overlaps don't flicker. Expect about 10–20% more pieces than the area alone suggests on large circles, and up to about 45% more on small ones. The circle outline is solved separately, so its pieces join edge to edge. Other pieces, such as props, use evenly spaced radial rows.
+
+The mouse wheel turns each piece in place without moving it, so rotated circle fills open up deliberate gaps and patterns.
+
+Concentric square and rectangle infill starts with rings packed to the sampled piece's crosswise width. Hold **Shift** and scroll to widen or tighten the ring spacing in 0.1 m steps. If the requested shape exceeds the 2048-placement safety limit, increase the ring spacing or make the shape smaller.
 
 ### Hammer: Precision Select
 
@@ -92,6 +139,14 @@ Selection padding, box/corner markers, highlights, selected count, and dimension
 
 Choose one of the surface path tools under **Hoe**, then click the route points. Hold **Shift** on the final point to finish; also hold **Alt** on that final click to soften the path edges. The mouse wheel changes the path half-width. The default half-width is 2 m, so the full path is 4 m wide.
 
+![Surface path route markers](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/surface-path-route.webp)
+
+*Route points with the path width shown at each one.*
+
+![Finished cultivated path](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/surface-path-result.webp)
+
+*The finished cultivated path.*
+
 | Tool | Surface painted |
 | --- | --- |
 | Grass Path | Grass |
@@ -117,6 +172,10 @@ Select **Force Grow** from the Hoe or Cultivator menu and click an area to insta
 
 Scatter one or more sampled networked props across a circular area.
 
+![Scatter Props previewing trees and rocks](https://raw.githubusercontent.com/sonicdm/SonicWorldTools/main/docs/images/scatter-props-preview.webp)
+
+*The scatter preview shows exactly where each prop will spawn before you click.*
+
 1. Select **Scatter Props** under Cultivator.
 2. Middle-click a networked prop to add it to the sample mix. Middle-click a sampled prop again to remove that type.
 3. Click the ground to scatter the mix inside the shown radius. If the sample list is empty, the prop under the cursor is used.
@@ -138,7 +197,7 @@ The main settings file is `BepInEx/config/com.sonicdm.valheim.sonicworldtools.cf
 
 | Section | Controls |
 | --- | --- |
-| `LineTool` | Controls, gap, curve algorithm and smoothing, world direction snap, height, prop facing and spacing, and optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
+| `LineTool` | Controls, gap, curve algorithm and smoothing, height, world direction snap, trace-wall keys, prop facing and spacing, and optional diagnostics. Previous `PieceRepeater` settings migrate on startup. |
 | `TerrainPaths`, `LowerTerrain` | Path width, edge smoothing and keys; initial lowering amount and smoothing. Path key changes regenerate the owned Infinity Hammer YAML. |
 | `ScatterProps` | Sample and clear keys, palette limit, amount per click, and initial radius. |
 | `PrecisionAreaPipette`, `Preview` | Selection controls, padding, and visual feedback. |

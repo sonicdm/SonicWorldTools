@@ -34,4 +34,4 @@ From [build-plan.md §25](build-plan.md#25-mvp-definition):
 
 ## Out of scope (all milestones)
 
-See [build-plan.md §23](build-plan.md#23-explicit-non-goals). Do not implement features in roadmap docs-only tasks; implementation follows the plans above.
+See [build-plan.md §23](build-plan.md#23-explicit-non-goals). Dismantle/delete, terrain editing, zoop-style tools, and prop scatter were dropped from the non-goals and are now in scope. Do not implement features in roadmap docs-only tasks; implementation follows the plans above.

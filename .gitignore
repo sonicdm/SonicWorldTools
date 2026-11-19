@@ -12,3 +12,5 @@ release_notes.md
 !.cursor/rules/
 !.cursor/rules/**
 .cursor/rules/ironbee-devtools-use.mdc
+# Local decompiler cache
+.tmp-ilspy/

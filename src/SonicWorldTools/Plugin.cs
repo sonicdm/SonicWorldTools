@@ -32,6 +32,8 @@ namespace SonicWorldTools
 
 	[BepInDependency(Jotunn.Main.ModGuid)]
 
+	[BepInDependency(InfinityHammerGuid)]
+
 	[NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
 
 	public sealed class SonicWorldToolsPlugin : BaseUnityPlugin
@@ -43,6 +45,9 @@ namespace SonicWorldTools
 
 
 		public const string PluginName = "SonicWorldTools";
+
+		/// <summary>Infinity Hammer is a hard dependency; BepInEx loads it before this plugin.</summary>
+		public const string InfinityHammerGuid = "infinity_hammer";
 
 
 
@@ -69,7 +74,7 @@ namespace SonicWorldTools
 
 		private bool _infinityHammerInitialized;
 
-		private float _nextInfinityHammerProbeTime;
+		private bool _infinityHammerRetried;
 
 
 
@@ -86,7 +91,6 @@ namespace SonicWorldTools
 
 			PrefabPlacementMetadata.Load(BepInEx.Paths.ConfigPath, ModLogger);
 
-			// Infinity Hammer may be loaded later in the BepInEx chainloader order.
 
 
 
@@ -109,11 +113,11 @@ namespace SonicWorldTools
 				ToolInstallerBridge.EnsureInstalled();
 			}
 
-			TryInitializeInfinityHammerIntegration();
+			TryInitializeInfinityHammerIntegration(logIfMissing: false);
 
 
 
-			ModLogger.LogInfo("SonicWorldTools 0.1.0 loaded.");
+			ModLogger.LogInfo(PluginName + " " + PluginVersion + " loaded.");
 
 		}
 
@@ -128,12 +132,13 @@ namespace SonicWorldTools
 			// The Player.Update prefix is the other early entry point; the per-frame
 			// cache makes the first capture authoritative for every tool this frame.
 			ToolInput.CaptureFrame();
-			// BepInEx can awaken this plugin before Infinity Hammer has entered PluginInfos.
-			// Retry after other plugins finish loading so tool YAML and the pipette register.
-			if (!_infinityHammerInitialized && UnityEngine.Time.unscaledTime >= _nextInfinityHammerProbeTime)
+			// The chainloader honours [BepInDependency], but ScriptEngine's LoadOnStart can
+			// awaken this plugin mid-chainload before IH. The first Update runs after the
+			// chainloader finishes, so one retry here is enough.
+			if (!_infinityHammerInitialized && !_infinityHammerRetried)
 			{
-				_nextInfinityHammerProbeTime = UnityEngine.Time.unscaledTime + 1f;
-				TryInitializeInfinityHammerIntegration();
+				_infinityHammerRetried = true;
+				TryInitializeInfinityHammerIntegration(logIfMissing: true);
 			}
 
 			// Ownership poll must run even while inactive (ScriptEngine-safe select→arm).
@@ -160,10 +165,17 @@ namespace SonicWorldTools
 
 
 
-		private void TryInitializeInfinityHammerIntegration()
+		private void TryInitializeInfinityHammerIntegration(bool logIfMissing)
 		{
-			if (_infinityHammerInitialized || !InfinityHammerBridge.TryDetect(out _, out _))
+			if (_infinityHammerInitialized)
 			{
+				return;
+			}
+
+			if (!InfinityHammerBridge.TryDetect(out _, out _))
+			{
+				if (logIfMissing)
+					ModLogger.LogError("Infinity Hammer (" + InfinityHammerGuid + ") not found after plugin loading; SonicWorldTools tools will not be available.");
 				return;
 			}
 
@@ -314,6 +326,10 @@ namespace SonicWorldTools
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSpacingModifier);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterLevelModifier);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterJointModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterTraceKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterTraceModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterNextRowKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterNextRowModifier);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSettingsHotkey);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterOffsetEditorModifier);
 			HookGeneratedToolSetting(PluginConfig.ScatterSampleKey);
@@ -496,6 +512,7 @@ namespace SonicWorldTools
 			ToolInputRouter.Reset();
 			ToolRuntime.Reset();
 			PrefabPlacementMetadata.Shutdown();
+			ScatterPreview.Shutdown();
 			_pieceRepeaterController?.Shutdown();
 			_pieceRepeaterController = null;
 

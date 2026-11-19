@@ -6,7 +6,7 @@
 **Audience:** Cursor / developer implementation  
 **Platform:** Valheim + BepInEx 5  
 **Primary integration:** Infinity Hammer + World Edit Commands  
-**Out of scope:** Dismantling (handled by Dismantleheim), zooping, terrain editing, precision rotation, build camera, blueprint systems already covered by existing mods
+**Out of scope:** A replacement Hammer or build menu, a generic world editor, precision rotation, build camera, and blueprint/structure-saving systems already covered by existing mods. (Dismantle/delete, terrain editing, and zoop-style repeat tools were originally excluded but have since been brought into scope; see §23.)
 
 ---
 
@@ -382,7 +382,7 @@ Expected dependencies:
 - Infinity Hammer
 - World Edit Commands
 
-Validate whether World Edit Commands is already transitively required by the installed Infinity Hammer version. Avoid redundant hard dependencies.
+Infinity Hammer is a hard dependency (`[BepInDependency("infinity_hammer")]`). World Edit Commands and Server Devcommands are declared as package dependencies and detected at runtime.
 
 Compatibility targets:
 
@@ -821,10 +821,6 @@ Acceptance: no regressions in existing tools.
 
 Do not add:
 
-- dismantling
-- mass deletion
-- terrain editing
-- zooping
 - arbitrary object rotation
 - build camera
 - blueprint library
@@ -833,7 +829,8 @@ Do not add:
 - replacement build menu
 - generic world editor
 - creature manipulation
-- vegetation editing
+
+**Dropped non-goals (now in scope):** dismantling, mass deletion, terrain editing, zooping (Line/Shape tools), and vegetation/prop scatter. These were originally excluded to avoid overlap with other mods, but the workflows SonicWorldTools provides are not easily done with them.
 
 If an existing installed mod reasonably provides the functionality, SonicWorldTools should not duplicate it.
 

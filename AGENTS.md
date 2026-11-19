@@ -4,7 +4,7 @@ Guidance for Cursor agents (and humans) working in this repo.
 
 ## What this is
 
-Valheim **BepInEx** mod: world-building utilities delivered through **one Infinity Hammer tool** (Precision Area Pipette first). Selection, refinement, and previews — not dismantle, terrain sculpt, or zoop.
+Valheim **BepInEx** mod: world-building utilities delivered as tools inside Infinity Hammer's menus. Current tools: Line Tool, Shape Tool, Precision Select (Hammer); Surface Paths, Lower Terrain (Hoe); Scatter Props (Cultivator).
 
 | | |
 | --- | --- |
@@ -15,9 +15,9 @@ Valheim **BepInEx** mod: world-building utilities delivered through **one Infini
 ## Product rules
 
 - **One Hammer** — register tools only via our owned YAML fragment (`assets/infinity_tools_sonicworldtools.yaml`) merged by Infinity Hammer at install time. Do not ship separate hammer items.
+- **Scope** — the original non-goals (dismantle/delete, terrain editing, zoop-style repeat tools, vegetation/prop scatter) are dropped: these tools are not available in other mods in the form we need. Still avoid duplicating what Infinity Hammer, WEC, or Dismantleheim already do well, and still never ship a replacement Hammer, build menu, or generic world editor.
 - **Never edit `infinity_tools.yaml`** — that file belongs to Infinity Hammer. Only maintain `infinity_tools_sonicworldtools.yaml` and the installer bridge (M1+).
-- **Out of scope** — no dismantle/delete flows, no terrain editing, no zoop/clone spam tools. Defer to Dismantleheim / WEC / vanilla where appropriate.
-- **Soft dependencies** — Infinity Hammer and World Edit Commands are detected at runtime (`Chainloader` / GUID + name heuristics). Never hard `[BepInDependency]` unless the GUID is confirmed for the target IH/WEC release.
+- **Dependencies** — Infinity Hammer is a **hard** dependency: `[BepInDependency(InfinityHammerGuid)]` on the plugin (GUID `infinity_hammer`) and listed in `manifest.json`. World Edit Commands and Server Devcommands are Thunderstore package dependencies but are still detected at runtime; their GUIDs are confirmed from the BepInEx log (`world_edit_commands`, `server_devcommands`), so a hard `[BepInDependency]` is possible, but they stay soft until a feature truly cannot work without them. Keep `InfinityHammerBridge` reflection guarded: a hard dependency guarantees load order, not API compatibility across IH versions.
 - **Client-only** — `[NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]`. Skip headless-only work until features need it; no custom server RPCs in M0.
 - **Harmony** — prefer Jötunn hooks. If patches are added, unpatch **only this plugin's Harmony id** on shutdown (`UnpatchSelf` / targeted unpatch). Never `UnpatchAll()`.
 
@@ -28,6 +28,8 @@ E:\Scripts\Valheim Mods\Reqs
 ```
 
 Override with `-LibDir` on `build.ps1` / `package.ps1` / `release.ps1`.
+
+Refresh that folder with `..\tools\sync-refs.ps1` (copies from the game's Managed folder and the Gale profile; `-DryRun` previews). On a machine without the game, `-From NuGet` pulls the same pinned packages CI uses.
 
 - Never commit those DLLs or the Reqs folder.
 - CI compiles against pinned public Valheim/Jötunn refs. Tag publish uploads Hexium/Thunderstore after verify + all-pass `docs/test-matrix.md`.
