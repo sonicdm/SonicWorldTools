@@ -16,6 +16,42 @@ namespace SonicWorldTools.Modules.PieceRepeater
 	/// <summary>Shape Tool layouts (circle, square, rectangle; outline/grid/concentric fill) and the shape card text.</summary>
 	internal sealed partial class PieceRepeaterController
 	{
+		/// <summary>
+		/// Circle outline for edge-chain pieces, solved by the shared edge-chain solver. The ring is sampled
+		/// finely and solved as one run, so each tile's joints turn with the curve instead of leaving wedges.
+		/// Closing the loop can leave a seam up to one tile wide where the run meets itself.
+		/// </summary>
+		private void GenerateEdgeChainCircle(GameObject prefab, ResolvedPrefabPlacement metadata)
+		{
+			_placements.Clear();
+			_outline.Clear();
+			_shapeLayoutOverLimit = false;
+			Vector3 a = _points[0];
+			float radius = Vector2.Distance(new Vector2(a.x, a.z), new Vector2(_aim.x, _aim.z));
+			if (radius < MinimumSpacing * 0.5f) return;
+			float spacing = GetSpacing(prefab);
+			int samples = Mathf.Clamp(Mathf.CeilToInt(2f * Mathf.PI * radius / 0.25f), 16, 512);
+			var ring = new List<Vector3>(samples + 1);
+			for (int i = 0; i <= samples; i++)
+			{
+				float t = 2f * Mathf.PI * i / samples;
+				ring.Add(new Vector3(a.x + Mathf.Sin(t) * radius, a.y, a.z + Mathf.Cos(t) * radius));
+			}
+			float groundOffset = -metadata.BottomOffset;
+			float fixedHeight = a.y;
+			var run = new EdgeChainRun
+			{
+				HasLockedStart = false,
+				WheelYaw = _rotationSteps * RotationStepDegrees,
+				Gap = _gapMeters,
+				MinimumSpacing = MinimumSpacing,
+				MaxPlacements = MaximumPlacements,
+			};
+			EdgeChainSolver.Solve(ring, spacing, prefab, metadata, run, _placements,
+				root => ApplySurfaceHeightMode(root, groundOffset, fixedHeight));
+			foreach (Vector3 p in ring) _outline.Add(p);
+		}
+
 		private void GenerateCircleOutline(Vector3 center, float radius, float spacing)
 		{
 			int count = Mathf.Clamp(Mathf.CeilToInt(2f * Mathf.PI * radius / spacing), 3, MaximumPlacements);

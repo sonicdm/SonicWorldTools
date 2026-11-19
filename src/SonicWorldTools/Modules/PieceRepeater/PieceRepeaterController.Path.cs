@@ -60,34 +60,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			return point;
 		}
 
-		private void GeneratePath(float spacing, float sideOffset)
+		private void GeneratePath(float spacing)
 		{
 			if (_points.Count < 2) return;
-			List<Placement> center = SamplePolyline(_points, spacing, _hasLockedStartPlacement && sideOffset <= 0f);
+			List<Placement> center = SamplePolyline(_points, spacing, _hasLockedStartPlacement);
 			if (center.Count == 0) return;
-			if (sideOffset <= 0f)
-			{
-				_placements.AddRange(center);
-				foreach (Vector3 p in _points) _outline.Add(p);
-				return;
-			}
-
-			List<Vector3> leftLine = new List<Vector3>();
-			List<Vector3> rightLine = new List<Vector3>();
-			foreach (Placement p in center)
-			{
-				Vector3 forward = p.Rotation * Vector3.forward;
-				Vector3 side = new Vector3(forward.z, 0f, -forward.x) * sideOffset;
-				Vector3 left = p.Position + side;
-				Vector3 right = p.Position - side;
-				_placements.Add(new Placement(left, p.Rotation));
-				_placements.Add(new Placement(right, p.Rotation));
-				leftLine.Add(left);
-				rightLine.Add(right);
-			}
-			_outline.AddRange(leftLine);
-			EnsureSecondLine();
-			SetLine(_secondLine, rightLine, false);
+			_placements.AddRange(center);
+			foreach (Vector3 p in _points) _outline.Add(p);
 		}
 
 		private static List<Placement> SamplePolyline(IList<Vector3> points, float spacing, bool anchorFirst = false, IList<int> rawCounts = null, IList<int> duplicateCounts = null)
@@ -225,8 +204,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			GetInsidePivotSides(previous.Rotation * (chainEnd - chainStart),
 				candidate.Rotation * (chainEnd - chainStart), out Vector3 previousInsideSide,
 				out Vector3 nextInsideSide, out float turn);
-			Vector3 previousInside = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousInsideSide);
-			Vector3 nextInside = candidate.Position + GetEdgeJoinPoint(
+			Vector3 previousInside = EdgeChainSolver.GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousInsideSide);
+			Vector3 nextInside = candidate.Position + EdgeChainSolver.GetEdgeJoinPoint(
 				new Placement(Vector3.zero, candidate.Rotation), prefab, metadata, chainStart, nextInsideSide);
 			Vector3 insideError = nextInside - previousInside;
 			insideError.y = 0f;
@@ -243,7 +222,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_placements.Add(candidate);
 
 			if (pivotInside && nextInsideSide.sqrMagnitude > 0.0001f)
-				hinge = GetEdgeJoinPoint(candidate, prefab, metadata, chainEnd, nextInsideSide);
+				hinge = EdgeChainSolver.GetEdgeJoinPoint(candidate, prefab, metadata, chainEnd, nextInsideSide);
 			else
 				hinge = candidate.Position + candidate.Rotation * chainEnd;
 			segment = nextSegment;
@@ -325,6 +304,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private void GeneratePathPreview(IList<Vector3> points, float spacing, GameObject prefab)
 		{
 			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
+			if (IsTracing)
+			{
+				GenerateTracedLayout(points, prefab, metadata);
+				ExpandPlacementsDownToTerrain(prefab);
+				return;
+			}
 			// Re-solve the whole waypoint sequence as a Catmull–Rom spline. The
 			// resulting placements remain rigid; only their centers and headings
 			// are fitted to the interpolated curve. Rebuilding here is intentional:
@@ -343,7 +328,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			var rawCounts = new List<int>();
 			var duplicateCounts = new List<int>();
 			_lastPathCenterDeviation = 0f;
-			if (metadata.ProfileType == RepeatProfileType.EdgeChain && !_bothSides)
+			if (metadata.ProfileType == RepeatProfileType.EdgeChain)
 			{
 				foreach (Vector3 point in layoutPoints)
 					_outline.Add(ApplySurfaceHeightMode(point, groundOffset, fixedHeight));
@@ -358,95 +343,73 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Vector3 chainStart = reverseEdgeChain ? metadata.JoinEnd : metadata.JoinStart;
 			Vector3 chainEnd = reverseEdgeChain ? metadata.JoinStart : metadata.JoinEnd;
 
-			if (_bothSides)
+			foreach (Vector3 point in layoutPoints)
+				_outline.Add(ApplySurfaceHeightMode(point, groundOffset, fixedHeight));
+			List<Placement> center = SamplePolyline(layoutPoints, spacing, metadata.ProfileType == RepeatProfileType.GroundProp, rawCounts, duplicateCounts);
+			if (_hasLockedStartPlacement) _placements.Add(_lockedStartPlacement);
+			for (int i = 0; i < center.Count; i++)
 			{
-				List<Placement> center = SamplePolyline(layoutPoints, spacing, _hasLockedStartPlacement && !_bothSides, rawCounts, duplicateCounts);
-				var left = new List<Vector3>();
-				var right = new List<Vector3>();
-				foreach (Placement p in center)
+				if (metadata.ProfileType == RepeatProfileType.GroundProp && i == 0 && _hasLockedStartPlacement)
+					continue;
+				Placement proposed = center[i];
+				if (metadata.ProfileType == RepeatProfileType.GroundProp)
 				{
-					Vector3 f = p.Rotation * Vector3.forward;
-					Vector3 side = new Vector3(f.z, 0f, -f.x) * _sideOffset;
-					Vector3 leftPos = ApplySurfaceHeightMode(p.Position + side, groundOffset, fixedHeight);
-					Vector3 rightPos = ApplySurfaceHeightMode(p.Position - side, groundOffset, fixedHeight);
-					left.Add(leftPos);
-					right.Add(rightPos);
-					_placements.Add(AdjustPlacement(new Placement(p.Position + side, p.Rotation), metadata, groundOffset, fixedHeight));
-					_placements.Add(AdjustPlacement(new Placement(p.Position - side, p.Rotation), metadata, groundOffset, fixedHeight));
+					Quaternion rotation = PluginConfig.PieceRepeaterPropFollowCurve.Value
+						? proposed.Rotation * Quaternion.Euler(0f, metadata.TangentYawOffset, 0f)
+						: _lockedStartPlacement.Rotation;
+					Vector3 position = proposed.Position - rotation * metadata.CenterOffset;
+					position = ApplySurfaceHeightMode(position, groundOffset, fixedHeight);
+					_placements.Add(new Placement(position, rotation));
 				}
-				_outline.AddRange(left);
-				SetLine(_secondLine, right, false);
+				else if (metadata.ProfileType == RepeatProfileType.EdgeChain && _placements.Count > 0)
+				{
+					Placement previous = _placements[_placements.Count - 1];
+					// Keep the sampled path tangent. Steering toward a center behind or beside
+					// this joint makes successive pieces alternate direction on straight runs.
+					if (reverseEdgeChain)
+						proposed.Rotation = Quaternion.Euler(0f, 180f, 0f) * proposed.Rotation;
+					Placement connected = AdjustPlacement(proposed, metadata, groundOffset, fixedHeight);
+					EdgeChainSolver.GetCornerPivotSides(previous.Rotation, connected.Rotation, chainStart, chainEnd,
+						out Vector3 previousDirection, out Vector3 nextDirection,
+						out Vector3 previousCornerSide, out Vector3 nextCornerSide, out float turn);
+					Vector3 previousJoin = EdgeChainSolver.GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousCornerSide);
+					Vector3 nextJoinOffset = EdgeChainSolver.GetEdgeJoinPoint(new Placement(Vector3.zero, connected.Rotation), prefab, metadata, chainStart, nextCornerSide);
+					Vector3 previousCenter = previous.Position + previous.Rotation * chainEnd;
+					Vector3 nextCenterOffset = connected.Rotation * chainStart;
+					Vector3 centeredRoot = previousCenter + nextDirection * _gapMeters - nextCenterOffset;
+					Vector3 cornerRoot = previousJoin + nextDirection * _gapMeters - nextJoinOffset;
+					Vector3 expectedAnchorDelta = nextDirection * _gapMeters;
+					Placement centeredCandidate = new Placement(centeredRoot, connected.Rotation);
+					float outsideBreak = EdgeChainSolver.GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
+						chainStart, chainEnd, previousCornerSide, nextCornerSide, expectedAnchorDelta);
+					float insideBreak = EdgeChainSolver.GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
+						chainStart, chainEnd, -previousCornerSide, -nextCornerSide, expectedAnchorDelta);
+					bool useOutsideCorner = EdgeChainSolver.ShouldPivotAtOutsideCorner(turn, outsideBreak, insideBreak);
+					Vector3 selectedRoot = useOutsideCorner ? cornerRoot : centeredRoot;
+					connected.Position.x = selectedRoot.x;
+					connected.Position.z = selectedRoot.z;
+					connected.Position = ApplySurfaceHeightMode(connected.Position, groundOffset, fixedHeight);
+					Vector3 actualCenter = connected.Position + connected.Rotation * metadata.CenterOffset;
+					Vector3 desiredCenter = proposed.Position;
+					actualCenter.y = desiredCenter.y = 0f;
+					_lastPathCenterDeviation = Mathf.Max(_lastPathCenterDeviation, Vector3.Distance(actualCenter, desiredCenter));
+					_placements.Add(connected);
+				}
+				else _placements.Add(AdjustPlacement(proposed, metadata, groundOffset, fixedHeight));
 			}
-			else
+			if (_hasLockedStartPlacement)
 			{
-				foreach (Vector3 point in layoutPoints)
-					_outline.Add(ApplySurfaceHeightMode(point, groundOffset, fixedHeight));
-				List<Placement> center = SamplePolyline(layoutPoints, spacing, metadata.ProfileType == RepeatProfileType.GroundProp, rawCounts, duplicateCounts);
-				if (_hasLockedStartPlacement) _placements.Add(_lockedStartPlacement);
-				for (int i = 0; i < center.Count; i++)
+			int wheelDelta = _rotationSteps - _rotationStepsAtStart;
+			if (wheelDelta != 0)
+			{
+				Quaternion wheelRotation = Quaternion.Euler(0f, wheelDelta * RotationStepDegrees, 0f);
+				for (int i = 1; i < _placements.Count; i++)
 				{
-					if (metadata.ProfileType == RepeatProfileType.GroundProp && i == 0 && _hasLockedStartPlacement)
-						continue;
-					Placement proposed = center[i];
-					if (metadata.ProfileType == RepeatProfileType.GroundProp)
-					{
-						Quaternion rotation = PluginConfig.PieceRepeaterPropFollowCurve.Value
-							? proposed.Rotation * Quaternion.Euler(0f, metadata.TangentYawOffset, 0f)
-							: _lockedStartPlacement.Rotation;
-						Vector3 position = proposed.Position - rotation * metadata.CenterOffset;
-						position = ApplySurfaceHeightMode(position, groundOffset, fixedHeight);
-						_placements.Add(new Placement(position, rotation));
-					}
-					else if (metadata.ProfileType == RepeatProfileType.EdgeChain && _placements.Count > 0)
-					{
-						Placement previous = _placements[_placements.Count - 1];
-						// Keep the sampled path tangent. Steering toward a center behind or beside
-						// this joint makes successive pieces alternate direction on straight runs.
-						if (reverseEdgeChain)
-							proposed.Rotation = Quaternion.Euler(0f, 180f, 0f) * proposed.Rotation;
-						Placement connected = AdjustPlacement(proposed, metadata, groundOffset, fixedHeight);
-						GetCornerPivotSides(previous.Rotation, connected.Rotation, chainStart, chainEnd,
-							out Vector3 previousDirection, out Vector3 nextDirection,
-							out Vector3 previousCornerSide, out Vector3 nextCornerSide, out float turn);
-						Vector3 previousJoin = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousCornerSide);
-						Vector3 nextJoinOffset = GetEdgeJoinPoint(new Placement(Vector3.zero, connected.Rotation), prefab, metadata, chainStart, nextCornerSide);
-						Vector3 previousCenter = previous.Position + previous.Rotation * chainEnd;
-						Vector3 nextCenterOffset = connected.Rotation * chainStart;
-						Vector3 centeredRoot = previousCenter + nextDirection * _gapMeters - nextCenterOffset;
-						Vector3 cornerRoot = previousJoin + nextDirection * _gapMeters - nextJoinOffset;
-						Vector3 expectedAnchorDelta = nextDirection * _gapMeters;
-						Placement centeredCandidate = new Placement(centeredRoot, connected.Rotation);
-						float outsideBreak = GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
-							chainStart, chainEnd, previousCornerSide, nextCornerSide, expectedAnchorDelta);
-						float insideBreak = GetCenterPivotAnchorError(previous, centeredCandidate, prefab, metadata,
-							chainStart, chainEnd, -previousCornerSide, -nextCornerSide, expectedAnchorDelta);
-						bool useOutsideCorner = ShouldPivotAtOutsideCorner(turn, outsideBreak, insideBreak);
-						Vector3 selectedRoot = useOutsideCorner ? cornerRoot : centeredRoot;
-						connected.Position.x = selectedRoot.x;
-						connected.Position.z = selectedRoot.z;
-						connected.Position = ApplySurfaceHeightMode(connected.Position, groundOffset, fixedHeight);
-						Vector3 actualCenter = connected.Position + connected.Rotation * metadata.CenterOffset;
-						Vector3 desiredCenter = proposed.Position;
-						actualCenter.y = desiredCenter.y = 0f;
-						_lastPathCenterDeviation = Mathf.Max(_lastPathCenterDeviation, Vector3.Distance(actualCenter, desiredCenter));
-						_placements.Add(connected);
-					}
-					else _placements.Add(AdjustPlacement(proposed, metadata, groundOffset, fixedHeight));
+					Placement placement = _placements[i];
+					placement.Rotation = wheelRotation * placement.Rotation;
+					_placements[i] = placement;
 				}
-				if (_hasLockedStartPlacement)
-				{
-				int wheelDelta = _rotationSteps - _rotationStepsAtStart;
-				if (wheelDelta != 0)
-				{
-					Quaternion wheelRotation = Quaternion.Euler(0f, wheelDelta * RotationStepDegrees, 0f);
-					for (int i = 1; i < _placements.Count; i++)
-					{
-						Placement placement = _placements[i];
-						placement.Rotation = wheelRotation * placement.Rotation;
-						_placements[i] = placement;
-					}
-				}
-				}
+			}
 			}
 			ExpandPlacementsDownToTerrain(prefab);
 			LogPathDiagnostics(points, spacing, metadata, rawCounts, duplicateCounts, prefab);
@@ -459,164 +422,19 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			ResolvedPrefabPlacement metadata, float groundOffset, float fixedHeight,
 			IList<int> rawCounts, IList<int> duplicateCounts)
 		{
-			if (path == null || path.Count < 2) return;
-			var distances = new List<float>(path.Count) { 0f };
-			for (int i = 1; i < path.Count; i++)
+			var run = new EdgeChainRun
 			{
-				Vector3 delta = path[i] - path[i - 1]; delta.y = 0f;
-				distances.Add(distances[i - 1] + delta.magnitude);
-			}
-			float total = distances[distances.Count - 1];
-			if (total < MinimumSpacing) return;
-
-			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
-			Vector3 joinDelta = metadata.JoinEnd - metadata.JoinStart;
-			joinDelta.y = 0f;
-			float length = Mathf.Max(MinimumSpacing, joinDelta.magnitude);
-			float width = Mathf.Max(0.01f, metadata.Axis == PrefabRepeatAxis.X
-				? bounds.size.z : bounds.size.x);
-			Vector3 localAxis = metadata.JoinEnd - metadata.JoinStart;
-			localAxis.y = 0f;
-			if (localAxis.sqrMagnitude < 0.0001f) return;
-			// Use the same outgoing end chosen for the anchored first piece. The
-			// sign is applied exactly once in both the starter and fitted run.
-			if (_hasLockedStartPlacement)
-				localAxis *= PieceRepeaterPathMath.ResolveOutgoingAxisSign(
-					_lockedStartAnchorLocal, metadata.JoinStart, metadata.JoinEnd, _lockedStartAnchorIsSnap);
-
-			Placement previous = _hasLockedStartPlacement
-				? _lockedStartPlacement
-				: new Placement(path[0] - Quaternion.identity * metadata.JoinEnd, Quaternion.identity);
-			Vector3 previousCenter = previous.Position + previous.Rotation * metadata.CenterOffset;
-			float wheelYaw = (_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps) * RotationStepDegrees;
-			// The first piece may already include the user's wheel offset when its
-			// secant heading was resolved. Remove that offset for fit calculations;
-			// manual rotation changes orientation in place, not the solved centers.
-			Quaternion fitStartRotation = _hasLockedStartPlacement
-				? Quaternion.Euler(0f, -wheelYaw, 0f) * previous.Rotation
-				: previous.Rotation;
-			Vector3 previousForward = fitStartRotation * localAxis.normalized;
-			previousForward.y = 0f; previousForward.Normalize();
-			Vector3 routeForward = path[1] - path[0];
-			routeForward.y = 0f;
-			if (routeForward.sqrMagnitude > 0.0001f)
-			{
-				routeForward.Normalize();
-				// Guard against numerical disagreement at a nearly perpendicular
-				// starter heading while keeping the selected outgoing end consistent.
-				if (Vector3.Dot(previousForward, routeForward) < 0f) previousForward = -previousForward;
-			}
-			float cursor = 0f;
-			int guard = 0;
-			while (_placements.Count < MaximumPlacements && guard++ < MaximumPlacements)
-			{
-				if (!PieceRepeaterPathMath.TryFindNextCenter(path, distances, cursor, total,
-					previousCenter, previousForward, localAxis, length, width, _gapMeters,
-					MinimumSpacing, 0f, out float accepted, out Vector3 nextCenter, out Quaternion solvedRotation)) break;
-				// Wheel rotation is an in-place orientation adjustment. Keep it out of
-				// the spacing solver so rotating the pieces cannot change their centers
-				// or make the batch gain/lose pieces.
-				Quaternion placementRotation = Quaternion.Euler(0f, wheelYaw, 0f) * solvedRotation;
-				Vector3 correction = placementRotation * metadata.PositionOffset;
-				Vector3 root = nextCenter - placementRotation * metadata.CenterOffset + correction;
-				if (_placements.Count > 0)
-				{
-					Placement last = _placements[_placements.Count - 1];
-					Vector3 chainStart = Vector3.Dot(localAxis, joinDelta) >= 0f
-						? metadata.JoinStart : metadata.JoinEnd;
-					Vector3 chainEnd = Vector3.Dot(localAxis, joinDelta) >= 0f
-						? metadata.JoinEnd : metadata.JoinStart;
-					GetCornerPivotSides(last.Rotation, placementRotation, chainStart, chainEnd,
-						out _, out _, out Vector3 lastOutside, out Vector3 nextOutside, out float turn);
-					if (Mathf.Abs(turn) >= 1f)
-					{
-						Vector3 lastJoin = GetEdgeJoinPoint(last, prefab, metadata, chainEnd, lastOutside);
-						Vector3 nextJoin = GetEdgeJoinPoint(new Placement(root, placementRotation),
-							prefab, metadata, chainStart, nextOutside);
-						// A join may move the rendered piece, but never the curve cursor or
-						// the next solver center. Cap the move so a bad join cannot grow a
-						// placed run beyond its waypoints.
-						Vector3 joinCorrection = PieceRepeaterPathMath.BoundedJoinCorrection(
-							lastJoin, nextJoin, Mathf.Min(0.6f, Mathf.Max(0.1f, width * 2f)));
-						root += joinCorrection;
-					}
-				}
-				root = ApplySurfaceHeightMode(root, groundOffset, fixedHeight);
-				root.y += correction.y;
-				_placements.Add(new Placement(root, placementRotation));
-				// Keep the solver on the sampled route. Per-piece root/height
-				// corrections affect rendering, never the next center search.
-				previousCenter = nextCenter;
-				previousForward = solvedRotation * localAxis.normalized; previousForward.y = 0f; previousForward.Normalize();
-				cursor = accepted;
-			}
-		}
-
-		private static Vector3 GetEdgeJoinPoint(Placement placement, GameObject prefab,
-			ResolvedPrefabPlacement metadata, Vector3 centerJoin, Vector3 preferredWorldSide)
-		{
-			if (preferredWorldSide.sqrMagnitude < 0.0001f)
-				return placement.Position + placement.Rotation * centerJoin;
-
-			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
-			Vector3 transverse = metadata.Axis == PrefabRepeatAxis.X ? Vector3.forward : Vector3.right;
-			float transverseMin = metadata.Axis == PrefabRepeatAxis.X ? bounds.min.z : bounds.min.x;
-			float transverseMax = metadata.Axis == PrefabRepeatAxis.X ? bounds.max.z : bounds.max.x;
-			if (transverseMax - transverseMin <= 0.001f)
-				return placement.Position + placement.Rotation * centerJoin;
-
-			// Repeat joints come from the intact rendered footprint. Build snap
-			// points are used only for the first vanilla-style anchor; their height
-			// and naming conventions must not steer path corners.
-			Vector3 desiredLocalSide = Quaternion.Inverse(placement.Rotation) * preferredWorldSide;
-			float desiredTransverse = Vector3.Dot(desiredLocalSide, transverse) >= 0f
-				? transverseMax : transverseMin;
-			Vector3 localCorner = centerJoin;
-			if (metadata.Axis == PrefabRepeatAxis.X) localCorner.z = desiredTransverse;
-			else localCorner.x = desiredTransverse;
-			return placement.Position + placement.Rotation * localCorner;
-		}
-
-		private static void GetCornerPivotSides(Quaternion previousRotation, Quaternion nextRotation,
-			Vector3 chainStart, Vector3 chainEnd, out Vector3 previousDirection, out Vector3 nextDirection,
-			out Vector3 previousCornerSide, out Vector3 nextCornerSide, out float turn)
-		{
-			previousDirection = previousRotation * (chainEnd - chainStart);
-			nextDirection = nextRotation * (chainEnd - chainStart);
-			previousDirection.y = nextDirection.y = 0f;
-			if (previousDirection.sqrMagnitude > 0.0001f) previousDirection.Normalize();
-			if (nextDirection.sqrMagnitude > 0.0001f) nextDirection.Normalize();
-			turn = Vector3.SignedAngle(previousDirection, nextDirection, Vector3.up);
-			if (Mathf.Abs(turn) < 1f)
-			{
-				previousCornerSide = nextCornerSide = Vector3.zero;
-				return;
-			}
-
-			Vector3 previousSide = new Vector3(-previousDirection.z, 0f, previousDirection.x);
-			Vector3 nextSide = new Vector3(-nextDirection.z, 0f, nextDirection.x);
-			// The outside is the same lateral side of both consecutive pieces.
-			float outsideSign = turn < 0f ? -1f : 1f;
-			previousCornerSide = previousSide * outsideSign;
-			nextCornerSide = nextSide * outsideSign;
-		}
-
-		private static bool ShouldPivotAtOutsideCorner(float turn, float outsideBreak, float insideBreak)
-		{
-			const float seamBreakTolerance = 0.02f;
-			return Mathf.Abs(turn) >= 90f || Mathf.Max(outsideBreak, insideBreak) > seamBreakTolerance;
-		}
-
-		private static float GetCenterPivotAnchorError(Placement previous, Placement next, GameObject prefab,
-			ResolvedPrefabPlacement metadata, Vector3 chainStart, Vector3 chainEnd,
-			Vector3 previousSide, Vector3 nextSide, Vector3 expectedDelta)
-		{
-			Vector3 previousAnchor = GetEdgeJoinPoint(previous, prefab, metadata, chainEnd, previousSide);
-			Vector3 nextAnchor = next.Position + GetEdgeJoinPoint(
-				new Placement(Vector3.zero, next.Rotation), prefab, metadata, chainStart, nextSide);
-			Vector3 error = nextAnchor - previousAnchor - expectedDelta;
-			error.y = 0f;
-			return error.magnitude;
+				HasLockedStart = _hasLockedStartPlacement,
+				LockedStart = _lockedStartPlacement,
+				LockedStartAnchorLocal = _lockedStartAnchorLocal,
+				LockedStartAnchorIsSnap = _lockedStartAnchorIsSnap,
+				WheelYaw = (_hasLockedStartPlacement ? _rotationSteps - _rotationStepsAtStart : _rotationSteps) * RotationStepDegrees,
+				Gap = _gapMeters,
+				MinimumSpacing = MinimumSpacing,
+				MaxPlacements = MaximumPlacements,
+			};
+			EdgeChainSolver.Solve(path, spacing, prefab, metadata, run, _placements,
+				root => ApplySurfaceHeightMode(root, groundOffset, fixedHeight));
 		}
 
 		// An outgoing-only Bezier keeps every completed leg fixed when a new
@@ -736,7 +554,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			details.Append(" legs=");
 			bool fittedSpline = _mode == PieceRepeaterMode.Path
-				&& metadata.ProfileType == RepeatProfileType.EdgeChain && !_bothSides;
+				&& metadata.ProfileType == RepeatProfileType.EdgeChain;
 			for (int i = 0; i + 1 < points.Count; i++)
 			{
 				if (i > 0) details.Append(';');

@@ -25,7 +25,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_previewMaterial = new Material(shader) { color = new Color(0.25f, 0.9f, 1f, 0.85f), hideFlags = HideFlags.HideAndDontSave };
 			_pieceGhostMaterial = new Material(shader) { color = new Color(0.35f, 0.9f, 1f, 0.42f), hideFlags = HideFlags.HideAndDontSave };
 			_outlineLine = CreateLine("Outline", 0.035f);
-			_secondLine = CreateLine("SecondLine", 0.035f);
 		}
 
 		private LineRenderer CreateLine(string name, float width)
@@ -39,11 +38,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			line.startWidth = line.endWidth = width;
 			line.enabled = false;
 			return line;
-		}
-
-		private void EnsureSecondLine()
-		{
-			if (!_secondLine) _secondLine = CreateLine("SecondLine", 0.035f);
 		}
 
 		private void UpdatePreview()
@@ -60,13 +54,17 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					if (_mode == PieceRepeaterMode.Path)
 					{
 						var pending = new List<Vector3>(_points);
-						Vector3 previewWaypoint = GetPathWaypoint(_aim, pending);
-						Vector3 previewLeg = previewWaypoint - pending[pending.Count - 1];
-						previewLeg.y = 0f;
-						// A repeated endpoint creates a degenerate Catmull-Rom segment
-						// that can loop beyond the last committed point. Keep the preview
-						// identical to the committed route until the cursor advances.
-						if (previewLeg.sqrMagnitude >= 0.0001f) pending.Add(previewWaypoint);
+						// A traced row is a complete route; the cursor does not extend it.
+						if (!IsTracing)
+						{
+							Vector3 previewWaypoint = GetPathWaypoint(_aim, pending);
+							Vector3 previewLeg = previewWaypoint - pending[pending.Count - 1];
+							previewLeg.y = 0f;
+							// A repeated endpoint creates a degenerate Catmull-Rom segment
+							// that can loop beyond the last committed point. Keep the preview
+							// identical to the committed route until the cursor advances.
+							if (previewLeg.sqrMagnitude >= 0.0001f) pending.Add(previewWaypoint);
+						}
 						if (pending.Count >= 2) GeneratePathPreview(pending, GetSpacing(prefab), prefab);
 					}
 					else if (_mode == PieceRepeaterMode.Circle || _points.Count >= 1)
@@ -86,7 +84,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				}
 			}
 			SetLine(_outlineLine, _outline, _mode != PieceRepeaterMode.Path || _points.Count == 0);
-			if (!_bothSides || _mode != PieceRepeaterMode.Path || _points.Count == 0) _secondLine.enabled = false;
 			UpdatePieceGhosts();
 			RefreshShapeToolCard();
 		}
@@ -192,7 +189,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (_pieceGhostMaterial) UnityEngine.Object.Destroy(_pieceGhostMaterial);
 			_previewRoot = null;
 			_outlineLine = null;
-			_secondLine = null;
 			_previewMaterial = null;
 			_pieceGhostMaterial = null;
 			_pieceGhostPrefabId = null;

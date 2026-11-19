@@ -19,6 +19,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Text _heightValue;
 		private Text _downFillValue;
 		private Text _facingValue;
+		private Text _traceOffsetValue;
+		private Text _traceTargetValue;
 
 		internal bool IsOpen => _open;
 
@@ -71,7 +73,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			GUIManager gui = GUIManager.Instance;
 			_panel = gui.CreateWoodpanel(GUIManager.CustomGUIFront.transform,
 				new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
-				530f, 500f, true);
+				530f, 640f, true);
 			_panel.SetActive(false);
 			Label("Line Tool settings", 0f, -34f, 28, 490f, gui.ValheimOrange);
 			Label("Preview updates live. Fill down applies only at level height.", 0f, -66f, 14, 490f, Color.white);
@@ -129,7 +131,17 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Changed();
 			});
 
-			Button("Close", 0f, -442f, 110f, () => Close(true));
+			Label("Trace wall offset", -145f, -434f, 18, 190f, Color.white);
+			Button("-", 5f, -434f, 34f, () => { _controller.NudgeTraceOffset(-0.1f); RefreshLabels(); });
+			_traceOffsetValue = Label("", 85f, -434f, 18, 90f, Color.white);
+			Button("+", 162f, -434f, 34f, () => { _controller.NudgeTraceOffset(0.1f); RefreshLabels(); });
+
+			Button("Trace wall", -165f, -484f, 150f, () => { Close(true); _controller.TraceCapturedWall(); });
+			Button("Next row", 0f, -484f, 150f, () => { Close(true); _controller.TraceNextRow(); });
+			Button("Flip side", 165f, -484f, 150f, () => { Close(true); _controller.FlipTraceSide(); });
+			_traceTargetValue = Label("", 0f, -526f, 14, 490f, Color.white);
+
+			Button("Close", 0f, -582f, 110f, () => Close(true));
 			RefreshLabels();
 		}
 
@@ -175,6 +187,14 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			if (_heightValue) _heightValue.text = PluginConfig.PieceRepeaterLevelByDefault.Value ? "Level" : "Follow surface";
 			if (_downFillValue) _downFillValue.text = PluginConfig.PieceRepeaterFillDownward.Value ? "On (level only)" : "Off";
 			if (_facingValue) _facingValue.text = PluginConfig.PieceRepeaterPropFollowCurve.Value ? "Tangent" : "Fixed";
+			if (_traceOffsetValue) _traceOffsetValue.text = _controller.HasTraceBase ? _controller.TraceOffset.ToString("0.##") + " m" : "-";
+			if (_traceTargetValue)
+			{
+				string target = _controller.TraceTargetLabel;
+				_traceTargetValue.text = target != null
+					? "Trace wall follows the " + target + " you were looking at, on your side."
+					: "To trace a wall: look at it, then open this panel.";
+			}
 		}
 	}
 }

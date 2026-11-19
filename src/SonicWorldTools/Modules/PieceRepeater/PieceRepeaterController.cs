@@ -85,7 +85,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private Piece _shapeDescriptionPiece;
 		private string _shapeDescriptionValue;
 		private int _shapeDescriptionLastRefreshFrame = -100;
-		private bool _bothSides;
 		private bool _hasLockedStartPlacement;
 		private Placement _lockedStartPlacement;
 		private bool _hasLockedStartAnchor;
@@ -103,14 +102,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private float _gapMeters;
 		private int _rotationSteps;
 		private int _rotationStepsAtStart;
-		private float _sideOffset = 2f;
 		private Vector3 _aim;
 		private float _sampledYaw;
 		private IDisposable _restoreIhShapeShortcut;
 		private bool _hasAim;
 		private GameObject _previewRoot;
 		private LineRenderer _outlineLine;
-		private LineRenderer _secondLine;
 		private Material _previewMaterial;
 		private Material _pieceGhostMaterial;
 		private string _pieceGhostPrefabId;
@@ -128,18 +125,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private int _catalogRevision = -1;
 		private readonly PieceRepeaterSettingsPanel _settingsPanel;
 		private readonly PieceRepeaterOffsetEditor _offsetEditor;
-
-		private struct Placement
-		{
-			internal Vector3 Position;
-			internal Quaternion Rotation;
-
-			internal Placement(Vector3 position, Quaternion rotation)
-			{
-				Position = position;
-				Rotation = rotation;
-			}
-		}
 
 		private sealed class PlacementVerification
 		{
@@ -217,6 +202,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 			if (!OwnsPlayerInput) return false;
 			if (ToolRuntime.TextInputBlocked) return false;
+			controller.CaptureTraceTarget();
 			controller._settingsPanel.Open();
 			return controller._settingsPanel.IsOpen;
 		}
@@ -309,14 +295,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
 			_shapeFillMode = ShapeFillMode.Outline;
 			_shapeRingSpacingAdjustment = 0f;
-			_bothSides = false;
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
 			_lockedStartAnchorIsSnap = false;
 			_snapPointIndex = -1;
 			_gapMeters = Mathf.Clamp(PluginConfig.PieceRepeaterGap.Value, -5f, 5f);
 			_rotationSteps = 0;
-			_sideOffset = 2f;
 			_points.Clear();
 			_lastPathDiagnosticKey = null;
 			_lastPathDiagnosticPointCount = -1;
@@ -350,6 +334,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_restoreIhShapeShortcut?.Dispose();
 			_restoreIhShapeShortcut = null;
 			_points.Clear();
+			_tracePendingStart = null;
+			_traceActive = false;
 			_lastPathDiagnosticKey = null;
 			_lastPathDiagnosticPointCount = -1;
 			_hasLockedStartPlacement = false;
@@ -483,7 +469,6 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_mode = _shapeToolMode ? PieceRepeaterMode.Circle : PieceRepeaterMode.Path;
 				_shapeFillMode = ShapeFillMode.Outline;
 				_shapeRingSpacingAdjustment = 0f;
-				_bothSides = false;
 				_points.Clear();
 				_hasLockedStartPlacement = false;
 				_hasLockedStartAnchor = false;
@@ -591,6 +576,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					}
 					else Notify("Sample a piece before adjusting concentric ring spacing.");
 				}
+				else if (IsTracing && ToolInput.WasModifierHeld(KeyCode.LeftShift))
+				{
+					NudgeTraceOffset(Mathf.Sign(wheel) * TraceOffsetStep);
+				}
 				else if (ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterSpacingModifier.Value))
 				{
 					SetGap(_gapMeters + wheel * 0.1f);
@@ -605,11 +594,19 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				UpdatePreview();
 			}
 
+			// The trace chord (Right Alt + MMB by default) is checked first so it wins over plain MMB sampling.
+			if (!_shapeToolMode && IsTraceChordDown())
+			{
+				HandleTraceChord(player);
+				return;
+			}
+
 			if (ToolInput.WasBoundKeyOrMouseDown(PluginConfig.PieceRepeaterSampleKey.Value))
 			{
 				SampleHoveredPiece(player);
 				return;
 			}
+
 
 			_hasAim = PrecisionAreaPipetteInput.TryGetAimPoint(out _aim);
 			UpdatePreview();
@@ -636,6 +633,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			bool finish = ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterPlaceModifier.Value);
 			if (_mode == PieceRepeaterMode.Path)
 			{
+				if (_traceActive && _points.Count == 0) _traceActive = false;
+				if (IsTracing)
+				{
+					if (finish) BuildAndPlace(player);
+					else Notify("Traced row ready: " + PlaceChordLabel + " places it; Shift+wheel nudges the offset.");
+					return;
+				}
 				List<Placement> previousPreview = null;
 				Vector3 committedWaypoint = Vector3.zero;
 				bool waypointAdded = false;
@@ -936,6 +940,13 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				GeneratePathPreview(_points, GetSpacing(prefab), prefab);
 				return;
 			}
+			// Shape outlines of edge-chain pieces use the shared solver so neighbouring tiles join at the corners.
+			if (_mode == PieceRepeaterMode.Circle && _shapeFillMode == ShapeFillMode.Outline && _points.Count > 0 && _hasAim
+			    && metadata.ProfileType == RepeatProfileType.EdgeChain)
+			{
+				GenerateEdgeChainCircle(prefab, metadata);
+				return;
+			}
 			GenerateLayoutCore(prefab);
 			for (int i = 0; i < _placements.Count; i++)
 			{
@@ -943,7 +954,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				_placements[i] = AdjustPlacement(_placements[i], metadata, groundOffset,
 					_points.Count > 0 ? _points[0].y : _placements[i].Position.y);
 			}
-			if (_mode == PieceRepeaterMode.Path && !_bothSides && _hasLockedStartPlacement && _placements.Count > 0)
+			if (_mode == PieceRepeaterMode.Path && _hasLockedStartPlacement && _placements.Count > 0)
 				_placements[0] = _lockedStartPlacement;
 		}
 
@@ -962,7 +973,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				rotation = Quaternion.Euler(0f, pathSteps * RotationStepDegrees, 0f) * rotation;
 			Vector3 correction = rotation * metadata.PositionOffset;
 			Vector3 rootPosition = placement.Position - rotation * metadata.CenterOffset + correction;
-			rootPosition = ApplySurfaceHeightMode(rootPosition, groundOffset, fixedHeight);
+			// Shape tiles that follow the terrain sample the ground directly. The build-piece surface lookup
+			// can pull a tile onto a neighbouring piece's height instead of the ground it sits on.
+			if (_shapeToolMode && !IsSameHeightHeld())
+			{
+				if (TryGetGroundHeight(rootPosition, out float groundHeight)) rootPosition.y = groundHeight + groundOffset;
+				else if (ZoneSystem.instance && ZoneSystem.instance.GetGroundHeight(rootPosition + Vector3.up * 2f, out float sampled) && !float.IsNaN(sampled))
+					rootPosition.y = sampled + groundOffset;
+				else rootPosition.y += groundOffset;
+			}
+			else rootPosition = ApplySurfaceHeightMode(rootPosition, groundOffset, fixedHeight);
 			rootPosition.y += correction.y;
 			return new Placement(rootPosition, rotation);
 		}
@@ -975,7 +995,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			float spacing = GetSpacing(prefab);
 			if (_mode == PieceRepeaterMode.Path)
 			{
-				GeneratePath(spacing, _bothSides ? _sideOffset : 0f);
+				GeneratePath(spacing);
 				return;
 			}
 			if (_points.Count == 0 || !_hasAim)
@@ -1045,7 +1065,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private static void Notify(string text)
 		{
-			if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, text, 0, null);
+			// Centre messages replace each other immediately. The top-left slot is a queue that backs up
+			// behind undo and spawn messages from WEC/IH, so Line Tool notices arrived late.
+			if (Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.Center, text, 0, null);
 		}
 	}
 }

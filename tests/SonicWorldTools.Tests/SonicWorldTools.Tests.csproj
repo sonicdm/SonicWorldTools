@@ -20,6 +20,7 @@
     <Compile Include="..\..\src\SonicWorldTools\Core\ToolInstaller.cs" Link="ToolInstaller.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\PieceRepeaterPathMath.cs" Link="PieceRepeaterPathMath.cs" />
     <Compile Include="..\..\src\SonicWorldTools\Modules\ScatterProps\ScatterLayout.cs" Link="ScatterLayout.cs" />
+    <Compile Include="..\..\src\SonicWorldTools\Modules\PieceRepeater\LineTrace.cs" Link="LineTrace.cs" />
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(ValheimLibDir)\UnityEngine.CoreModule.dll</HintPath>
     </Reference>

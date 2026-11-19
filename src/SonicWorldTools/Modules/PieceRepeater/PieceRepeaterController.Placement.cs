@@ -131,11 +131,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			PieceRepeaterDiagnostics.Log("BatchEnd", "prefab=" + _prefabId + " requests=" + requests
 				+ " withImmediateInstance=" + matchedInstances + " pendingDelayedVerification=" + _placementVerifications.Count);
-			Notify(ToolDisplayName + " sent " + requests + " " + _prefabId + (anarchy
-				? " network spawn request(s). Confirm the objects appear before placing another batch."
-				: " placement request(s); detected " + matchedInstances
-				  + " structural instances immediately. Use IH undo to reverse the batch.")
-				+ (PluginConfig.LineToolDiagnostics.Value ? " Diagnostics: BepInEx/logs/SonicWorldTools-LineTool.log." : ""));
+			// Short on purpose: the detail (requests, matched instances) is in the diagnostics log above.
+			Notify(ToolDisplayName + ": placed " + requests + " " + _prefabId + (anarchy ? " (check they appear)" : " (undo reverses it)"));
 			_points.Clear();
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
@@ -613,10 +610,12 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			       && Mathf.Abs(groundHeight - position.y) <= MaximumTerrainSampleDelta;
 		}
 
-		private static bool IsSameHeightHeld()
+		private bool IsSameHeightHeld()
 		{
+			// The F7 height setting is the default; holding the level modifier (Left Alt) flips it either way.
+			// Applies to the Line Tool, Shape Tool and traced rows alike.
 			return PluginConfig.PieceRepeaterLevelByDefault.Value
-				|| ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterLevelModifier.Value);
+				!= ToolInput.WasModifierHeld(PluginConfig.PieceRepeaterLevelModifier.Value);
 		}
 	}
 }
