@@ -16,7 +16,7 @@ namespace SonicWorldTools.Core
 			}
 			else
 			{
-				SonicWorldToolsPlugin.ModLogger.LogInfo("Infinity Hammer not detected (optional).");
+				SonicWorldToolsPlugin.ModLogger.LogInfo("Infinity Hammer not detected. It is a required dependency; SonicWorldTools tools will not appear.");
 			}
 
 			if (wec)
@@ -26,7 +26,7 @@ namespace SonicWorldTools.Core
 			}
 			else
 			{
-				SonicWorldToolsPlugin.ModLogger.LogInfo("World Edit Commands not detected (optional).");
+				SonicWorldToolsPlugin.ModLogger.LogInfo("World Edit Commands not detected. It is a package dependency; undo for Line Tool placements and Precision Select removals will be unavailable.");
 			}
 		}
 	}

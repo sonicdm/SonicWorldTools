@@ -114,7 +114,7 @@ namespace SonicWorldTools.Integration
 					if (_beginAction != null && _endAction != null && _addRemoveAction != null)
 					{
 						SonicWorldToolsPlugin.ModLogger?.LogInfo(
-							"[SonicWorldTools] World Edit undo bridge ready (pipette removals are undoable).");
+							"[SonicWorldTools] World Edit undo bridge ready (Precision Select removals, Line Tool and Scatter Props placements are undoable).");
 						return;
 					}
 				}

@@ -11,7 +11,7 @@ $Project = Join-Path $ProjectRoot "SonicWorldTools.csproj"
 $Dist = Join-Path $ProjectRoot "dist"
 
 if (-not (Test-Path -LiteralPath $LibDir)) {
-    throw "Valheim reference folder not found: $LibDir"
+    throw "Valheim reference folder not found: $LibDir. Create or refresh it with ..\tools\sync-refs.ps1 (or pass -LibDir)."
 }
 
 $Required = @(
