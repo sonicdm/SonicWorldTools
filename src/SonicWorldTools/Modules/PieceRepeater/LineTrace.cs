@@ -106,7 +106,39 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			List<Vector3> slice = full.GetRange(low, high - low + 2);
 			if (to < from) slice.Reverse();
 			usedSegments = high - low + 1;
+
+			// On a closed loop the two picks have two ways round. The direct slice is only one of them, so also
+			// try the way that wraps through the chain's ends and keep the shorter one.
+			int last = full.Count - 1;
+			if (IsClosedLoop(full, tolerance, heightTolerance))
+			{
+				// Other way round: from the start piece's far point back through the chain's first point, then down
+				// to the end piece's near point. Both picked pieces are included, as in the direct slice.
+				var wrap = new List<Vector3>();
+				for (int i = low + 1; i >= 0; i--) wrap.Add(full[i]);
+				for (int i = last - 1; i >= high; i--) wrap.Add(full[i]);
+				if (to < from) wrap.Reverse();
+				if (PathLength(wrap) < PathLength(slice))
+				{
+					slice = wrap;
+					usedSegments = wrap.Count - 1;
+				}
+			}
 			return slice;
+		}
+
+		private static bool IsClosedLoop(List<Vector3> full, float tolerance, float heightTolerance)
+		{
+			if (full.Count < 4) return false;
+			Vector3 first = full[0], last = full[full.Count - 1];
+			return DistanceSqXZ(first, last) <= tolerance * tolerance && Math.Abs(first.y - last.y) <= heightTolerance;
+		}
+
+		private static float PathLength(List<Vector3> path)
+		{
+			float length = 0f;
+			for (int i = 1; i < path.Count; i++) length += Vector3.Distance(path[i - 1], path[i]);
+			return length;
 		}
 
 		private static void Extend(IReadOnlyList<TraceSegment> segments, bool[] used, List<Vector3> chain, List<int> order, float tolerance,
@@ -140,7 +172,18 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				Vector3 far = bestFlipped ? segments[best].A : segments[best].B;
 				// A piece whose far end lands back on the traced line overlaps one already used
 				// (a duplicate or doubled piece); following it would make the trace U-turn.
-				if (IsOnChain(chain, far, toleranceSq, heightTolerance)) continue;
+				if (IsOnChain(chain, far, toleranceSq, heightTolerance))
+				{
+					// A piece that closes a loop back onto the chain's first point is part of the loop, not an overlap.
+					bool closesLoop = chain.Count >= 3 && DistanceSqXZ(far, chain[0]) <= toleranceSq
+					                  && Math.Abs(far.y - chain[0].y) <= heightTolerance;
+					if (!closesLoop) continue;
+					usedSegments++;
+					order.Add(best);
+					chain[chain.Count - 1] = (end + near) * 0.5f;
+					chain.Add(far);
+					return;
+				}
 				usedSegments++;
 				order.Add(best);
 				chain[chain.Count - 1] = (end + near) * 0.5f;

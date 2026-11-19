@@ -59,7 +59,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			       || action == ToolPlayerAction.Attack
 			       || action == ToolPlayerAction.Interact;
 		}
-		private const int MaximumPlacements = 512;
+		private const int MaximumPlacements = 2048;
 		private const int MaximumPreviewDots = MaximumPlacements;
 		private const float MinimumSpacing = 0.1f;
 		private const float MaximumTerrainSampleDelta = 8f;
@@ -334,6 +334,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			_restoreIhShapeShortcut?.Dispose();
 			_restoreIhShapeShortcut = null;
 			_points.Clear();
+			_traceRows.Clear();
+			_traceAnchor = null;
 			_tracePendingStart = null;
 			_traceActive = false;
 			_lastPathDiagnosticKey = null;
@@ -576,6 +578,10 @@ namespace SonicWorldTools.Modules.PieceRepeater
 					}
 					else Notify("Sample a piece before adjusting concentric ring spacing.");
 				}
+				else if (HasTraceBase && ToolInput.WasModifierHeld(KeyCode.LeftShift) && ToolInput.WasModifierHeld(KeyCode.LeftAlt))
+				{
+					AdjustTraceRows(wheel > 0f ? 1 : -1);
+				}
 				else if (IsTracing && ToolInput.WasModifierHeld(KeyCode.LeftShift))
 				{
 					NudgeTraceOffset(Mathf.Sign(wheel) * TraceOffsetStep);
@@ -594,15 +600,18 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				UpdatePreview();
 			}
 
+			// Next row (Shift + MMB) is checked before the trace chord: "either Alt" counts for the trace
+			// modifier, so Shift + Alt + MMB would otherwise start a trace instead of stepping the row.
+			if (!_shapeToolMode && IsNextRowChordDown())
+			{
+				HandleNextRowChord();
+				return;
+			}
+
 			// The trace chord (Right Alt + MMB by default) is checked first so it wins over plain MMB sampling.
 			if (!_shapeToolMode && IsTraceChordDown())
 			{
 				HandleTraceChord(player);
-				return;
-			}
-			if (!_shapeToolMode && HasTraceBase && IsNextRowChordDown())
-			{
-				TraceNextRow();
 				return;
 			}
 

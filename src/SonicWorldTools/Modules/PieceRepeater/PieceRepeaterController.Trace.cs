@@ -24,6 +24,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private readonly List<Vector3> _traceBase = new List<Vector3>();
 		private int _traceSide = 1;
 		private float _traceOffset;
+		/// <summary>Offset of the first row, so Shift + Alt + wheel down cannot remove the row beside the wall.</summary>
+		private float _traceFirstOffset;
+		private float _lastTraceRowStepTime = -10f;
+		/// <summary>How many rows are laid, from the wall outwards; each sits one piece depth beyond the last.</summary>
+		private int _traceRowCount = 1;
+		/// <summary>The rows laid for this trace, from the one beside the wall outwards. Each new row is traced from the one before it.</summary>
+		private readonly List<List<Vector3>> _traceRows = new List<List<Vector3>>();
+		/// <summary>The last row placed for this wall. New rows continue from it, so placed rows are not laid again.</summary>
+		private List<Vector3> _traceAnchor;
 		private float _traceRowStep;
 		/// <summary>True when the trace was started on a wall's top face: the row then runs on top of the wall.</summary>
 		private bool _traceOnTop;
@@ -153,6 +162,37 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			TraceWall(_traceTarget, _traceAimPoint, _traceAimNormal);
 		}
 
+		/// <summary>
+		/// Shift+MMB: with a pending start it cancels that start (so a new wall can be picked); otherwise it steps
+		/// the traced row out, like the Next row button.
+		/// </summary>
+		private void HandleNextRowChord()
+		{
+			if (_tracePendingStart)
+			{
+				_tracePendingStart = null;
+				ClearTracedRow();
+				Notify("Trace cleared. Aim at a new start and press Right Alt + MMB.");
+				return;
+			}
+			if (HasTraceBase) TraceNextRow();
+			else Notify("Trace a wall first (Right Alt + MMB, then again at the end).");
+		}
+
+		/// <summary>Drops the traced wall and its unplaced row, and removes the row's preview.</summary>
+		private void ClearTracedRow()
+		{
+			_traceBase.Clear();
+			_traceAnchor = null;
+			_traceActive = false;
+			_traceRows.Clear();
+			_points.Clear();
+			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
+			UpdatePreview();
+		}
+
 		/// <summary>Steps the traced row out by one piece depth from the last traced wall.</summary>
 		internal void TraceNextRow()
 		{
@@ -162,8 +202,24 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				return;
 			}
 			if (!TryGetTracePiece(out _, out _)) return;
-			_traceOffset += _traceRowStep;
+			_traceRowCount++;
+			_traceOffset = _traceFirstOffset + (_traceRowCount - 1) * _traceRowStep;
 			ApplyTrace("Next row");
+		}
+
+		/// <summary>Shift + Alt + wheel: wheel up adds a row, wheel down removes the last one (never the first).</summary>
+		internal void AdjustTraceRows(int direction)
+		{
+			if (!HasTraceBase) return;
+			// The scroll axis stays non-zero for several frames per notch, so one row per short interval.
+			if (Time.unscaledTime - _lastTraceRowStepTime < 0.3f) return;
+			_lastTraceRowStepTime = Time.unscaledTime;
+			int current = _traceRows.Count;
+			int count = direction > 0 ? current + 1 : Mathf.Max(0, current - 1);
+			if (count == 0) return;
+			RebuildTraceRows(count);
+			UpdatePreview();
+			Notify((direction > 0 ? "More rows" : "Fewer rows") + ": " + count + " row(s) at " + _traceOffset.ToString("0.##") + " m spacing (Shift+wheel changes spacing, " + PlaceChordLabel + " places)");
 		}
 
 		/// <summary>Moves the traced row to the other side of the wall.</summary>
@@ -183,7 +239,42 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		{
 			if (!HasTraceBase) return;
 			_traceOffset = Mathf.Max(0f, Mathf.Round((_traceOffset + delta) * 100f) / 100f);
+			if (_traceRows.Count > 1)
+			{
+				// Shift+wheel sets the spacing between rows, so every laid row moves with it.
+				RebuildTraceRows(_traceRows.Count);
+				UpdatePreview();
+				return;
+			}
 			ApplyTrace(null);
+		}
+
+		private List<Vector3> OffsetRow(List<Vector3> row)
+		{
+			return LineTrace.Offset(row, _traceSide * _traceOffset).ConvertAll(p => new Vector3(p.x, _traceRowY, p.z));
+		}
+
+		/// <summary>
+		/// Lays <paramref name="count"/> rows from the wall outwards. The first sits one offset from the wall, and each
+		/// further row is traced from the one before it, one offset further out, so every gap equals the offset.
+		/// </summary>
+		private void RebuildTraceRows(int count)
+		{
+			_traceRows.Clear();
+			// Rows continue from the last placed row when there is one, otherwise they start at the wall.
+			List<Vector3> previous = _traceAnchor;
+			for (int i = 0; i < count; i++)
+			{
+				List<Vector3> row = previous == null ? TracedRowPoints(_traceOffset) : OffsetRow(previous);
+				_traceRows.Add(row);
+				previous = row;
+			}
+			_points.Clear();
+			_points.AddRange(_traceRows[_traceRows.Count - 1]);
+			_hasLockedStartPlacement = false;
+			_hasLockedStartAnchor = false;
+			_lockedStartAnchorIsSnap = false;
+			_traceActive = true;
 		}
 
 		/// <summary>Traces the wall course through <paramref name="wall"/>; with <paramref name="endPiece"/> only the stretch from wall to endPiece.</summary>
@@ -279,6 +370,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 			_traceBase.Clear();
 			_traceBase.AddRange(polyline);
+			_traceAnchor = null;
 			_traceWallPrefab = wallPrefabName;
 			Player player = Player.m_localPlayer;
 			// The row goes on the face the crosshair is on, wherever the player stands. A hit on the
@@ -307,20 +399,24 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			{
 				// Level mode places the piece root at (waypoint Y - centre offset Y); choose the waypoint
 				// so the piece's top lands on the base of the traced course.
+				// Always the lowest snap, so the course height does not change with where the wall is aimed
+				// (the nearest snap flipped between a block's top and bottom).
 				var snapPoints = new List<Transform>();
 				wall.GetSnapPoints(snapPoints);
-				float bestSnapDistance = float.MaxValue;
+				float lowestSnapY = float.MaxValue;
 				foreach (Transform snap in snapPoints)
 				{
-					float d = (snap.position - aimPoint).sqrMagnitude;
-					if (d >= bestSnapDistance) continue;
-					bestSnapDistance = d;
+					if (snap.position.y >= lowestSnapY) continue;
+					lowestSnapY = snap.position.y;
 					courseBaseY = snap.position.y;
 					snapNote = "snap '" + snap.name + "'";
 				}
-				_traceRowY = courseBaseY - rowBounds.max.y + rowMetadata.CenterOffset.y;
+				// Bottom of the row sits on the wall's bottom snap, so the row stands level with the fence base.
+				_traceRowY = courseBaseY - rowBounds.min.y + rowMetadata.CenterOffset.y;
 				_traceOffset = wallHalfThickness + rowHalfDepth;
 			}
+			_traceFirstOffset = _traceOffset;
+			_traceRowCount = 1;
 
 			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Traced " + used + " " + wallPrefabName + " piece(s) into "
 				+ polyline.Count + " vertices; aimed " + Utils.GetPrefabName(wall.gameObject) + " at " + aimPoint.ToString("F1")
@@ -331,13 +427,30 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			ApplyTrace("Traced " + used + " " + wallPrefabName + " piece(s)");
 		}
 
+		/// <summary>The traced wall offset by <paramref name="offset"/> to this trace's side, at the row height.</summary>
+		private List<Vector3> TracedRowPoints(float offset)
+		{
+			List<Vector3> offsetLine = LineTrace.Offset(_traceBase, _traceSide * offset);
+			var points = new List<Vector3>(offsetLine.Count);
+			foreach (Vector3 p in offsetLine) points.Add(new Vector3(p.x, _traceRowY, p.z));
+			return points;
+		}
+
+		/// <summary>Offset of row <paramref name="row"/> (0 is the one beside the wall). The outermost row follows the wheel nudge.</summary>
+		private float TracedRowOffset(int row)
+		{
+			return row == _traceRowCount - 1 ? _traceOffset : _traceFirstOffset + row * _traceRowStep;
+		}
+
 		/// <summary>Rebuilds the waypoints from the traced wall at the current offset and refreshes the preview.</summary>
 		private void ApplyTrace(string headline)
 		{
 			if (!HasTraceBase) return;
-			List<Vector3> offsetLine = LineTrace.Offset(_traceBase, _traceSide * _traceOffset);
 			_points.Clear();
-			foreach (Vector3 p in offsetLine) _points.Add(new Vector3(p.x, _traceRowY, p.z));
+			_points.AddRange(TracedRowPoints(_traceOffset));
+			_traceRows.Clear();
+			_traceRows.Add(new List<Vector3>(_points));
+			_traceAnchor = null;
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
 			_lockedStartAnchorIsSnap = false;
@@ -454,6 +567,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 
 		private void GenerateTracedLayout(IList<Vector3> points, GameObject prefab, ResolvedPrefabPlacement metadata)
 		{
+			int firstPlacement = _placements.Count;
 			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
 			bool alongX = RepeatsAlongX(metadata, bounds);
 			Vector3 joinDelta = metadata.JoinEnd - metadata.JoinStart;
@@ -504,7 +618,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			}
 
 			if (!level && terrainFallbacks > 0 && PluginConfig.IsVerboseLogging()) SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Traced row: " + terrainFallbacks + " tile(s) had no terrain sample and kept the row height.");
-			foreach (Vector3 point in points) _outline.Add(point);
+			// The outline follows the placed pieces, so it sits on the ground in follow mode rather than at the wall-base height.
+			for (int i = firstPlacement; i < _placements.Count; i++) _outline.Add(_placements[i].Position);
 		}
 
 		/// <summary>

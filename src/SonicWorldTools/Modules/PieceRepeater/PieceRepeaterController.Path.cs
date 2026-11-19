@@ -306,9 +306,16 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
 			if (IsTracing)
 			{
-				// Props keep the Line Tool's fixed spacing (gap changed with Alt+wheel) instead of tiling by piece length.
-				if (metadata.ProfileType == RepeatProfileType.GroundProp) GenerateTracedPropLayout(points, spacing, metadata);
-				else GenerateTracedLayout(points, prefab, metadata);
+				// Each laid row was traced from the one before it, so the rows stack evenly. Props keep the Line Tool's fixed spacing.
+				List<List<Vector3>> rowsToLay = _traceRows.Count > 0 ? _traceRows : new List<List<Vector3>> { new List<Vector3>(points) };
+				foreach (List<Vector3> rowPoints in rowsToLay)
+				{
+					if (rowPoints.Count < 2) continue;
+					if (metadata.ProfileType == RepeatProfileType.GroundProp) GenerateTracedPropLayout(rowPoints, spacing, metadata);
+					else GenerateTracedLayout(rowPoints, prefab, metadata);
+				}
+				if (_placements.Count >= MaximumPlacements)
+					Notify("Traced rows reached the " + MaximumPlacements + " placement limit; the outer rows are cut short. Reduce the rows or the spacing.");
 				ExpandPlacementsDownToTerrain(prefab);
 				return;
 			}

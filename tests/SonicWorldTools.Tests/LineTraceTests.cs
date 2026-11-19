@@ -195,6 +195,21 @@ namespace SonicWorldTools.Tests
 		}
 
 		[Fact]
+		public void Ring_between_neighbours_takes_the_short_way_round()
+		{
+			var ring = new List<TraceSegment>
+			{
+				new TraceSegment(new Vector3(0f, 0f, 0f), new Vector3(1f, 0f, 0f)),
+				new TraceSegment(new Vector3(1f, 0f, 0f), new Vector3(1f, 0f, 1f)),
+				new TraceSegment(new Vector3(1f, 0f, 1f), new Vector3(0f, 0f, 1f)),
+				new TraceSegment(new Vector3(0f, 0f, 1f), new Vector3(0f, 0f, 0f)),
+			};
+			List<Vector3> line = LineTrace.ChainBetween(ring, 0, 3, 0.1f, 0.5f, 100, out int used);
+			Assert.Equal(2, used);
+			Assert.Equal(3, line.Count);
+		}
+
+		[Fact]
 		public void Fence_line_up_a_hill_chains_with_a_slope_sized_tolerance_only()
 		{
 			// 2 m pieces rising 1.1 m per piece, as a steep hill gives rigid pieces rooted at terrain height.

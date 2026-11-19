@@ -133,6 +133,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				+ " withImmediateInstance=" + matchedInstances + " pendingDelayedVerification=" + _placementVerifications.Count);
 			// Short on purpose: the detail (requests, matched instances) is in the diagnostics log above.
 			Notify(ToolDisplayName + ": placed " + requests + " " + _prefabId + (anarchy ? " (check they appear)" : " (undo reverses it)"));
+			if (_traceRows.Count > 0) _traceAnchor = new List<Vector3>(_traceRows[_traceRows.Count - 1]);
+			_traceRows.Clear();
 			_points.Clear();
 			_hasLockedStartPlacement = false;
 			_hasLockedStartAnchor = false;
