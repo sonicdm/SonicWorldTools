@@ -25,6 +25,8 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		private int _traceSide = 1;
 		private float _traceOffset;
 		private float _traceRowStep;
+		/// <summary>True when the trace was started on a wall's top face: the row then runs on top of the wall.</summary>
+		private bool _traceOnTop;
 		/// <summary>Waypoint Y that puts the row piece's top surface flush with the traced course's base.</summary>
 		private float _traceRowY;
 		private string _traceWallPrefab;
@@ -89,6 +91,15 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			KeyCode key = PluginConfig.PieceRepeaterTraceKey != null ? PluginConfig.PieceRepeaterTraceKey.Value : KeyCode.None;
 			if (key == KeyCode.None) return false;
 			KeyCode modifier = PluginConfig.PieceRepeaterTraceModifier != null ? PluginConfig.PieceRepeaterTraceModifier.Value : KeyCode.None;
+			if (modifier != KeyCode.None && !ToolInput.WasModifierHeld(modifier)) return false;
+			return ToolInput.WasBoundKeyOrMouseDown(key);
+		}
+
+		private static bool IsNextRowChordDown()
+		{
+			KeyCode key = PluginConfig.PieceRepeaterNextRowKey != null ? PluginConfig.PieceRepeaterNextRowKey.Value : KeyCode.None;
+			if (key == KeyCode.None) return false;
+			KeyCode modifier = PluginConfig.PieceRepeaterNextRowModifier != null ? PluginConfig.PieceRepeaterNextRowModifier.Value : KeyCode.None;
 			if (modifier != KeyCode.None && !ToolInput.WasModifierHeld(modifier)) return false;
 			return ToolInput.WasBoundKeyOrMouseDown(key);
 		}
@@ -273,6 +284,7 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			// The row goes on the face the crosshair is on, wherever the player stands. A hit on the
 			// top or bottom of the wall has no useful horizontal normal, so fall back to the player.
 			bool sideFace = Mathf.Abs(aimNormal.y) < TraceSideFaceMaxNormalY;
+			_traceOnTop = aimNormal.y >= TraceSideFaceMaxNormalY;
 			Vector3 sideProbe = sideFace ? aimPoint + aimNormal * 0.3f : (player ? player.transform.position : aimPoint);
 			_traceSide = LineTrace.SideOf(_traceBase, sideProbe);
 
@@ -280,29 +292,41 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			Bounds rowBounds = PrefabPlacementMetadata.GetLocalRendererBounds(rowPrefab);
 			float rowHalfDepth = HalfTransverse(rowBounds, RepeatsAlongX(rowMetadata, rowBounds));
 			_traceRowStep = Mathf.Max(0.1f, rowHalfDepth * 2f);
-			// Level mode places the piece root at (waypoint Y - centre offset Y); choose the waypoint
-			// so the piece's top lands on the base of the traced course.
-			float courseBaseY = polyline[0].y;
 			string snapNote = "root";
-			var snapPoints = new List<Transform>();
-			wall.GetSnapPoints(snapPoints);
-			float bestSnapDistance = float.MaxValue;
-			foreach (Transform snap in snapPoints)
+			float courseBaseY = polyline[0].y;
+			if (_traceOnTop)
 			{
-				float d = (snap.position - aimPoint).sqrMagnitude;
-				if (d >= bestSnapDistance) continue;
-				bestSnapDistance = d;
-				courseBaseY = snap.position.y;
-				snapNote = "snap '" + snap.name + "'";
+				// On top: the row runs down the wall's centre line with its bottom on the aimed top face.
+				// Level mode places the root at (waypoint Y - centre offset Y), so solve for the waypoint.
+				courseBaseY = aimPoint.y;
+				snapNote = "top face";
+				_traceRowY = courseBaseY - rowBounds.min.y + rowMetadata.CenterOffset.y;
+				_traceOffset = 0f;
 			}
-			_traceRowY = courseBaseY - rowBounds.max.y + rowMetadata.CenterOffset.y;
-			_traceOffset = wallHalfThickness + rowHalfDepth;
+			else
+			{
+				// Level mode places the piece root at (waypoint Y - centre offset Y); choose the waypoint
+				// so the piece's top lands on the base of the traced course.
+				var snapPoints = new List<Transform>();
+				wall.GetSnapPoints(snapPoints);
+				float bestSnapDistance = float.MaxValue;
+				foreach (Transform snap in snapPoints)
+				{
+					float d = (snap.position - aimPoint).sqrMagnitude;
+					if (d >= bestSnapDistance) continue;
+					bestSnapDistance = d;
+					courseBaseY = snap.position.y;
+					snapNote = "snap '" + snap.name + "'";
+				}
+				_traceRowY = courseBaseY - rowBounds.max.y + rowMetadata.CenterOffset.y;
+				_traceOffset = wallHalfThickness + rowHalfDepth;
+			}
 
 			SonicWorldToolsPlugin.ModLogger?.LogInfo("[Line Tool] Traced " + used + " " + wallPrefabName + " piece(s) into "
 				+ polyline.Count + " vertices; aimed " + Utils.GetPrefabName(wall.gameObject) + " at " + aimPoint.ToString("F1")
 				+ " normal " + aimNormal.ToString("F2") + "; level from " + snapNote + " y=" + courseBaseY.ToString("0.##")
 				+ "; side=" + _traceSide + " offset=" + _traceOffset.ToString("0.##")
-				+ " (wall half " + wallHalfThickness.ToString("0.##") + " + row half " + rowHalfDepth.ToString("0.##") + ").");
+				+ (_traceOnTop ? " (on top of the wall)" : " (wall half " + wallHalfThickness.ToString("0.##") + " + row half " + rowHalfDepth.ToString("0.##") + ")") + ".");
 			_traceLastOk = true;
 			ApplyTrace("Traced " + used + " " + wallPrefabName + " piece(s)");
 		}
@@ -368,6 +392,66 @@ namespace SonicWorldTools.Modules.PieceRepeater
 		/// Line Tool's curve solver to it. The solver smooths the corners and spaces tiles unevenly,
 		/// which left gaps against the wall at bends and random gaps along straight stretches.
 		/// </summary>
+		/// <summary>
+		/// The wall top under a traced prop or tile: the highest build piece in the column around the row's height.
+		/// The search starts above the row so block tops slightly above it are still found, which the
+		/// Line Tool's surface lookup rejects.
+		/// </summary>
+		private bool TryGetTraceTopHeight(Vector3 position, out float height)
+		{
+			height = 0f;
+			Vector3 origin = new Vector3(position.x, _traceRowY + 3f, position.z);
+			int hitCount = Physics.RaycastNonAlloc(origin, Vector3.down, _surfaceRayHits, 6f, ~0, QueryTriggerInteraction.Ignore);
+			float best = float.NegativeInfinity;
+			Player localPlayer = Player.m_localPlayer;
+			for (int i = 0; i < hitCount; i++)
+			{
+				Collider collider = _surfaceRayHits[i].collider;
+				if (!collider || collider.isTrigger) continue;
+				Transform hitTransform = collider.transform;
+				if ((_previewRoot && hitTransform.IsChildOf(_previewRoot.transform))
+				    || (_snapProbeContainer && hitTransform.IsChildOf(_snapProbeContainer.transform))
+				    || (localPlayer && hitTransform.IsChildOf(localPlayer.transform)))
+					continue;
+				if (!collider.GetComponentInParent<Piece>()) continue;
+				float hitY = _surfaceRayHits[i].point.y;
+				if (hitY > best) best = hitY;
+			}
+			if (float.IsNegativeInfinity(best)) return false;
+			height = best;
+			return true;
+		}
+
+		/// <summary>Props (torches, poles) along a traced row at the Line Tool's fixed prop spacing, so gaps stay even on curves.</summary>
+		private void GenerateTracedPropLayout(IList<Vector3> points, float spacing, ResolvedPrefabPlacement metadata)
+		{
+			float groundOffset = -metadata.BottomOffset;
+			bool level = IsSameHeightHeld();
+			List<Placement> center = SamplePolyline(points, spacing, false);
+			foreach (Placement proposed in center)
+			{
+				if (_placements.Count >= MaximumPlacements) break;
+				Quaternion rotation = PluginConfig.PieceRepeaterPropFollowCurve.Value
+					? proposed.Rotation * Quaternion.Euler(0f, metadata.TangentYawOffset, 0f)
+					: proposed.Rotation;
+				Vector3 position = proposed.Position - rotation * metadata.CenterOffset;
+				if (level)
+				{
+					position.y = _traceRowY - metadata.CenterOffset.y;
+				}
+				else if (_traceOnTop)
+				{
+					position.y = TryGetTraceTopHeight(position, out float topHeight)
+						? topHeight + groundOffset : _traceRowY - metadata.CenterOffset.y;
+				}
+				else if (ZoneSystem.instance && ZoneSystem.instance.GetGroundHeight(position, out float terrainHeight) && !float.IsNaN(terrainHeight))
+				{
+					position.y = terrainHeight + groundOffset;
+				}
+				_placements.Add(new Placement(position, rotation));
+			}
+		}
+
 		private void GenerateTracedLayout(IList<Vector3> points, GameObject prefab, ResolvedPrefabPlacement metadata)
 		{
 			Bounds bounds = PrefabPlacementMetadata.GetLocalRendererBounds(prefab);
@@ -398,6 +482,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				if (level)
 				{
 					root.y = rootY + correction.y;
+				}
+				else if (_traceOnTop)
+				{
+					// Following on top: take the wall top under each tile, so the row rides the top of the blocks.
+					root.y = (TryGetTraceTopHeight(root, out float topHeight) ? topHeight + groundOffset : rootY) + correction.y;
 				}
 				else
 				{

@@ -306,7 +306,9 @@ namespace SonicWorldTools.Modules.PieceRepeater
 			ResolvedPrefabPlacement metadata = ResolvePlacementMetadata(prefab);
 			if (IsTracing)
 			{
-				GenerateTracedLayout(points, prefab, metadata);
+				// Props keep the Line Tool's fixed spacing (gap changed with Alt+wheel) instead of tiling by piece length.
+				if (metadata.ProfileType == RepeatProfileType.GroundProp) GenerateTracedPropLayout(points, spacing, metadata);
+				else GenerateTracedLayout(points, prefab, metadata);
 				ExpandPlacementsDownToTerrain(prefab);
 				return;
 			}

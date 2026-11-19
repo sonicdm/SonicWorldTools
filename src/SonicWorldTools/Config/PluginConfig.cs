@@ -85,6 +85,8 @@ namespace SonicWorldTools.Config
 		internal static ConfigEntry<KeyCode> PieceRepeaterSettingsHotkey;
 		internal static ConfigEntry<KeyCode> PieceRepeaterTraceKey;
 		internal static ConfigEntry<KeyCode> PieceRepeaterTraceModifier;
+		internal static ConfigEntry<KeyCode> PieceRepeaterNextRowKey;
+		internal static ConfigEntry<KeyCode> PieceRepeaterNextRowModifier;
 		internal static ConfigEntry<float> PieceRepeaterGroundPropSpacing;
 		internal static ConfigEntry<bool> PieceRepeaterAnarchyMode;
 		internal static ConfigEntry<float> PieceRepeaterGap;
@@ -298,6 +300,8 @@ namespace SonicWorldTools.Config
 			PieceRepeaterSettingsHotkey = BindLineTool(config, "SettingsHotkey", KeyCode.F7, "Open Line Tool settings while the Line Tool is active.");
 			PieceRepeaterTraceKey = BindLineTool(config, "TraceChordKey", KeyCode.Mouse2, "Trace the wall under the crosshair and lay the sampled piece along your side of it. Used together with TraceChordModifier. The settings panel (SettingsHotkey) also has Trace wall, Next row and Flip side buttons.");
 			PieceRepeaterTraceModifier = BindLineTool(config, "TraceChordModifier", KeyCode.RightAlt, "Hold with TraceChordKey to trace a wall. None means the key alone, which would replace sampling when both use the same key.");
+			PieceRepeaterNextRowKey = BindLineTool(config, "NextRowKey", KeyCode.Mouse2, "Steps the traced row out by one piece depth (same as the Next row button). Used together with NextRowModifier.");
+			PieceRepeaterNextRowModifier = BindLineTool(config, "NextRowModifier", KeyCode.LeftShift, "Hold with NextRowKey to step the traced row. None means the key alone.");
 			PieceRepeaterOffsetEditorModifier = BindLineTool(config, "OffsetEditorModifier", KeyCode.LeftShift, "Hold with SettingsHotkey to edit sampled-piece offsets. None disables this shortcut.");
 			PieceRepeaterGroundPropSpacing = BindLineTool(config, "GroundPropDefaultSpacing", 2f, "Default spacing in metres for ground props unless overridden by piece YAML.");
 			PieceRepeaterAnarchyMode = BindLineTool(config, "AnarchyMode", false, "Allow Line Tool to sample and spawn any registered networked prefab, including trees and creatures. Uses ground-prop spacing and bypasses build-piece placement rules.");

@@ -326,6 +326,8 @@ namespace SonicWorldTools
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterJointModifier);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterTraceKey);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterTraceModifier);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterNextRowKey);
+			HookGeneratedToolSetting(PluginConfig.PieceRepeaterNextRowModifier);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterSettingsHotkey);
 			HookGeneratedToolSetting(PluginConfig.PieceRepeaterOffsetEditorModifier);
 			HookGeneratedToolSetting(PluginConfig.ScatterSampleKey);

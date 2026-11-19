@@ -600,6 +600,11 @@ namespace SonicWorldTools.Modules.PieceRepeater
 				HandleTraceChord(player);
 				return;
 			}
+			if (!_shapeToolMode && HasTraceBase && IsNextRowChordDown())
+			{
+				TraceNextRow();
+				return;
+			}
 
 			if (ToolInput.WasBoundKeyOrMouseDown(PluginConfig.PieceRepeaterSampleKey.Value))
 			{
