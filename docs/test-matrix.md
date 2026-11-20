@@ -424,14 +424,14 @@ Release includes Shape Tool gap-free circle fill, Line Tool trace wall and world
 | Offline | `dotnet test SonicWorldTools.sln` (67 + PluginAudit) | MVP-10 / 2026-11-18 | pass |
 | S01 | BepInEx load line | hygiene | pass |
 | S02 | No exception in Gale logs | hygiene | pass |
-| S03 | Optional dependency detect lines | §11 | pending |
+| S03 | Optional dependency detect lines | §11 | pass |
 | S04 | Config file created | §13 | pass |
-| S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pending |
+| S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pass |
 | S06 | Hammer menu hot-reload (M1) | A04 | pending |
 | S06a | Curved Terrain Path Surface Variants | WEC / IH multi-point tool | pending |
 | S06b | Lower Terrain | WEC / IH Hoe tool | pending |
 | S07 | Precision Area Pipette activate (M1) | A05–A06 | pending |
-| S08 | SettingChanged hot-reload (M1) | config | pending |
+| S08 | SettingChanged hot-reload (M1) | config | pass |
 | S09 | Plugins-folder restart | release install | pending |
 | S10 | Corner A marker (M3) | A06–A08 | pending |
 | S11 | Live box preview (M3) | A09–A10 | pending |
@@ -456,7 +456,7 @@ Release includes Shape Tool gap-free circle fill, Line Tool trace wall and world
 | S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pending |
 | S31 | Force Grow hatches one chicken egg; stacked eggs are skipped | Force Grow / egg handling | pending |
 | S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pending |
-| S33 | Tool YAML updates correctly on plugin version change | installer/version refresh | pending |
+| S33 | Tool YAML updates correctly on plugin version change | installer/version refresh | pass |
 | A01 | Install with Infinity Hammer | §18.1 | pending |
 | A02 | Launch game | §18.2 | pending |
 | A03 | No new physical Hammer | §18.3 | pending |
