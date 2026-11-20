@@ -219,6 +219,23 @@ namespace SonicWorldTools.Modules.ScatterProps
 			       && string.Equals(toolName, "Scatter Props", StringComparison.OrdinalIgnoreCase);
 		}
 
+		/// <summary>
+		/// Player.GetHoveringPiece can keep a build piece that the Hammer selected or last hovered, even when the
+		/// aim ray is on a creature or tree. Trust it only when the nearest non-player hit is that piece.
+		/// </summary>
+		private static bool HoverIsUnderAim(Piece hovered, Player player, Ray ray)
+		{
+			int count = Physics.RaycastNonAlloc(ray, HitBuffer, MaxSampleRayDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+			Array.Sort(HitBuffer, 0, count, RaycastHitDistanceComparer.Instance);
+			for (int i = 0; i < count; i++)
+			{
+				Collider collider = HitBuffer[i].collider;
+				if (!collider || collider.transform.IsChildOf(player.transform)) continue;
+				return collider.transform.IsChildOf(hovered.transform);
+			}
+			return false;
+		}
+
 		private static bool TryGetAimedPrefab(Player player, out string prefab, out Vector3 scale)
 		{
 			prefab = null;
@@ -233,7 +250,8 @@ namespace SonicWorldTools.Modules.ScatterProps
 				SonicWorldToolsPlugin.ModLogger?.LogInfo(
 					"[Scatter] Sample hover target: " + (hoveredPiece ? GetHierarchyPath(hoveredPiece.transform) : "<none>") + ".");
 			}
-			if (hoveredPiece && !IsOwnedByLocalPlayer(hoveredPiece.gameObject, player))
+			if (hoveredPiece && !IsOwnedByLocalPlayer(hoveredPiece.gameObject, player)
+			    && GameCamera.instance && HoverIsUnderAim(hoveredPiece, player, new Ray(GameCamera.instance.transform.position, GameCamera.instance.transform.forward)))
 			{
 				ZNetView hoveredView = hoveredPiece.GetComponent<ZNetView>();
 				if (!hoveredView) hoveredView = hoveredPiece.GetComponentInParent<ZNetView>();
