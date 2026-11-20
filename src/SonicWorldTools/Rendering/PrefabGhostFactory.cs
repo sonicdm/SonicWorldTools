@@ -27,9 +27,11 @@ namespace SonicWorldTools.Rendering
 				SetLayerRecursively(visual.transform, pieceLayer);
 			}
 
+			// DestroyImmediate: a deferred Destroy leaves components such as CharacterAnimEvent alive when the
+			// ghost activates below, and their Awake then fails on the stripped references.
 			foreach (Component component in ghost.GetComponentsInChildren<Component>(true))
 				if (!(component is Renderer) && !(component is MeshFilter) && !(component is Transform))
-					UnityEngine.Object.Destroy(component);
+					UnityEngine.Object.DestroyImmediate(component);
 
 			foreach (Renderer renderer in ghost.GetComponentsInChildren<Renderer>(true))
 			{

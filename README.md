@@ -4,7 +4,7 @@
 
 **A collection of Infinity Hammer tools for building, terrain editing, prop placement, and selection.**
 
-Release candidate: **0.1.2**.
+Release candidate: **0.1.3**.
 
 SonicWorldTools adds menu tools to Infinity Hammer's Hammer, Hoe, and Cultivator. It does not add a separate hammer item. Each tool is described below with its purpose, controls, and important limits.
 

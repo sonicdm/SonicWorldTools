@@ -414,6 +414,44 @@ Keep a disposable three-story build with: vertically aligned walls, overlapping 
 2. **Pass:** all tests green (see version table).
 3. **Fail:** any failing test.
 
+### SC — Scatter Props creature sample
+**Rule:** Sampling a creature with Scatter Props and drawing the preview does not throw. **Maps:** scatter ghost fix (PrefabGhostFactory).
+1. Select Scatter Props in the Hammer's Tools section. Middle-click a Greydwarf.
+2. **Pass:** the preview shows creature ghosts, the card names Greydwarf, and the log has no NullReferenceException.
+3. **Fail:** the card names a build piece, or exceptions repeat from PrefabGhostFactory.
+
+### TW — Line Tool trace wall
+**Rule:** Trace wall lays a row along an existing wall, and Shift+MMB adds more rows. **Maps:** Line Tool trace wall (0.1.3).
+1. Sample a fence or wall piece with MMB. Right Alt+MMB on the first wall piece, then on the last.
+2. **Pass:** the preview runs along your side of the wall.
+3. Shift+MMB adds a row. **Pass:** the second row appears one piece depth out.
+4. **Fail:** the trace fails on a joined wall, or the preview leaves the wall.
+
+## 0.1.3
+
+Narrowed release set: the checks for what changed in this release. Older Pipette and milestone checks moved to docs/test-regression.md and run when Pipette code changes.
+
+| ID | Procedure | §18 / notes | Result |
+| --- | --- | --- | --- |
+| Offline | `dotnet test SonicWorldTools.sln` (67 + PluginAudit) | MVP-10 / 2026-11-18 | pass |
+| S01 | BepInEx load line | hygiene | pass |
+| S02 | No exception in Gale logs | hygiene | pass |
+| S03 | Optional dependency detect lines | §11 | pass |
+| S04 | Config file created | §13 | pass |
+| S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pass |
+| S06 | Hammer menu hot-reload (M1) | A04 | pass |
+| S07 | Precision Area Pipette activate (M1) | A05–A06 | pass |
+| S08 | SettingChanged hot-reload (M1) | config | pass |
+| S33 | Tool YAML updates correctly on plugin version change | installer/version refresh | pass |
+| S06p | Line Tool F7 settings panel | F7 settings | pass |
+| S06s | Shape Tool outlines and circle fill | Shape Tool | pass |
+| S09 | Plugins-folder restart | release install | pass |
+| S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pass |
+| S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pass |
+| S31 | Force Grow hatches one chicken egg; stacked eggs are skipped | Force Grow / egg handling | pass |
+| SC | Scatter Props: sample a Greydwarf, preview, place | Scatter ghost fix | pass |
+| TW | Line Tool trace wall: trace a wall, Shift+MMB adds a row | F7 Trace wall | pass |
+
 ## 0.1.2
 
 Release candidate includes Force Grow for Hoe/Cultivator, single chicken egg hatching, and Line Tool world direction snapping. Re-run the complete matrix for this version; do not carry forward prior results.
