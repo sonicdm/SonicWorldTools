@@ -427,10 +427,10 @@ Release includes Shape Tool gap-free circle fill, Line Tool trace wall and world
 | S03 | Optional dependency detect lines | §11 | pass |
 | S04 | Config file created | §13 | pass |
 | S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pass |
-| S06 | Hammer menu hot-reload (M1) | A04 | pending |
+| S06 | Hammer menu hot-reload (M1) | A04 | pass |
 | S06a | Curved Terrain Path Surface Variants | WEC / IH multi-point tool | pending |
 | S06b | Lower Terrain | WEC / IH Hoe tool | pending |
-| S07 | Precision Area Pipette activate (M1) | A05–A06 | pending |
+| S07 | Precision Area Pipette activate (M1) | A05–A06 | pass |
 | S08 | SettingChanged hot-reload (M1) | config | pass |
 | S09 | Plugins-folder restart | release install | pending |
 | S10 | Corner A marker (M3) | A06–A08 | pending |
