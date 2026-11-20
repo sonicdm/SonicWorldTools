@@ -51,7 +51,7 @@ namespace SonicWorldTools
 
 
 
-		public const string PluginVersion = "0.1.2";
+		public const string PluginVersion = "0.1.3";
 
 
 

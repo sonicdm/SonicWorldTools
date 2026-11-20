@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.3
 
 - Shape Tool circle infill for floor-type pieces no longer leaves gaps: rings fitted from the rim inward, with a grid core in the middle. Overlaps are kept small and staggered in height so they do not flicker.
 - README: trace wall, world direction snap and circle fill documented, with screenshots.
