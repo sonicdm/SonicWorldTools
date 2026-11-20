@@ -443,7 +443,7 @@ Narrowed release set: the checks for what changed in this release. Older Pipette
 | S07 | Precision Area Pipette activate (M1) | A05–A06 | pass |
 | S08 | SettingChanged hot-reload (M1) | config | pass |
 | S33 | Tool YAML updates correctly on plugin version change | installer/version refresh | pass |
-| S06p | Line Tool F7 settings panel | F7 settings | pending |
+| S06p | Line Tool F7 settings panel | F7 settings | pass |
 | S06s | Shape Tool outlines and circle fill | Shape Tool | pending |
 | S09 | Plugins-folder restart | release install | pending |
 | S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pending |
