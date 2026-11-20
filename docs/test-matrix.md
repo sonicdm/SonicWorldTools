@@ -450,7 +450,7 @@ Narrowed release set: the checks for what changed in this release. Older Pipette
 | S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pending |
 | S31 | Force Grow hatches one chicken egg; stacked eggs are skipped | Force Grow / egg handling | pending |
 | SC | Scatter Props: sample a Greydwarf, preview, place | Scatter ghost fix | pass |
-| TW | Line Tool trace wall: trace a wall, Shift+MMB adds a row | F7 Trace wall | pending |
+| TW | Line Tool trace wall: trace a wall, Shift+MMB adds a row | F7 Trace wall | pass |
 
 ## 0.1.2
 
