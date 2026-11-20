@@ -422,10 +422,10 @@ Release includes Shape Tool gap-free circle fill, Line Tool trace wall and world
 | ID | Procedure | §18 / notes | Result |
 | --- | --- | --- | --- |
 | Offline | `dotnet test SonicWorldTools.sln` (67 + PluginAudit) | MVP-10 / 2026-11-18 | pass |
-| S01 | BepInEx load line | hygiene | pending |
-| S02 | No exception in Gale logs | hygiene | pending |
+| S01 | BepInEx load line | hygiene | pass |
+| S02 | No exception in Gale logs | hygiene | pass |
 | S03 | Optional dependency detect lines | §11 | pending |
-| S04 | Config file created | §13 | pending |
+| S04 | Config file created | §13 | pass |
 | S05 | Owned Infinity Hammer YAML install (M1) | A01–A02 / §9 | pending |
 | S06 | Hammer menu hot-reload (M1) | A04 | pending |
 | S06a | Curved Terrain Path Surface Variants | WEC / IH multi-point tool | pending |
