@@ -3,19 +3,19 @@
 # sonicworldtools-tool-v1 — owned by SonicWorldTools; safe to delete on uninstall
 hammer:
 - name: Precision Select
-  description: A→B→C box. Alt+LMB/MMB refine, Shift+MMB copy, Ctrl+Del dismantle, Shift+Del delete.
+  description: Click three corners to select. Alt+LMB adds; Alt+MMB excludes. Shift+MMB copies; Ctrl+Del dismantles; Shift+Del deletes.
   icon: Hammer
   instant: true
   command: sonic_precision_pipette
   tabIndex: 0
-- name: Piece Repeater
-  description: MMB samples; click waypoints; Ctrl+click places. Q/E cycle build snap points; Right Alt+click snaps a waypoint to a piece joint. Wheel rotates repeated pieces in place; Alt+wheel adjusts the gap. Profiles follow build-piece surfaces or terrain; props face the tangent. F7 sets interpolation, smoothing, gap and height. Esc exits.
+- name: Line Tool
+  description: MMB samples; LMB adds waypoints; Shift+LMB places. Q/E cycles first-piece snap. Alt+LMB snaps to a joint; Alt+MMB traces a wall; Shift+MMB adds the next row. Wheel rotates; Alt+wheel changes gap; hold Alt for level. F7 settings, including world direction snap; Shift+F7 offsets; Esc exits.
   icon: Hammer
   instant: true
   command: sonic_piece_repeater
   tabIndex: 0
 - name: Shape Tool
-  description: MMB samples a piece. Click a center and move to size; cursor direction also sets square angle. I toggles infill; Shift+click places. Q cycles circle, square and rectangle.
+  description: MMB samples a piece. Click a center and move to size; cursor direction also sets square angle. I cycles outline, grid and concentric infill; Shift+wheel changes concentric spacing; Shift+click places. Q cycles circle, square and rectangle.
   icon: Hammer
   instant: false
   command: sonic_shape_tool
