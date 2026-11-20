@@ -446,8 +446,8 @@ Narrowed release set: the checks for what changed in this release. Older Pipette
 | S06p | Line Tool F7 settings panel | F7 settings | pass |
 | S06s | Shape Tool outlines and circle fill | Shape Tool | pass |
 | S09 | Plugins-folder restart | release install | pending |
-| S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pending |
-| S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pending |
+| S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pass |
+| S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pass |
 | S31 | Force Grow hatches one chicken egg; stacked eggs are skipped | Force Grow / egg handling | pending |
 | SC | Scatter Props: sample a Greydwarf, preview, place | Scatter ghost fix | pass |
 | TW | Line Tool trace wall: trace a wall, Shift+MMB adds a row | F7 Trace wall | pass |
