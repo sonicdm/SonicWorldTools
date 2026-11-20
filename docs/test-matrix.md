@@ -444,7 +444,7 @@ Narrowed release set: the checks for what changed in this release. Older Pipette
 | S08 | SettingChanged hot-reload (M1) | config | pass |
 | S33 | Tool YAML updates correctly on plugin version change | installer/version refresh | pass |
 | S06p | Line Tool F7 settings panel | F7 settings | pass |
-| S06s | Shape Tool outlines and circle fill | Shape Tool | pending |
+| S06s | Shape Tool outlines and circle fill | Shape Tool | pass |
 | S09 | Plugins-folder restart | release install | pending |
 | S32 | Line Tool world direction snap follows 22.5° build rotation grid | F7 settings | pending |
 | S30 | Force Grow on healthy plants via Hoe and Cultivator | Force Grow | pending |
